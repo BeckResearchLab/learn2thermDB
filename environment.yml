@@ -1,0 +1,27 @@
+name: learn2therm
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - biopython
+  - beautifulsoup4
+  - cython
+  - freetype
+  - fuzzywuzzy
+  - jpeg
+  - libpng
+  - libtiff
+  - python~=3.8
+  - pandas
+  - pip
+  - setuptools
+  - dvc
+  - numpy
+  - scikit-learn
+  - pytorch
+  - matplotlib
+  - seaborn
+  - jupyter
+
+
