@@ -32,3 +32,5 @@ Installable, importable code is found in `src` and should be installed given the
 -pipeline/                                  # Contains DVC tracked executable pipeline steps and parameters
 -notebooks/                                 # notebooks for testing and decisionmaking
 -environment.yml                            # Conda dependancies
+-docs/                                      # repository documentation
+```
