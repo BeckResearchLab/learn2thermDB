@@ -303,6 +303,7 @@ dependencies:
     - scmrepo==0.1.1
     - seaborn==0.12.0
     - send2trash==1.8.0
+    - sentencepiece==0.1.97
     - setuptools==65.4.0
     - shortuuid==1.0.9
     - shtab==1.5.5
