@@ -1,0 +1,13 @@
+schema: '2.0'
+stages:
+  get_ncbi_refseq:
+    cmd: bash pipeline/s0.0_get_ncbi_refseq.sh
+    deps:
+    - path: pipeline/s0.0_get_ncbi_refseq.sh
+      md5: 837b5f5eafaeb1bce06b909476276d05
+      size: 8151
+    outs:
+    - path: ./data/refseq
+      md5: 7e3fa86ff45297a95e4e235097ca92c7.dir
+      size: 52933152676
+      nfiles: 16664

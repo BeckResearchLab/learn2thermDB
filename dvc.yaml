@@ -1,0 +1,7 @@
+stages:
+  get_ncbi_refseq:
+    cmd: bash pipeline/s0.0_get_ncbi_refseq.sh
+    deps:
+    - pipeline/s0.0_get_ncbi_refseq.sh
+    outs:
+    - ./data/refseq
