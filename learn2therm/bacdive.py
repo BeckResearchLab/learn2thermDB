@@ -27,6 +27,7 @@ class BacdiveClient(bacdive.BacdiveClient):
 
         if len(resp.history) == 0:
             logger.info(f"BacdiveClient: No record found for taxid {tid}")
+            self.result = {}
             return 0
         elif len(resp.history) > 0:
             raise ValueError(f"Found multiple records for taxid {tid}")
