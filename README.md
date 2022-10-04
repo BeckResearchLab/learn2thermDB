@@ -22,6 +22,8 @@ DVC tracked data, metrics, and models are found in `./data` while scripts and pa
 
 - TODO
 
+Note that script execution is expected to occur with the top level as the current working directory, and paths are specified with respect to the repo top level.
+
 ### Python package
 Installable, importable code is found in `src` and should be installed given the above steps in the __Environemnt__ section.
 
