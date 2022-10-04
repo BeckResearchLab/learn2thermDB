@@ -27,6 +27,7 @@ dependencies:
   - dpath=2.0.6
   - dulwich=0.20.46
   - dvc=2.27.2
+  - dvc-ssh=2.19.0
   - expat=2.4.9
   - flufl.lock=7.1
   - font-ttf-dejavu-sans-mono=2.37
@@ -165,6 +166,7 @@ dependencies:
   - sip=6.6.2
   - sleef=3.5.1
   - sqlite=3.39.3
+  - sshfs=2022.6.0
   - stack_data=0.5.1
   - statsmodels=0.13.2
   - tbb=2021.6.0
