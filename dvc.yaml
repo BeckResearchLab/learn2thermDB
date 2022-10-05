@@ -5,3 +5,16 @@ stages:
     - pipeline/s0.0_get_ncbi_refseq.sh
     outs:
     - ./data/refseq
+  get_bacdive_ogt:
+    cmd: python pipeline/s0.1_get_bacdive_ogt.py
+    deps:
+    - pipeline/s0.1_get_bacdive_ogt.py
+    - ./data/refseq
+    outs:
+    - ./data/taxa/taxa_info_and_ogt.csv
+    params:
+    - ./pipeline/s0_data_extraction.yaml:
+      - get_bacdive_ogt.n_jobs
+      - get_bacdive_ogt.n_sample
+    metrics:
+    - ./data/metrics/s0.1_metrics.yaml
