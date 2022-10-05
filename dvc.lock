@@ -11,6 +11,7 @@ stages:
       md5: 7e3fa86ff45297a95e4e235097ca92c7.dir
       size: 52933152676
       nfiles: 16664
+
   get_bacdive_ogt:
     cmd: python pipeline/s0.1_get_bacdive_ogt.py
     deps:
@@ -19,16 +20,16 @@ stages:
       size: 52933152676
       nfiles: 16664
     - path: pipeline/s0.1_get_bacdive_ogt.py
-      md5: 8674e286dccb01daa0defcd47793c4ab
-      size: 7202
+      md5: 1e6cf985cedebb58235c47235b5fb30e
+      size: 6979
     params:
       pipeline/s0_data_extraction_params.yaml:
         get_bacdive_ogt.n_jobs: 3
         get_bacdive_ogt.n_sample: 25
     outs:
-    - path: ./data/metrics/s0.1_metrics.csv
-      md5: 46f9fd706a3506493b37640a074fcf28
-      size: 177
+    - path: ./data/metrics/s0.1_metrics.yaml
+      md5: 7bb627c2499f8da5692b759fda3fba41
+      size: 66
     - path: ./data/taxa/taxa_info_and_ogt.csv
       md5: 028d04e198f7595be117b499beb82b57
       size: 5559

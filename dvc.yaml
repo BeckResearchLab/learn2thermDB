@@ -17,5 +17,5 @@ stages:
       - get_bacdive_ogt.n_jobs
       - get_bacdive_ogt.n_sample
     metrics:
-    - ./data/metrics/s0.1_metrics.csv:
+    - ./data/metrics/s0.1_metrics.yaml:
         cache: false
