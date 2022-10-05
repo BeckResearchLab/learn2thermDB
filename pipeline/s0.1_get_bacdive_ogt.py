@@ -1,6 +1,7 @@
 """Use NCBI TAXid to search bacdive for OGT. and record the results"""
 import logging
 import os
+import time
 
 from joblib import delayed, Parallel
 import pandas as pd
@@ -161,7 +162,10 @@ if __name__ == '__main__':
     metrics['n_have_bacdive'] = int((~df['bacdive_id'].isna()).sum())
     metrics['n_have_ogt'] = int(df['ogt_raw'].apply(lambda x: type(x) == int).sum())
     metrics['n_have_growth_temp'] = int(df['ogt_raw'].apply(lambda x: type(x) == list).sum())
-    with open('./data/metrics/s0.1_metrics.yaml', "w") as stream:
-        yaml_dump(metrics, stream)
+
+    metrics = pd.DataFrame(data={'Name': list(metrics.keys()), 'Value': list(metrics.values()), 'Timestamp': [time.time()]*len(metrics), 'Step': [1]*len(metrics)})
+    metrics.to_csv('./data/metrics/s0.1_metrics.csv')
+    # with open('./data/metrics/s0.1_metrics.yaml', "w") as stream:
+    #     yaml_dump(metrics, stream)
 
 
