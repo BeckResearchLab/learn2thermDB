@@ -13,7 +13,7 @@ stages:
     outs:
     - ./data/taxa/taxa_info_and_ogt.csv
     params:
-    - ./pipeline/s0_data_extraction.yaml:
+    - ./pipeline/s0_data_extraction_params.yaml:
       - get_bacdive_ogt.n_jobs
       - get_bacdive_ogt.n_sample
     metrics:

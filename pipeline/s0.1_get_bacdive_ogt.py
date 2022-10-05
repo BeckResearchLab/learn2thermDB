@@ -128,7 +128,7 @@ if __name__ == '__main__':
     logger = logging.basicConfig(filename=f'./logs/{os.path.basename(__file__)}.log', level=LOGLEVEL)
 
     # DVC tracked parameters
-    with open("./pipeline/s0_data_extraction.yaml", "r") as stream:
+    with open("./pipeline/s0_data_extraction_params.yaml", "r") as stream:
         params = yaml_load(stream)['get_bacdive_ogt']
     logging.info(f"Loaded parameters: {params}")
 

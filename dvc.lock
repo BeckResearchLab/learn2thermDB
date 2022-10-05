@@ -19,10 +19,10 @@ stages:
       size: 52933152676
       nfiles: 16664
     - path: pipeline/s0.1_get_bacdive_ogt.py
-      md5: 42adfd456ba3d5960393d80af400e084
-      size: 6960
+      md5: a2a1b8fbf38ac4f792711b001c8d1813
+      size: 6967
     params:
-      pipeline/s0_data_extraction.yaml:
+      pipeline/s0_data_extraction_params.yaml:
         get_bacdive_ogt.n_jobs: 3
         get_bacdive_ogt.n_sample: 20
     outs:
