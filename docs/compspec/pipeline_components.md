@@ -9,14 +9,15 @@ Each DVC stage is associated with a script
 2. `s0.1_get_bacdive_ogt.py`
     Retrieve optimal growth temperatures from bacdive.  
     Loops the refseq files and uses `taxid` to search bacdive.  
+    _Params_: `data_extraction.n_jobs`  
     _Inputs_: `data/refseq`  
     _Outputs_: `data/taxa/taxa_info_and_ogt.csv` which maps taxid to ogt or ogt label, also contains auxilarry taxa information from NCBI for taxa  
-    _Metrics_: `data_extraction.number_taxa_w_ogt`  
+    _Metrics_: `n_taxa, n_have_bacdive, n_have_ogt, n_have_growth_temp`  
 3. `s1.0_get_protein_sequences.py`  
     Extract sequences for each taxa and label the 16s rRNA.  
     _Inputs_: `data/taxa/taxa_info_and_ogt.csv`, `data/refseq`  
     _Outputs_: `data/taxa/proteins.csv`, contains sequences and sequence labels and 16s tag for the taxa with \<id\> field as index in taxa_info_and_ogt.csv
-    _Metrics_: `data_processing.total_sequences`  
+    _Metrics_: `data_processing.n_total_sequences`  
 4. `s1.1_label_taxa.py`  
     Label taxa as mesophile or thermophile.
     _Params_: `data_processing.ogt_threshold`  
