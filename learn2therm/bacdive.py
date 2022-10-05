@@ -22,14 +22,14 @@ class BacdiveClient(bacdive.BacdiveClient):
         else:
             baseurl = "http://bacdive-dev.dsmz.local/"
         url = baseurl+"search?search=taxid:"+str(tid)
-        print(url)
         resp = self.do_request(url)
 
         if len(resp.history) == 0:
             logger.info(f"BacdiveClient: No record found for taxid {tid}")
             self.result = {}
             return 0
-        elif len(resp.history) > 0:
+        elif len(resp.history) > 1:
+            logging.debug(f"Bacdive response history for taxid {tid}: {str(resp.history)}")
             raise ValueError(f"Found multiple records for taxid {tid}")
         else:
             pass
