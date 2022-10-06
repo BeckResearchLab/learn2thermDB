@@ -19,3 +19,19 @@ stages:
     metrics:
     - ./data/metrics/s0.1_metrics.yaml:
         cache: false
+  get_proteins:
+    cmd: python pipeline/s1.1_get_protein_sequences.py
+    deps:
+    - pipeline/s1.1_get_protein_sequences.py
+    - ./data/refseq
+    - ./data/taxa/taxa_info_and_ogt.csv
+    outs:
+    - ./data/taxa/16s_rRNA.csv
+    - ./data/taxa/proteins.csv
+    params:
+    - ./pipeline/s1_data_processing_params.yaml:
+      - get_protein_sequences.n_jobs
+      - get_protein_sequences.n_sample
+    metrics:
+    - ./data/metrics/s1.1_metrics.yaml:
+        cache: false

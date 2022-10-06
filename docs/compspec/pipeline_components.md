@@ -12,18 +12,18 @@ Each DVC stage is associated with a script
     _Params_: `data_extraction.n_jobs`  
     _Inputs_: `data/refseq`  
     _Outputs_: `data/taxa/taxa_info_and_ogt.csv` which maps taxid to ogt or ogt label, also contains auxilarry taxa information from NCBI for taxa  
-    _Metrics_: `n_taxa, n_have_bacdive, n_have_ogt, n_have_growth_temp`  
-3. `s1.0_get_protein_sequences.py`  
-    Extract sequences for each taxa and label the 16s rRNA.  
-    _Inputs_: `data/taxa/taxa_info_and_ogt.csv`, `data/refseq`  
-    _Outputs_: `data/taxa/proteins.csv`, contains sequences and sequence labels and 16s tag for the taxa with \<id\> field as index in taxa_info_and_ogt.csv
-    _Metrics_: `data_processing.n_total_sequences`  
-4. `s1.1_label_taxa.py`  
+    _Metrics_: `n_taxa, n_have_bacdive, n_have_ogt, n_have_growth_temp`   
+3. `s1.0_label_taxa.py`  
     Label taxa as mesophile or thermophile.
     _Params_: `data_processing.ogt_threshold`  
     _Inputs_: `data/taxa/taxa_info_and_ogt.csv`   
     _Outputs_: `data/taxa/labels.csv`  
-    _Metrics_: `data_processing.num_meso`, `data_processing.num_thermo`  
+    _Metrics_: `n_meso`, `n_thermo`  
+4. `s1.1_get_protein_sequences.py`  
+    Extract sequences and 16s rRNA for each taxa.  
+    _Inputs_: `data/taxa/taxa_info_and_ogt.csv`, `data/refseq`  
+    _Outputs_: `data/taxa/16s_rRNA.csv`, `data/taxa/proteins.csv`, contains sequences and sequence labels  
+    _Metrics_: `n_total_sequences`, `n_taxa_with_16srRNA`
 5. `s1.2_get_16s_blast_scores.py`  
     Compute pairwise BLAST pairings of meso vs therma 16s rRNA sequences.   
     Uses `labels.csv`, grabs the 16s rRNA sequencies for each meso and therma. BLASTS all possible pairs.  

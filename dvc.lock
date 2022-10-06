@@ -33,3 +33,30 @@ stages:
     - path: ./data/taxa/taxa_info_and_ogt.csv
       md5: a5bb1873b2aeac4026516a91dd94c3e1
       size: 3826414
+  get_proteins:
+    cmd: python pipeline/s1.1_get_protein_sequences.py
+    deps:
+    - path: ./data/refseq
+      md5: 7e3fa86ff45297a95e4e235097ca92c7.dir
+      size: 52933152676
+      nfiles: 16664
+    - path: ./data/taxa/taxa_info_and_ogt.csv
+      md5: a5bb1873b2aeac4026516a91dd94c3e1
+      size: 3826414
+    - path: pipeline/s1.1_get_protein_sequences.py
+      md5: 252165632064f060cb1fcaf63a017ff2
+      size: 4225
+    params:
+      pipeline/s1_data_processing_params.yaml:
+        get_protein_sequences.n_jobs: 6
+        get_protein_sequences.n_sample: 20
+    outs:
+    - path: ./data/metrics/s1.1_metrics.yaml
+      md5: e2817c2f29e642b4e6ae6736fe9b2529
+      size: 49
+    - path: ./data/taxa/16s_rRNA.csv
+      md5: bd484b364ba9e6db7443e61186d02841
+      size: 26482
+    - path: ./data/taxa/proteins.csv
+      md5: b5dfd69073904136fb1554172f84724c
+      size: 35115546

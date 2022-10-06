@@ -22,7 +22,7 @@ if 'LOGLEVEL' in os.environ:
     LOGLEVEL = os.environ['LOGLEVEL']
     LOGLEVEL = getattr(logging, LOGLEVEL)
 else:
-    LOGLEVEL = logger.inFO
+    LOGLEVEL = logging.INFO
 LOGNAME = __file__
 LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 
