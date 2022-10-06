@@ -54,5 +54,4 @@ Each DVC stage is associated with a script
     _Outputs_: `data/learn2thermDB.sql`
 
 ## Notes
-- Current compspec is contingent on taxid being a sufficient unique identifier and having suffieicent coverage in bacdive
-- Check with dave on what parameters are needed to define and run a BLAST
+- Humood will likely take the lead on blasting
