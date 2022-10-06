@@ -5,9 +5,12 @@ Wrapper of sqlite database containing data. Allows for creation and splitting of
 
 __Params__:
 - `db_loc`: str, location of sqlite database on disk
-- `protein_blast_threshold`: float, blast score required to count a protein pair
+- `protein_min_blast`: float, blast score required to count a protein pair
+- `protein_max_blast`: float, not sure about this, but what if a pair is too similar?
 - `temperature_window`: float, number of celcius on either side of the threshold to discard organisms
 - `max_sequence_length`: int, maximum number of amino acids in a sequence 
+- `n_mesophiles_per_thermophile`: str, how to consider multiple mesophilic sequences paired to a thermophilic sequence  
+    eg. top N blast score, all that meet threshold, random one, 
 
 #### _Methods_:
 `from_files(db_loc: str, taxa_table: str, taxa_pair_table: str, protein_table: str, protein_pair_table: str)`
