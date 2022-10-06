@@ -10,8 +10,10 @@ conda activate learn2therm
 pip install .
 ```
 
-Set environmental variables to ensure everything runs smoothly:
-- `ENV_EMAIL` : email used durring HTTP and FTP execution
+Ensure that the following environmental variables are set for pipeline exacution:  
+- `ENV_EMAIL` - The email will be used to access NCBI FTP in `s0.0` and Bacdive in `s0.1`
+- `BACDIVE_PASSWORD` - Password associated with Bacdive account fo use in `s0.1`
+- `LOGLEVEL` (optional) - Specified logging level to run the package. eg 'INFO' or 'DEBUG'
 
 ### Execution
 Data Version Control (DVC) is used to track data, parameters, metrics, and execution pipelines.
@@ -25,14 +27,14 @@ DVC tracked data, metrics, and models are found in `./data` while scripts and pa
 Note that script execution is expected to occur with the top level as the current working directory, and paths are specified with respect to the repo top level.
 
 ### Python package
-Installable, importable code is found in `src` and should be installed given the above steps in the __Environemnt__ section.
+Installable, importable code is found in `learn2therm` and should be installed given the above steps in the __Environemnt__ section.
 
 ## Directory
 ```
 -data/                                      # Contains DVC tracked data, models, and metrics
--src/                                       # Contains git tracked importable code
+-learn2therm/                               # Contains git tracked importable code
 -pipeline/                                  # Contains DVC tracked executable pipeline steps and parameters
--notebooks/                                 # notebooks for testing and decisionmaking
+-notebooks/                                 # notebooks for testing and decision making
 -environment.yml                            # Conda dependancies
 -docs/                                      # repository documentation
 ```
