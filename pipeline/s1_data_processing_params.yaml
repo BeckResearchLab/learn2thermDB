@@ -1,5 +1,5 @@
 # Parameters for scripts in the current directory for data processing steps
 # ----------------------------------------------------------------------------
 get_protein_sequences:
-  n_jobs: 6                    # number of cores for parallel execution
-  n_sample: 20                 # number of "data" to sample down to for testing
+  n_jobs: 2                    # number of cores for parallel execution
+  n_sample: null                 # number of "data" to sample down to for testing

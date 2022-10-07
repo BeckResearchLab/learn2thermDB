@@ -44,19 +44,19 @@ stages:
       md5: a5bb1873b2aeac4026516a91dd94c3e1
       size: 3826414
     - path: pipeline/s1.1_get_protein_sequences.py
-      md5: 252165632064f060cb1fcaf63a017ff2
-      size: 4225
+      md5: 599f96a15b51f8c781131579f68976b6
+      size: 4870
     params:
       pipeline/s1_data_processing_params.yaml:
-        get_protein_sequences.n_jobs: 6
-        get_protein_sequences.n_sample: 20
+        get_protein_sequences.n_jobs: 2
+        get_protein_sequences.n_sample:
     outs:
     - path: ./data/metrics/s1.1_metrics.yaml
-      md5: e2817c2f29e642b4e6ae6736fe9b2529
-      size: 49
+      md5: 8c34f4fefe92eac1fc9656ba83be235a
+      size: 55
     - path: ./data/taxa/16s_rRNA.csv
-      md5: bd484b364ba9e6db7443e61186d02841
-      size: 26482
+      md5: fd367e500fc781453b73a4617ce4075a
+      size: 21316764
     - path: ./data/taxa/proteins.csv
-      md5: b5dfd69073904136fb1554172f84724c
-      size: 35115546
+      md5: 5fd92574b305f4d652d35cd7bca38ac6
+      size: 23950681337
