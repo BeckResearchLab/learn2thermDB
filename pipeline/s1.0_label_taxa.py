@@ -3,6 +3,7 @@
 A method for dealing with taxa with data but not OGT should be passed.
 """
 import ast
+from locale import normalize
 import logging
 import os
 
@@ -103,4 +104,5 @@ if __name__ == '__main__':
     fig, ax = plt.subplots(figsize=(5,5))
     ax.set_xlabel('OGT [C]')
     labels['ogt'].plot.hist(bins=15, ax=ax)
+    ax.vlines(x=[params['ogt_threshold']], ymin=0, ymax=ax.get_ylim()[1], colors=['r'])
     plt.savefig('./data/plots/ogt_hist.png', bbox_inches='tight', dpi=250)

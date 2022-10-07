@@ -67,8 +67,8 @@ stages:
       md5: a5bb1873b2aeac4026516a91dd94c3e1
       size: 3826414
     - path: pipeline/s1.0_label_taxa.py
-      md5: c0117f621a8375785645d4730df03086
-      size: 3579
+      md5: 885283271394a0d5f91db4f039113b2e
+      size: 3696
     params:
       pipeline/s1_data_processing_params.yaml:
         label_taxa.ogt_determination_method: true ogt only
@@ -78,8 +78,8 @@ stages:
       md5: e3dc1b14e664e4fb162fb0338ca487ee
       size: 27
     - path: ./data/plots/ogt_hist.png
-      md5: 9bc18dbcb827856fecda6f8ccc43a025
-      size: 32442
+      md5: 3829aacef7dbbcbda087976df5567ec7
+      size: 35539
     - path: ./data/taxa/labels.csv
       md5: 69ee2d0057dc0c1c1fcfabcc98b3327c
       size: 160870
