@@ -6,6 +6,7 @@ import ast
 import logging
 import os
 
+import matplotlib.pyplot as plt
 import pandas as pd
 from yaml import dump as yaml_dump
 from yaml import safe_load as yaml_load
@@ -77,18 +78,29 @@ if __name__ == '__main__':
     logger.info("Computing OGT from raw records")
     if params['ogt_determination_method'] == 'true ogt only':
         ogts = taxa.apply(true_ogt_only)
+    ogts.name = 'ogt'
+    ogts = ogts.astype(float)
     
     # extract meso or thermo based on threshold
     logger.info("Labeling thermophiles")
-    labels = ogts.map(lambda ogt: ogt > params['ogt_threshold'], na_action='ignore')
-    labels.name = "thermophile_label"
+    thermo_bools = ogts.map(lambda ogt: ogt > params['ogt_threshold'], na_action='ignore')
+    thermo_bools.name = "thermophile_label"
     
     # save to file
+    labels = pd.DataFrame([ogts, thermo_bools]).T
+    labels['thermophile_label'] = labels['thermophile_label'].astype('boolean')
+    print(labels.columns)
     labels.to_csv('./data/taxa/labels.csv')
 
     # save metrics
     metrics = {}
-    metrics['n_meso'] = int((labels == False).sum())
-    metrics['n_therm'] = int((labels == True).sum())
+    metrics['n_meso'] = int((labels['ogt'] == False).sum())
+    metrics['n_therm'] = int((labels['thermophile_label'] == True).sum())
     with open('./data/metrics/s1.0_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)
+    
+    # save plot
+    fig, ax = plt.subplots(figsize=(5,5))
+    ax.set_xlabel('OGT [C]')
+    labels['ogt'].plot.hist(bins=15, ax=ax)
+    plt.savefig('./data/plots/ogt_hist.png', bbox_inches='tight', dpi=250)

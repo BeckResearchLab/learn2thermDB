@@ -33,6 +33,9 @@ stages:
     metrics:
     - ./data/metrics/s1.0_metrics.yaml:
         cache: false
+    plots:
+    - ./data/plots/ogt_hist.png:
+        cache: false
   get_proteins:
     cmd: python pipeline/s1.1_get_protein_sequences.py
     deps:
