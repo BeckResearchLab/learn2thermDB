@@ -15,7 +15,7 @@ Each DVC stage is associated with a script
     _Metrics_: `n_taxa, n_have_bacdive, n_have_ogt, n_have_growth_temp`   
 3. `s1.0_label_taxa.py`  
     Label taxa as mesophile or thermophile.
-    _Params_: `data_processing.ogt_threshold`  
+    _Params_: `data_processing.ogt_threshold`,  `data_processing.ogt_determination_method`, define what do do with all of the data that we have temps for but not OGT  
     _Inputs_: `data/taxa/taxa_info_and_ogt.csv`   
     _Outputs_: `data/taxa/labels.csv`  
     _Metrics_: `n_meso`, `n_thermo`  

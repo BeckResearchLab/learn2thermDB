@@ -60,3 +60,23 @@ stages:
     - path: ./data/taxa/proteins.csv
       md5: 5fd92574b305f4d652d35cd7bca38ac6
       size: 23950681337
+  label_taxa:
+    cmd: python pipeline/s1.0_label_taxa.py
+    deps:
+    - path: ./data/taxa/taxa_info_and_ogt.csv
+      md5: a5bb1873b2aeac4026516a91dd94c3e1
+      size: 3826414
+    - path: pipeline/s1.0_label_taxa.py
+      md5: 9344f8ba437e3601b5da3fef110fd827
+      size: 3074
+    params:
+      pipeline/s1_data_processing_params.yaml:
+        label_taxa.ogt_determination_method: true ogt only
+        label_taxa.ogt_threshold: 33.0
+    outs:
+    - path: ./data/metrics/s1.0_metrics.yaml
+      md5: e3dc1b14e664e4fb162fb0338ca487ee
+      size: 27
+    - path: ./data/taxa/labels.csv
+      md5: af2876df1ff8ba50c8462259da1c280a
+      size: 126506

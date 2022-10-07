@@ -19,6 +19,20 @@ stages:
     metrics:
     - ./data/metrics/s0.1_metrics.yaml:
         cache: false
+  label_taxa:
+    cmd: python pipeline/s1.0_label_taxa.py
+    deps:
+    - pipeline/s1.0_label_taxa.py
+    - ./data/taxa/taxa_info_and_ogt.csv
+    params:
+    - ./pipeline/s1_data_processing_params.yaml:
+      - label_taxa.ogt_threshold
+      - label_taxa.ogt_determination_method
+    outs:
+    - ./data/taxa/labels.csv
+    metrics:
+    - ./data/metrics/s1.0_metrics.yaml:
+        cache: false
   get_proteins:
     cmd: python pipeline/s1.1_get_protein_sequences.py
     deps:

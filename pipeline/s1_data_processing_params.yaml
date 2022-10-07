@@ -3,3 +3,6 @@
 get_protein_sequences:
   n_jobs: 2                    # number of cores for parallel execution
   n_sample: null                 # number of "data" to sample down to for testing
+label_taxa:
+  ogt_threshold: 33.0
+  ogt_determination_method: 'true ogt only'
