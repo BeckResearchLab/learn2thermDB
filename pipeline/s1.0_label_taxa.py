@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
     # save metrics
     metrics = {}
-    metrics['n_meso'] = int((labels['ogt'] == False).sum())
+    metrics['n_meso'] = int((labels['thermophile_label'] == False).sum())
     metrics['n_therm'] = int((labels['thermophile_label'] == True).sum())
     with open('./data/metrics/s1.0_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)
