@@ -1,7 +1,9 @@
 # Machine translation of mesophic protein to same-function thermophilic protein
 
 ## Getting started
+
 ### Environment
+
 Create and activate the environment specified in `environment.yml`
 
 ```
@@ -10,12 +12,14 @@ conda activate learn2therm
 pip install .
 ```
 
-Ensure that the following environmental variables are set for pipeline exacution:  
+Ensure that the following environmental variables are set for pipeline exacution:
+
 - `ENV_EMAIL` - The email will be used to access NCBI FTP in `s0.0` and Bacdive in `s0.1`
 - `BACDIVE_PASSWORD` - Password associated with Bacdive account fo use in `s0.1`
 - `LOGLEVEL` (optional) - Specified logging level to run the package. eg 'INFO' or 'DEBUG'
 
 ### Execution
+
 Data Version Control (DVC) is used to track data, parameters, metrics, and execution pipelines.
 
 To use a DVC remote, see the the [documentation](https://dvc.org/doc/command-reference/remote).
@@ -27,9 +31,11 @@ DVC tracked data, metrics, and models are found in `./data` while scripts and pa
 Note that script execution is expected to occur with the top level as the current working directory, and paths are specified with respect to the repo top level.
 
 ### Python package
-Installable, importable code is found in `learn2therm` and should be installed given the above steps in the __Environemnt__ section.
+
+Installable, importable code is found in `learn2therm` and should be installed given the above steps in the **Environemnt** section.
 
 ## Directory
+
 ```
 -data/                                      # Contains DVC tracked data, models, and metrics
 -learn2therm/                               # Contains git tracked importable code
@@ -38,3 +44,7 @@ Installable, importable code is found in `learn2therm` and should be installed g
 -environment.yml                            # Conda dependancies
 -docs/                                      # repository documentation
 ```
+
+### Exposition
+
+Testing that I can commit okay.
