@@ -5,6 +5,10 @@ import tempfile
 import shutil
 import os
 
+import pandas as pd
+
+from typing import Collection
+
 def seq_io_gnuzipped(filepath: str, filetype: str):
     """Open gnuzipped sequence files.
     
@@ -34,3 +38,27 @@ def seq_io_gnuzipped(filepath: str, filetype: str):
         os.remove(tmp.name)
     return records
 
+def csv_id_seq_iterator(csv_filepath: str, seq_col: str, id_filter: Collection = None, chunksize: int = 512, **kwargs):
+    """Returns a one by one iterator of seq ids and sequences to avoid OOM.
+    
+    Parameters
+    ----------
+    csv_filepath : str
+        path to file containing data
+    seq_col : str
+        name of column containing sequences
+    id_filter : Collection, Optional
+        If given, only return sequences with the provided ids
+    chunksize : int, default 512
+        Number of sequences that will be stored in memory at once.
+    **kwargs passed to pandas read csv 
+    """
+    for df_chunk in pd.read_csv(csv_filepath, index_col=0, chunksize=chunksize):
+        chunk = df_chunk[seq_col]
+
+        # filter down indexes
+        if id_filter is not None:
+            mask = chunk.index.isin(id_filter)
+            chunk = chunk[chunk.index[mask]]
+        for id_, seq in chunk.items():
+            yield id_, seq
