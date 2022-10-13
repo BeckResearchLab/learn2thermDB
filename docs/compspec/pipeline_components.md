@@ -27,8 +27,8 @@ Each DVC stage is associated with a script
 5. `s1.2_get_16s_blast_scores.py`  
     Compute pairwise BLAST pairings of meso vs therma 16s rRNA sequences.   
     Uses `labels.csv`, grabs the 16s rRNA sequencies for each meso and therma. BLASTS all possible pairs.  
-    _Params_: `data_processing.16s_blast_parameters`   
-    _Inputs_: `data/taxa/proteins.csv`, `data/taxa/labels.csv`  
+    _Params_: `data_processing.16s_blast_parameters` (there are a number), `data_processing.16s_blast_metrics`
+    _Inputs_: `data/taxa/16s_rRNA.csv`, `data/taxa/labels.csv`  
     _Outputs_: `data/taxa_pairs/pairwise_16s_blast.csv` table of id and BLAST scores. Meso and thermo as rows and columns.  
     _Metrics_: `data_processing.16s_blast_quantiles`  
 6. `s1.3_label_all_pairs.py`  

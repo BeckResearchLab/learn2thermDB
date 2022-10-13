@@ -83,3 +83,34 @@ stages:
     - path: ./data/taxa/labels.csv
       md5: 69ee2d0057dc0c1c1fcfabcc98b3327c
       size: 160870
+  get_16s_blast_scores:
+    cmd: python pipeline/s1.2_get_16s_blast_scores.py
+    deps:
+    - path: ./data/taxa/16s_rRNA.csv
+      md5: fd367e500fc781453b73a4617ce4075a
+      size: 21316764
+    - path: ./data/taxa/labels.csv
+      md5: 69ee2d0057dc0c1c1fcfabcc98b3327c
+      size: 160870
+    - path: ./pipeline/s1.2_get_16s_blast_scores.py
+      md5: 9bfe80f82977865055995be54dd98bdb
+      size: 5534
+    params:
+      pipeline/s1_data_processing_params.yaml:
+        get_16s_blast_scores.blast_metrics:
+        - local_E_value
+        - scaled_local_query_percent_id
+        - scaled_local_symmetric_percent_id
+        - local_gap_compressed_percent_id
+        get_16s_blast_scores.gapextend_penalty: 2
+        get_16s_blast_scores.gapopen_penalty: 5
+        get_16s_blast_scores.n_jobs: 2
+        get_16s_blast_scores.n_sample:
+        get_16s_blast_scores.penalty: -3
+        get_16s_blast_scores.reward: 2
+        get_16s_blast_scores.ungapped: false
+        get_16s_blast_scores.word_size: 28
+    outs:
+    - path: ./data/taxa_pairs/pairwise_16s_blast.csv
+      md5: cd9d392d657f8311dcc5a32ffa6e1291
+      size: 189493357
