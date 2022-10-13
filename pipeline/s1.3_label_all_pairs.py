@@ -75,6 +75,6 @@ if __name__ == '__main__':
     mask.to_csv('./data/taxa_pairs/pair_labels.csv')
     
     # save metrics
-    metrics = {'num_pairs_conservative': mask.sum()}
+    metrics = {'num_pairs_conservative': int(mask.sum())}
     with open('./data/metrics/s1.3_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)
