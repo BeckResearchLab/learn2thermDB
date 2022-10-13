@@ -128,15 +128,15 @@ stages:
         label_all_pairs:
           blast_metric_thresholds:
             scaled_local_symmetric_percent_id:
-              thresh: 0.82
+              thresh: 0.88
               greater: true
             local_E_value:
               thresh: 1e-50
               greater: false
     outs:
     - path: ./data/metrics/s1.3_metrics.yaml
-      md5: 2cdc4e0efba815db6042d9a0fcec78d1
+      md5: 13ed9fb21f1a14ac92131de35d7a2b06
       size: 31
     - path: ./data/taxa_pairs/pair_labels.csv
-      md5: 21f7c7beeabae4004537684e3433cb7c
-      size: 35119754
+      md5: f13bf791a3da8511ee6debc36f27cab2
+      size: 35285702
