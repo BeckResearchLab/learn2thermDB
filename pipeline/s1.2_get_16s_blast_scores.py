@@ -4,7 +4,6 @@ import ast
 import fcntl
 import logging
 import os
-from unittest.mock import NonCallableMagicMock
 
 from Bio.Blast.Applications import NcbiblastnCommandline
 from Bio.Blast import NCBIXML

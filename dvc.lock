@@ -114,3 +114,29 @@ stages:
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
       md5: cd9d392d657f8311dcc5a32ffa6e1291
       size: 189493357
+  label_all_pairs:
+    cmd: python pipeline/s1.3_label_all_pairs.py
+    deps:
+    - path: ./data/taxa_pairs/pairwise_16s_blast.csv
+      md5: cd9d392d657f8311dcc5a32ffa6e1291
+      size: 189493357
+    - path: ./pipeline/s1.3_label_all_pairs.py
+      md5: eea1ed1e26686c575f7c602900394e5d
+      size: 3183
+    params:
+      pipeline/s1_data_processing_params.yaml:
+        label_all_pairs:
+          blast_metric_thresholds:
+            scaled_local_symmetric_percent_id:
+              thresh: 0.82
+              greater: true
+            local_E_value:
+              thresh: 1e-50
+              greater: false
+    outs:
+    - path: ./data/metrics/s1.3_metrics.yaml
+      md5: a5bab352d02e59873b89c80eeaa74b43
+      size: 256
+    - path: ./data/taxa_pairs/pair_labels.csv
+      md5: 21f7c7beeabae4004537684e3433cb7c
+      size: 35119754

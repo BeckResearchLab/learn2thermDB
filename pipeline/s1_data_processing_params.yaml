@@ -20,3 +20,11 @@ get_16s_blast_scores:
     - scaled_local_query_percent_id
     - scaled_local_symmetric_percent_id
     - local_gap_compressed_percent_id
+label_all_pairs:
+  blast_metric_thresholds:                  # define which metrics to use to label a taxa pair 
+    scaled_local_symmetric_percent_id:    # metric name
+      thresh: 0.82                            # float threshold
+      greater: true                         # greater than threshold is good
+    local_E_value:
+      thresh: 1.e-50
+      greater: false
