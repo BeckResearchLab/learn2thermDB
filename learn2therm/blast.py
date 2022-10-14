@@ -103,8 +103,8 @@ class BlastMetrics:
         scores = []
         for hsp in alignment.hsps:
             scores.append(
-                (len(hsp.query.replace('-', ''))/self.record.query_length) + (len(hsp.sbjct.replace('-', ''))/alignment.length)/2)
-        return np.argmax(scores)[0], max(scores)
+                ((hsp.query_end - hsp.query_start)/self.record.query_length + (hsp.sbjct_end - hsp.sbjct_start)/alignment.length)/2)
+        return np.argmax(scores), max(scores)
 
     def compute_metric(self, metric_name: str):
         """Compute the metric with specified name for each alignment"""
@@ -184,11 +184,11 @@ class BlastMetrics:
 
     def local_E_value(self, alignment):
         """E value of HSP with most identities."""
-        best_hsp_idx, _ = self.id_hsp_best_cov(alignment, self.record.query_length)
+        best_hsp_idx, _ = self.id_hsp_best_cov(alignment)
         hsp = alignment.hsps[best_hsp_idx]
         return hsp.expect
 
     def local_average_coverage(self, alignment):
         """The coverage of the HSP averaged for query and subject"""
-        return self.id_hsp_best_cov(alignment)[0]
+        return self.id_hsp_best_cov(alignment)[1]
 
