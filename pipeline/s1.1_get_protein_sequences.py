@@ -71,7 +71,7 @@ def extract_proteins_from_one(taxa_index: int, filepath: str):
     with open(OUTPUT_FILE_PROTEINS, "a") as g:
         fcntl.flock(g, fcntl.LOCK_EX)
         for i in range(len(protein_sequences['seq_len'])):
-            g.write(f"{taxa_index},{protein_sequences['sequence'][i]},{protein_sequences['desc'][i]},{protein_sequences['seq_len'][i]}\n")
+            g.write(f"{taxa_index};{protein_sequences['sequence'][i]};{protein_sequences['desc'][i]};{protein_sequences['seq_len'][i]}\n")
         fcntl.flock(g, fcntl.LOCK_UN)
     with open(OUTPUT_FILE_16srRNA, "a") as g:
         fcntl.flock(g, fcntl.LOCK_EX)
@@ -100,7 +100,7 @@ if __name__ == '__main__':
 
     # start the files, we have to write intermittedly because of memory issues
     with open(OUTPUT_FILE_PROTEINS, "w") as g:
-        g.write("taxa_index,protein_seq,protein_desc,protein_len\n")
+        g.write("taxa_index;protein_seq;protein_desc;protein_len\n")
     with open(OUTPUT_FILE_16srRNA, "w") as g:
         g.write("taxa_index,seq_16srRNA\n")
 

@@ -44,7 +44,7 @@ stages:
       md5: a5bb1873b2aeac4026516a91dd94c3e1
       size: 3826414
     - path: pipeline/s1.1_get_protein_sequences.py
-      md5: 599f96a15b51f8c781131579f68976b6
+      md5: e8318785c26d60ca90d71134a0054644
       size: 4870
     params:
       pipeline/s1_data_processing_params.yaml:
@@ -55,10 +55,10 @@ stages:
       md5: 8c34f4fefe92eac1fc9656ba83be235a
       size: 55
     - path: ./data/taxa/16s_rRNA.csv
-      md5: fd367e500fc781453b73a4617ce4075a
+      md5: 95b01ff42c7e533738711ec18fff7984
       size: 21316764
     - path: ./data/taxa/proteins.csv
-      md5: 5fd92574b305f4d652d35cd7bca38ac6
+      md5: 7ff50b94a543762011c6571aa0ee711f
       size: 23950681337
   label_taxa:
     cmd: python pipeline/s1.0_label_taxa.py
