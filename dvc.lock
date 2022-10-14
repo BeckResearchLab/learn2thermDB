@@ -44,8 +44,8 @@ stages:
       md5: a5bb1873b2aeac4026516a91dd94c3e1
       size: 3826414
     - path: pipeline/s1.1_get_protein_sequences.py
-      md5: e8318785c26d60ca90d71134a0054644
-      size: 4870
+      md5: f4efa5463eba6cbe477af256e8de00dd
+      size: 4888
     params:
       pipeline/s1_data_processing_params.yaml:
         get_protein_sequences.n_jobs: 2
@@ -55,10 +55,10 @@ stages:
       md5: 8c34f4fefe92eac1fc9656ba83be235a
       size: 55
     - path: ./data/taxa/16s_rRNA.csv
-      md5: 95b01ff42c7e533738711ec18fff7984
+      md5: 60d4e15a596f3b8175f744994b6bf60e
       size: 21316764
     - path: ./data/taxa/proteins.csv
-      md5: 7ff50b94a543762011c6571aa0ee711f
+      md5: cc0494917cc1f7e7c8c40604363c6884
       size: 23950681337
   label_taxa:
     cmd: python pipeline/s1.0_label_taxa.py
@@ -72,17 +72,17 @@ stages:
     params:
       pipeline/s1_data_processing_params.yaml:
         label_taxa.ogt_determination_method: true ogt only
-        label_taxa.ogt_threshold: 33.0
+        label_taxa.ogt_threshold: 40.0
     outs:
     - path: ./data/metrics/s1.0_metrics.yaml
-      md5: e3dc1b14e664e4fb162fb0338ca487ee
-      size: 27
+      md5: b81c7de57507e95b010902f79b970d99
+      size: 26
     - path: ./data/plots/ogt_hist.png
-      md5: 3829aacef7dbbcbda087976df5567ec7
-      size: 35539
+      md5: 871e6c2307c407eda0191b082617a367
+      size: 35538
     - path: ./data/taxa/labels.csv
-      md5: 69ee2d0057dc0c1c1fcfabcc98b3327c
-      size: 160870
+      md5: 22b516c22355a1697527f0099c5b8075
+      size: 161752
   get_16s_blast_scores:
     cmd: python pipeline/s1.2_get_16s_blast_scores.py
     deps:

@@ -69,6 +69,8 @@ class BlastFiles:
 
 class BlastMetrics:
     """Handles computation of metrics for each alignment in a blast record.
+
+    The HSP with the largest average sequence coverage is used for local metrics.
     
     Parameters
     ----------
@@ -89,6 +91,20 @@ class BlastMetrics:
         self.record = blast_record
         self.qid = self.record.query.split(' ')[0]
         logger.info(f"Query {self.qid} with {len(self.record.alignments)} alignments with ids {[a.hit_id for a in self.record.alignments]}.")
+
+    def id_hsp_best_cov(self, alignment):
+        """Determine HSP with the most average coverage of both sequences.
+        
+        Returns
+        -------
+        Index of HSP with max average seq coverage
+        Max average coverage
+        """
+        scores = []
+        for hsp in alignment.hsps:
+            scores.append(
+                (len(hsp.query.replace('-', ''))/self.record.query_length) + (len(hsp.sbjct.replace('-', ''))/alignment.length)/2)
+        return np.argmax(scores)[0], max(scores)
 
     def compute_metric(self, metric_name: str):
         """Compute the metric with specified name for each alignment"""
@@ -145,30 +161,34 @@ class BlastMetrics:
         
         The largest local HSP score is used
         """
-        scores = []
-        for hsp in alignment.hsps:
-            n_matches = hsp.identities
-            n_gaps = hsp.gaps
-            n_columns = len(hsp.query)
-            n_compressed_gaps = len(re.findall('-+', hsp.query))+len(re.findall('-+', hsp.sbjct))
-            scores.append(self.raw_gap_compressed_percent_id(n_matches, n_gaps, n_columns, n_compressed_gaps))
-        return max(scores)
+        best_hsp_idx, _ = self.id_hsp_best_cov(alignment)
+        hsp = alignment.hsps[best_hsp_idx]
+
+        n_matches = hsp.identities
+        n_gaps = hsp.gaps
+        n_columns = len(hsp.query)
+        n_compressed_gaps = len(re.findall('-+', hsp.query))+len(re.findall('-+', hsp.sbjct))
+        return self.raw_gap_compressed_percent_id(n_matches, n_gaps, n_columns, n_compressed_gaps)
 
     def scaled_local_query_percent_id(self, alignment):
         """Percent matches in query sequence based on best HSP."""
-        ids = [hsp.identities for hsp in alignment.hsps]
-        return max(ids)/self.record.query_length
+        best_hsp_idx, _ = self.id_hsp_best_cov(alignment)
+        hsp = alignment.hsps[best_hsp_idx]
+        return hsp.identities/self.record.query_length
 
     def scaled_local_symmetric_percent_id(self, alignment):
         """Percent matches compared to average seq length of query and subject based on best HSP"""
-        ids = [hsp.identities for hsp in alignment.hsps]
-        return 2*max(ids)/(self.record.query_length + alignment.length)
+        best_hsp_idx, _ = self.id_hsp_best_cov(alignment)
+        hsp = alignment.hsps[best_hsp_idx]
+        return 2*hsp.identities/(self.record.query_length + alignment.length)
 
     def local_E_value(self, alignment):
         """E value of HSP with most identities."""
-        ids = []
-        Es = []
-        for hsp in alignment.hsps:
-            ids.append(hsp.identities)
-            Es.append(hsp.expect)
-        return Es[np.argmax(ids)]
+        best_hsp_idx, _ = self.id_hsp_best_cov(alignment, self.record.query_length)
+        hsp = alignment.hsps[best_hsp_idx]
+        return hsp.expect
+
+    def local_average_coverage(self, alignment):
+        """The coverage of the HSP averaged for query and subject"""
+        return self.id_hsp_best_cov(alignment)[0]
+
