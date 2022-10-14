@@ -67,6 +67,7 @@ if __name__ == '__main__':
             mask = metric_vals > vals['thresh']
         else:
             mask = metric_vals < vals['thresh']
+        logger.info(f"Only considering pairs with {mname} {'>' if vals['greater'] else '<'} {vals['thresh']}")
         masks.append(mask)
     mask = pd.DataFrame(masks).all(axis=0)
     mask.name='is_pair'

@@ -48,12 +48,12 @@ def csv_id_seq_iterator(csv_filepath: str, seq_col: str, id_filter: Collection =
     seq_col : str
         name of column containing sequences
     id_filter : Collection, Optional
-        If given, only return sequences with the provided ids
+        If given, only return sequences with the provided indexes
     chunksize : int, default 512
         Number of sequences that will be stored in memory at once.
     **kwargs passed to pandas read csv 
     """
-    for df_chunk in pd.read_csv(csv_filepath, index_col=0, chunksize=chunksize):
+    for df_chunk in pd.read_csv(csv_filepath, chunksize=chunksize, **kwargs):
         chunk = df_chunk[seq_col]
 
         # filter down indexes

@@ -79,9 +79,9 @@ if __name__ == '__main__':
     # ###########
     # these iterators just mean that we don't have to load all sequences into memory
     thermophile_iterator = learn2therm.io.csv_id_seq_iterator(
-        './data/taxa/16s_rRNA.csv', seq_col='seq_16srRNA', id_filter=thermo_indexes)
+        './data/taxa/16s_rRNA.csv', seq_col='seq_16srRNA', id_filter=thermo_indexes, index_col=0)
     mesophile_iterator = learn2therm.io.csv_id_seq_iterator(
-        './data/taxa/16s_rRNA.csv', seq_col='seq_16srRNA', id_filter=meso_indexes)
+        './data/taxa/16s_rRNA.csv', seq_col='seq_16srRNA', id_filter=meso_indexes, index_col=0)
 
     # sample if we neeed to
     if params['n_sample'] != None:
