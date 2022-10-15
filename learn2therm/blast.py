@@ -7,6 +7,7 @@ Note BioPython provides a python API to the command line
 """
 import tempfile
 import os
+import shutil
 import re
 
 import numpy as np
@@ -14,6 +15,9 @@ import pandas as pd
 
 import logging
 logger = logging.getLogger(__name__)
+
+from Bio.Blast.Applications import NcbimakeblastdbCommandline
+
 
 class BlastFiles:
     """Temporary files for use with BLAST CLI.
@@ -34,7 +38,7 @@ class BlastFiles:
     subject_filename : str, name of fasta file with subject sequences
     output_filename : str, name of output file for blast to save reuslts, will be deleted out of context
     """
-    def __init__(self, query_iterator, subject_iterator):
+    def __init__(self, query_iterator, subject_iterator, dbtype: str = 'nucl'):
         # we have to create the temporary fasta files
         logger.info("Creating temporary files to deposit blast inputs and outputs.")
         query_temp = tempfile.NamedTemporaryFile('w', delete=False)
@@ -45,25 +49,31 @@ class BlastFiles:
             query_temp.write(f">{id_}\n{seq}\n")
         query_temp.close()
 
-        subject_temp = tempfile.NamedTemporaryFile('w', delete=False)
-        self.st = subject_temp.name
+        # folder for subject DB after we make a fasta
+        subject_folder = tempfile.mkdtemp()
+        self.st = subject_folder
+        subject_fasta_file = subject_folder+'/subs.fasta'
+        self.subject_fasta_file = subject_fasta_file
+        file = open(subject_fasta_file, 'w')
         for id_, seq in subject_iterator:
             if seq == 'None' or seq is None:
                 continue
-            subject_temp.write(f">{id_}\n{seq}\n")
-        subject_temp.close()
+            file.write(f">{id_}\n{seq}\n")
+        file.close()
 
+        # create db for it
+        NcbimakeblastdbCommandline(dbtype=dbtype, input_file=subject_fasta_file)()
         # create the output xml file
         out_temp = tempfile.NamedTemporaryFile('w', delete=False)
         self.ot = out_temp.name
 
     def __enter__(self):
-        return self.qt, self.st, self.ot
+        return self.qt, self.subject_fasta_file, self.ot
 
     def __exit__(self, type, value, traceback):
         logger.info("Removing temporary files used by blast")
         os.remove(self.qt)
-        os.remove(self.st)
+        shutil.rmtree(self.st)
         os.remove(self.ot)
         
 

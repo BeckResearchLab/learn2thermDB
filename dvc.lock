@@ -87,14 +87,14 @@ stages:
     cmd: python pipeline/s1.2_get_16s_blast_scores.py
     deps:
     - path: ./data/taxa/16s_rRNA.csv
-      md5: fd367e500fc781453b73a4617ce4075a
+      md5: 60d4e15a596f3b8175f744994b6bf60e
       size: 21316764
     - path: ./data/taxa/labels.csv
-      md5: 69ee2d0057dc0c1c1fcfabcc98b3327c
-      size: 160870
+      md5: 22b516c22355a1697527f0099c5b8075
+      size: 161752
     - path: ./pipeline/s1.2_get_16s_blast_scores.py
-      md5: 9bfe80f82977865055995be54dd98bdb
-      size: 5534
+      md5: 58d68866a09c2fc10f1e60aaffd3e0f0
+      size: 5427
     params:
       pipeline/s1_data_processing_params.yaml:
         get_16s_blast_scores.blast_metrics:
@@ -102,24 +102,25 @@ stages:
         - scaled_local_query_percent_id
         - scaled_local_symmetric_percent_id
         - local_gap_compressed_percent_id
-        get_16s_blast_scores.gapextend_penalty: 2
-        get_16s_blast_scores.gapopen_penalty: 5
+        - local_average_coverage
+        get_16s_blast_scores.gapextend_penalty: 1
+        get_16s_blast_scores.gapopen_penalty: 2
         get_16s_blast_scores.n_jobs: 2
         get_16s_blast_scores.n_sample:
-        get_16s_blast_scores.penalty: -3
-        get_16s_blast_scores.reward: 2
+        get_16s_blast_scores.penalty: -2
+        get_16s_blast_scores.reward: 1
         get_16s_blast_scores.ungapped: false
         get_16s_blast_scores.word_size: 28
     outs:
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: cd9d392d657f8311dcc5a32ffa6e1291
-      size: 189493357
+      md5: 69fe352f465190410d855d3f6720fb2f
+      size: 79704193
   label_all_pairs:
     cmd: python pipeline/s1.3_label_all_pairs.py
     deps:
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: cd9d392d657f8311dcc5a32ffa6e1291
-      size: 189493357
+      md5: 69fe352f465190410d855d3f6720fb2f
+      size: 79704193
     - path: ./pipeline/s1.3_label_all_pairs.py
       md5: f9c6c3f0b293809c3caf137e0fe17c0e
       size: 3299
@@ -130,13 +131,13 @@ stages:
             scaled_local_symmetric_percent_id:
               thresh: 0.88
               greater: true
-            local_E_value:
-              thresh: 1e-50
-              greater: false
+            local_average_coverage:
+              thresh: 0.75
+              greater: true
     outs:
     - path: ./data/metrics/s1.3_metrics.yaml
-      md5: 13ed9fb21f1a14ac92131de35d7a2b06
-      size: 31
+      md5: a33fd8a199b59bd6bf0f19bd1ea6a083
+      size: 30
     - path: ./data/taxa_pairs/pair_labels.csv
-      md5: f13bf791a3da8511ee6debc36f27cab2
-      size: 35285702
+      md5: 669c48d2c3722f2177c26cc448c575dd
+      size: 9633344

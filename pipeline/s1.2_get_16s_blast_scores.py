@@ -72,7 +72,6 @@ if __name__ == '__main__':
     # get the tax indexes of themophiles and mesophiles
     thermo_indexes = list(labels[labels == True].index)
     meso_indexes = list(labels[labels == False].index)
-    dbsize = len(meso_indexes) # used for computing e values later
     logger.info(f"Found taxa indexes for {len(thermo_indexes)} thermophiles and {len(meso_indexes)} mesophiles")
 
     # run blast
@@ -90,17 +89,16 @@ if __name__ == '__main__':
         logger.info(f"Downsample to each of {params['n_sample']} thermo and meso")
 
     # this context manager creates temporary files for BLAST inputs and outputs, again to avoid OOM
-    with learn2therm.blast.BlastFiles(thermophile_iterator, mesophile_iterator) as (query_fname, subject_fname, out_fname):
+    with learn2therm.blast.BlastFiles(thermophile_iterator, mesophile_iterator, dbtype='nucl') as (query_fname, subject_fname, out_fname):
         logger.info('Running blast...')
         NcbiblastnCommandline(
             query=query_fname,
-            subject=subject_fname,
+            db=subject_fname,
             outfmt=5,
             out=out_fname,
             max_target_seqs=10000000, # very large so we do not throw out any pairs. will have to increase if there is more than this num of mesos
             perc_identity=0.0, # no cutoff to lose data
             evalue=10000000, # very large so we do not lose any hits
-            dbsize=dbsize,
             # the rest are tunable params
             word_size=params['word_size'],
             gapopen=params['gapopen_penalty'],
@@ -108,7 +106,7 @@ if __name__ == '__main__':
             reward=params['reward'],
             penalty=params['penalty'],
             ungapped=params['ungapped'],
-            # num_threads=params['n_jobs']
+            num_threads=params['n_jobs']
         )()
         logger.info('Blast complete. Parsing and saving metrics.')
 
