@@ -62,7 +62,7 @@ class BlastFiles:
         file.close()
 
         # create db for it
-        NcbimakeblastdbCommandline(dbtype=dbtype, input_file=subject_fasta_file)()
+        NcbimakeblastdbCommandline(dbtype=dbtype, input_file=subject_fasta_file, parse_seqids=True)()
         # create the output xml file
         out_temp = tempfile.NamedTemporaryFile('w', delete=False)
         self.ot = out_temp.name
@@ -127,7 +127,7 @@ class BlastMetrics:
 
         outputs = []
         for alignment in self.record.alignments:
-            outputs.append((self.qid, alignment.hit_id, metric(alignment)))
+            outputs.append((self.qid, alignment.hit_id.split('|')[-1], metric(alignment)))
         return pd.DataFrame(data=outputs, columns=['query_id', 'subject_id', metric_name])
 
     @staticmethod

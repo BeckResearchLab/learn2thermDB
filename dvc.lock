@@ -113,8 +113,8 @@ stages:
         get_16s_blast_scores.word_size: 28
     outs:
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: 69fe352f465190410d855d3f6720fb2f
-      size: 79704193
+      md5: 73cede91e4af03eaf983e2123edc5fb9
+      size: 69195331
   label_all_pairs:
     cmd: python pipeline/s1.3_label_all_pairs.py
     deps:
