@@ -9,6 +9,9 @@ import pandas as pd
 
 from typing import Collection
 
+import logging
+logger = logging.getLogger(__name__)
+
 def seq_io_gnuzipped(filepath: str, filetype: str):
     """Open gnuzipped sequence files.
     
@@ -53,12 +56,13 @@ def csv_id_seq_iterator(csv_filepath: str, seq_col: str, id_filter: Collection =
         Number of sequences that will be stored in memory at once.
     **kwargs passed to pandas read csv 
     """
-    for df_chunk in pd.read_csv(csv_filepath, chunksize=chunksize, **kwargs):
+    for i, df_chunk in enumerate(pd.read_csv(csv_filepath, chunksize=chunksize, **kwargs)):
         chunk = df_chunk[seq_col]
-
+        logger.debug(f'Iterating chunk {i} seq in {csv_filepath}')
         # filter down indexes
         if id_filter is not None:
             mask = chunk.index.isin(id_filter)
             chunk = chunk[chunk.index[mask]]
+            logger.debug(f"{len(chunk)} viable sequences in chunk")
         for id_, seq in chunk.items():
             yield id_, seq
