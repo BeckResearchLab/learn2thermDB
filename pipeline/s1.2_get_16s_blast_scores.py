@@ -134,5 +134,10 @@ if __name__ == '__main__':
             ax.set_xlabel(m)
             scores.plot.hist(bins=50, ax=ax)
             plt.savefig(f'./data/plots/blast/blast_hist_{m}.png', bbox_inches='tight', dpi=250)
+        
+        # save metrics
+        metrics = {'percent_full_pairwise_16s_blast': float(len(pd.read_csv(OUTFILENAME, usecols=[0]))/(len(thermo_indexes)*len(meso_indexes)))}
+        with open('./data/metrics/s1.2_metrics.yaml', "w") as stream:
+            yaml_dump(metrics, stream)
     
     

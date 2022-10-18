@@ -61,8 +61,10 @@ if __name__ == '__main__':
     for mname, vals in params['blast_metric_thresholds'].items():
         column_index = pairwise_score_cols.get_loc(mname)
         if type(column_index) != int:
-            raise ValueError(f'Something went wrong! The position of column {mname} in thye blast metrics file is not an integer')
+            raise ValueError(f'Something went wrong! The position of column {mname} in the blast metrics file is not an integer')
         metric_vals = pd.read_csv('./data/taxa_pairs/pairwise_16s_blast.csv', usecols=[column_index])[mname]
+        if metric_vals.isna().any():
+            raise ValueError(f'Some metrics came back Nan, this should not be')
         if vals['greater'] == True:
             mask = metric_vals > vals['thresh']
         else:
@@ -76,6 +78,9 @@ if __name__ == '__main__':
     mask.to_csv('./data/taxa_pairs/pair_labels.csv')
     
     # save metrics
-    metrics = {'num_pairs_conservative': int(mask.sum())}
+    metrics = {
+        'num_pairs_conservative': int(mask.sum()),
+        'true_pair_ratio': float(mask.sum()/len(mask))
+    }
     with open('./data/metrics/s1.3_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)

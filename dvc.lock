@@ -93,8 +93,8 @@ stages:
       md5: 22b516c22355a1697527f0099c5b8075
       size: 161752
     - path: ./pipeline/s1.2_get_16s_blast_scores.py
-      md5: 58d68866a09c2fc10f1e60aaffd3e0f0
-      size: 5427
+      md5: 1fb89dc4b48cfc72ab52ff90a496494f
+      size: 5713
     params:
       pipeline/s1_data_processing_params.yaml:
         get_16s_blast_scores.blast_metrics:
@@ -105,7 +105,7 @@ stages:
         - local_average_coverage
         get_16s_blast_scores.gapextend_penalty: 1
         get_16s_blast_scores.gapopen_penalty: 2
-        get_16s_blast_scores.n_jobs: 2
+        get_16s_blast_scores.n_jobs: 4
         get_16s_blast_scores.n_sample:
         get_16s_blast_scores.penalty: -2
         get_16s_blast_scores.reward: 1
@@ -113,17 +113,17 @@ stages:
         get_16s_blast_scores.word_size: 28
     outs:
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: 73cede91e4af03eaf983e2123edc5fb9
-      size: 69195331
+      md5: 3dc5252b0dd21a2781d190826b5b4311
+      size: 69641588
   label_all_pairs:
     cmd: python pipeline/s1.3_label_all_pairs.py
     deps:
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: 69fe352f465190410d855d3f6720fb2f
-      size: 79704193
+      md5: 3dc5252b0dd21a2781d190826b5b4311
+      size: 69641588
     - path: ./pipeline/s1.3_label_all_pairs.py
-      md5: f9c6c3f0b293809c3caf137e0fe17c0e
-      size: 3299
+      md5: 5dd3c52d39771580c402bd0531929235
+      size: 3485
     params:
       pipeline/s1_data_processing_params.yaml:
         label_all_pairs:
@@ -136,8 +136,8 @@ stages:
               greater: true
     outs:
     - path: ./data/metrics/s1.3_metrics.yaml
-      md5: a33fd8a199b59bd6bf0f19bd1ea6a083
-      size: 30
+      md5: 17ebe184c757a0eaebe16f820785d8e5
+      size: 67
     - path: ./data/taxa_pairs/pair_labels.csv
       md5: 669c48d2c3722f2177c26cc448c575dd
       size: 9633344
