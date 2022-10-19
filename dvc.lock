@@ -112,6 +112,9 @@ stages:
         get_16s_blast_scores.ungapped: false
         get_16s_blast_scores.word_size: 28
     outs:
+    - path: ./data/metrics/s1.2_metrics.yaml
+      md5: d8037d675c3ac5efbe7fd85ca5316cfd
+      size: 51
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
       md5: 3dc5252b0dd21a2781d190826b5b4311
       size: 69641588

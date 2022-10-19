@@ -30,14 +30,14 @@ label_all_pairs:
       thresh: 0.75
       greater: true
 get_protein_blast_scores:
-  n_jobs: 2                        # number of cpus to run in parallel
-  word_size: 28                    # size of words for initial exact matching of nucleotides
-  gapopen_penalty: 5               # cost to open a gap
-  gapextend_penalty: 2             # cost to extend gap
+  n_jobs: 4                        # number of cpus to run in parallel
+  word_size: 3                    # size of words for initial exact matching of nucleotides
+  gapopen_penalty: 11               # cost to open a gap
+  gapextend_penalty: 1             # cost to extend gap
   matrix: 'BLOSUM62'
-  word_score_thresh: null          # minumum score for word to be added to blast lookup table
+  word_score_thresh: 11          # minumum score for word to be added to blast lookup table
   ungapped: false                  # whether to do ungapped alignment
-  n_sample: 2                     # number of thermophiles and mesophiles to sample for testing
+  n_sample: 1                     # number of thermophiles and mesophiles to sample for testing
   blast_metrics:
     - local_E_value
     - scaled_local_query_percent_id

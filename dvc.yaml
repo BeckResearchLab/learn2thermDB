@@ -71,6 +71,9 @@ stages:
       - get_16s_blast_scores.ungapped
       - get_16s_blast_scores.n_sample
       - get_16s_blast_scores.blast_metrics
+    metrics:
+    - ./data/metrics/s1.2_metrics.yaml:
+        cache: false
   label_all_pairs:
     cmd: python pipeline/s1.3_label_all_pairs.py
     deps:
