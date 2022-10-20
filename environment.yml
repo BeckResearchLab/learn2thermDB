@@ -1,6 +1,7 @@
 name: learn2therm
 channels:
   - conda-forge
+  - bioconda
   - defaults
 dependencies:
   - aiohttp=3.8.3
@@ -84,8 +85,6 @@ dependencies:
   - libedit=3.1.20191231
   - libffi=3.4.2
   - libgd=2.3.3
-  - libgfortran=5.0.0
-  - libgfortran5=11.3.0
   - libgit2=1.5.0
   - libglib=2.72.1
   - libiconv=1.17
@@ -228,7 +227,7 @@ dependencies:
     - dvc-objects==0.4.0
     - dvc-render==0.0.11
     - dvc-task==0.1.2
-    - dvclive==0.0.0
+    - dvclive
     - ecdsa==0.18.0
     - entrypoints==0.4
     - executing==1.1.0
