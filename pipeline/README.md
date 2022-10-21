@@ -7,7 +7,7 @@ Script labeling is of the format `s<Sub Pipeline Number>.<Script Number>_<Script
 | Script | Function |
 | ------ | -------- |
 | s0.0_get_ncbi_refseq.sh | Pull most recent NCBI refseq sequences for archaea and bacteria |
-| s0.0_get_bacdive_ogt.py | Cross reference TAXID from NCBI to bacdive records, and attempt to extract information on OGT |
+| s0.1_get_bacdive_ogt.py | Cross reference TAXID from NCBI to bacdive records, and attempt to extract information on OGT |
 
 Parameters are grouped in terms of sub-pipelines:
 | Sub-pipeline | Params |

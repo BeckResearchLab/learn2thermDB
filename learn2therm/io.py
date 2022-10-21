@@ -56,13 +56,29 @@ def csv_id_seq_iterator(csv_filepath: str, seq_col: str, id_filter: Collection =
         Number of sequences that will be stored in memory at once.
     **kwargs passed to pandas read csv 
     """
-    for i, df_chunk in enumerate(pd.read_csv(csv_filepath, chunksize=chunksize, **kwargs)):
+    # first get the row numbers to consider
+    if id_filter is not None:
+        if 'index_col' in kwargs:
+            row_indexes = pd.read_csv(csv_filepath, usecols=[kwargs['index_col']])
+            row_indexes = row_indexes[row_indexes.columns[0]]
+        else:
+            row_indexes = pd.read_csv(csv_filepath, usecols=[0]).index
+            row_indexes = pd.Series(index=row_indexes, data=row_indexes)
+        row_indexes_to_keep_mask = row_indexes.isin(id_filter)
+        skiprows = lambda row_num: False if row_num==0 else not row_indexes_to_keep_mask.loc[row_num-1]
+        logger.debug(f"{row_indexes_to_keep_mask.sum()} viable sequences in in file to iterate")
+        seq_index_iterator = iter(list(row_indexes[row_indexes_to_keep_mask].values))
+    else:
+        skiprows=None
+
+    for i, df_chunk in enumerate(pd.read_csv(csv_filepath, chunksize=chunksize, skiprows=skiprows, **kwargs)):
         chunk = df_chunk[seq_col]
         logger.debug(f'Iterating chunk {i} seq in {csv_filepath}')
-        # filter down indexes
-        if id_filter is not None:
-            mask = chunk.index.isin(id_filter)
-            chunk = chunk[chunk.index[mask]]
-            logger.debug(f"{len(chunk)} viable sequences in chunk")
         for id_, seq in chunk.items():
-            yield id_, seq
+            # in the case that there were no id filters, the id in the chunk corresponds to the correct sequence id
+            # but if there was a filter, many rows were skipped and the indexes got jumbled, so we have to recapitulate
+            # the correct seq index
+            if id_filter is not None:
+                yield next(seq_index_iterator), seq
+            else:
+                yield id_, seq
