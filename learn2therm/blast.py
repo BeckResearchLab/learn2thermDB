@@ -43,26 +43,33 @@ class BlastFiles:
         logger.info("Creating temporary files to deposit blast inputs and outputs.")
         query_temp = tempfile.NamedTemporaryFile('w', delete=False)
         self.qt = query_temp.name
+        n = 0
         for id_, seq in query_iterator:
             if seq == 'None' or seq is None:
                 continue
             query_temp.write(f">{id_}\n{seq}\n")
+            n +=1
         query_temp.close()
+        logger.debug(f"added {n} sequences to query file")
 
         # folder for subject DB after we make a fasta
         subject_folder = tempfile.mkdtemp()
         self.st = subject_folder
         subject_fasta_file = subject_folder+'/subs.fasta'
         self.subject_fasta_file = subject_fasta_file
+        n = 0
         file = open(subject_fasta_file, 'w')
         for id_, seq in subject_iterator:
             if seq == 'None' or seq is None:
                 continue
             file.write(f">{id_}\n{seq}\n")
+            n +=1
         file.close()
+        logger.debug(f"added {n} sequences to db file")
 
         # create db for it
         NcbimakeblastdbCommandline(dbtype=dbtype, input_file=subject_fasta_file, parse_seqids=True)()
+        logger.debug(f"created database")
         # create the output xml file
         out_temp = tempfile.NamedTemporaryFile('w', delete=False)
         self.ot = out_temp.name
