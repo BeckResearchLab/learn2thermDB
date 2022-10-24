@@ -27,7 +27,7 @@ if 'LOGLEVEL' in os.environ:
     LOGLEVEL = getattr(logging, LOGLEVEL)
 else:
     LOGLEVEL = logging.INFO
-LOGNAME = __file__
+LOGNAME = ''
 LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 
 OUTFILENAME = './data/taxa_pairs/pairwise_protein_blast.csv'
