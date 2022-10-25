@@ -3,6 +3,7 @@ import logging
 import os
 import time
 import fcntl
+import shutil
 
 from joblib import delayed, Parallel
 import pandas as pd
@@ -22,7 +23,7 @@ LOGNAME = __file__
 LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 
 # where we will deposit_data
-OUTPUT_FILE_PROTEINS = './data/taxa/proteins.csv'
+OUTPUT_DIR_PROTEINS = './data/taxa/proteins/'
 OUTPUT_FILE_16srRNA = './data/taxa/16s_rRNA.csv'
 
 def extract_proteins_from_one(taxa_index: int, filepath: str):
@@ -64,14 +65,20 @@ def extract_proteins_from_one(taxa_index: int, filepath: str):
                     protein_sequences['desc'].append(None)
     if seq_16srRNA is None:
         logger.info(f"Could not find 16s rRNA in {filepath}")
-    logger.info(f"Found {len(protein_sequences['sequence'])} proteins")
+    logger.info(f"Found {len(protein_sequences['sequence'])} proteins for taxa {taxa_index}")
     protein_sequences['seq_len'] = [len(s) for s in protein_sequences['sequence']]
     
     # save to file
-    with open(OUTPUT_FILE_PROTEINS, "a") as g:
+    # first we will have to create protein file for this taxa
+    with open(OUTPUT_DIR_PROTEINS+f'taxa_index_{taxa_index}.csv', "w") as g:
+        g.write("seq_id;protein_seq;protein_desc;protein_len\n")
+    logger.debug(f"Created new proteins file for taxa {taxa_index}")
+
+    # save proteins to the protein file for this taxa and 16s to the global file fir 16s
+    with open(OUTPUT_DIR_PROTEINS+f'taxa_index_{taxa_index}.csv', "a") as g:
         fcntl.flock(g, fcntl.LOCK_EX)
         for i in range(len(protein_sequences['seq_len'])):
-            g.write(f"{taxa_index};{protein_sequences['sequence'][i]};{protein_sequences['desc'][i].replace(';', ',')};{protein_sequences['seq_len'][i]}\n")
+            g.write(f"{taxa_index}_{i};{protein_sequences['sequence'][i]};{protein_sequences['desc'][i].replace(';', ',')};{protein_sequences['seq_len'][i]}\n")
         fcntl.flock(g, fcntl.LOCK_UN)
     with open(OUTPUT_FILE_16srRNA, "a") as g:
         fcntl.flock(g, fcntl.LOCK_EX)
@@ -80,6 +87,7 @@ def extract_proteins_from_one(taxa_index: int, filepath: str):
     
     num_proteins = len(protein_sequences['sequence'])
     has_16srRNA = seq_16srRNA is not None
+    logger.debug(f"Completed protein deposit for taxa {taxa_index}")
     return num_proteins, has_16srRNA
 
 if __name__ == '__main__':
@@ -99,10 +107,11 @@ if __name__ == '__main__':
         logger.info(f"Using only the first {params['n_sample']} files.")
 
     # start the files, we have to write intermittedly because of memory issues
-    with open(OUTPUT_FILE_PROTEINS, "w") as g:
-        g.write("taxa_index;protein_seq;protein_desc;protein_len\n")
     with open(OUTPUT_FILE_16srRNA, "w") as g:
         g.write("taxa_index,seq_16srRNA\n")
+    # start a dir for proteins
+    shutil.rmtree(OUTPUT_DIR_PROTEINS, ignore_errors=True)
+    os.makedirs(OUTPUT_DIR_PROTEINS)
 
     # get the info in parallel
     outputs = Parallel(n_jobs=params['n_jobs'])(delayed(extract_proteins_from_one)(taxa_index, file) for taxa_index, file in taxa.items())

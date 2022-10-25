@@ -31,7 +31,7 @@ LOGNAME = ''
 LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 
 OUTFILENAME = './data/taxa_pairs/pairwise_protein_blast.csv'
-PROTEIN_SEQ_FILE = './data/taxa/proteins.csv'
+PROTEIN_SEQ_DIR = './data/taxa/proteins/'
 
 def apply_blast_metric_and_append_pairwise(
     blast_record,
@@ -66,7 +66,6 @@ def apply_blast_metric_and_append_pairwise(
 def run_blast_and_apply_blast_metric_and_append_pairwise_one_taxa_pair(
     thermo_taxa_index: int,
     meso_taxa_index: int,
-    protein_index_map: pd.Series,
     metrics: List[str]
 ):
     """Filter proteins to only the proteins of a particular thermo-meso pair, and run blast on them.
@@ -77,24 +76,22 @@ def run_blast_and_apply_blast_metric_and_append_pairwise_one_taxa_pair(
     ----------
     *index : int
         index of taxa in the taxa list file
-    protein_index_map : pd.Series
-        index is protein index, values are associated taxa index
     metrics : list of str
         names of blast metrics to apply to blast hits
     """
-    # start logger and carbon tracker
+    # start logger
     logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='a')
 
-    # get list of protein indexes we want to blast on
-    meso_protein_indexes = protein_index_map[protein_index_map == meso_taxa_index].index
-    thermo_protein_indexes = protein_index_map[protein_index_map == thermo_taxa_index].index
-    logger.info(f"BLASTing {len(thermo_protein_indexes)} thermo proteins against {len(meso_protein_indexes)} meso sequences for pair {(thermo_taxa_index,meso_taxa_index)}")
+    # check the total number of pairwise seq we are doing
+    num_meso = sum(1 for _ in open(PROTEIN_SEQ_DIR+f"taxa_index_{meso_taxa_index}.csv", 'r')) - 1
+    num_thermo = sum(1 for _ in open(PROTEIN_SEQ_DIR+f"taxa_index_{thermo_taxa_index}.csv", 'r')) - 1
+    logger.info(f"Blasting pair {(thermo_taxa_index,meso_taxa_index)} with {(num_thermo, num_meso)} sequences")
 
     # create iterators of protein sequences to give to blast input files
     # this file does not have an index column, we have been assuming that the position is the index, so do not
     # pass index col to kwargs
-    meso_iter = learn2therm.io.csv_id_seq_iterator(PROTEIN_SEQ_FILE, seq_col="protein_seq", id_filter=meso_protein_indexes, sep=';')
-    thermo_iter = learn2therm.io.csv_id_seq_iterator(PROTEIN_SEQ_FILE, seq_col="protein_seq", id_filter=thermo_protein_indexes, sep=';')
+    meso_iter = learn2therm.io.csv_id_seq_iterator(PROTEIN_SEQ_DIR+f"taxa_index_{meso_taxa_index}.csv", seq_col="protein_seq", sep=';')
+    thermo_iter = learn2therm.io.csv_id_seq_iterator(PROTEIN_SEQ_DIR+f"taxa_index_{thermo_taxa_index}.csv", seq_col="protein_seq", sep=';')
 
     time0 = time.time()
     with learn2therm.blast.BlastFiles(thermo_iter, meso_iter, dbtype='prot') as (query_fname, subject_fname, out_fname):
@@ -131,7 +128,7 @@ def run_blast_and_apply_blast_metric_and_append_pairwise_one_taxa_pair(
     
     # record carbon emissions and output
     logger.info(f"Roundtrip execution for pair {(thermo_taxa_index,meso_taxa_index)} took {(time2-time0)/60}")
-    return {'ids': (thermo_taxa_index,meso_taxa_index), 'pairwise_space': len(meso_protein_indexes)*len(thermo_protein_indexes), 'computed space': hits, 'time':(time2-time0)/60}
+    return {'ids': (thermo_taxa_index,meso_taxa_index), 'pairwise_space': int(num_meso*num_thermo), 'computed space': hits, 'time':(time2-time0)/60}
 
 if __name__ == '__main__':
     # connect to log file and carbon tracker file
@@ -161,11 +158,6 @@ if __name__ == '__main__':
     if params['n_sample']:
         logger.info(f"Running for only {params['n_sample']} pairs")
         pairs = pairs[:params['n_sample']]
-    
-    # load the protein to taxa mapping
-    logger.debug("Loading protein to taxa index map")
-    protein_index_map = pd.read_csv(PROTEIN_SEQ_FILE, usecols=[0], sep=';')['taxa_index']
-    logger.debug(f"Found {len(protein_index_map)} for {len(protein_index_map.unique())} taxa")
 
     # create the headers in the output file
     logger.info("Creating output file and beginning to BLASTP...")
@@ -179,7 +171,7 @@ if __name__ == '__main__':
     # we need to run blast on proteins in each pair
     # this can be done in parallel
     outs = Parallel(n_jobs=params['n_jobs'])(delayed(
-        lambda pair: run_blast_and_apply_blast_metric_and_append_pairwise_one_taxa_pair(*pair, protein_index_map=protein_index_map, metrics=params['blast_metrics'])
+        lambda pair: run_blast_and_apply_blast_metric_and_append_pairwise_one_taxa_pair(*pair, metrics=params['blast_metrics'])
         )(pair) for pair in pairs)
     logger.debug(outs)
     emissions = c_tracker.stop()
@@ -188,7 +180,7 @@ if __name__ == '__main__':
     outs = pd.DataFrame(outs)
     emissions_per_pair = float(emissions/len(outs))
     time_per_pair = float(outs['time'].mean())
-    percent_full_pairwise = float(outs['computed space']/outs['pairwise_space'].sum())
+    percent_full_pairwise = float(outs['computed space'].sum()/outs['pairwise_space'].sum())
 
     # save metrics
     metrics = {
