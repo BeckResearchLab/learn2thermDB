@@ -44,8 +44,8 @@ stages:
       md5: a5bb1873b2aeac4026516a91dd94c3e1
       size: 3826414
     - path: pipeline/s1.1_get_protein_sequences.py
-      md5: 599f96a15b51f8c781131579f68976b6
-      size: 4870
+      md5: f4efa5463eba6cbe477af256e8de00dd
+      size: 4888
     params:
       pipeline/s1_data_processing_params.yaml:
         get_protein_sequences.n_jobs: 2
@@ -55,10 +55,10 @@ stages:
       md5: 8c34f4fefe92eac1fc9656ba83be235a
       size: 55
     - path: ./data/taxa/16s_rRNA.csv
-      md5: fd367e500fc781453b73a4617ce4075a
+      md5: 60d4e15a596f3b8175f744994b6bf60e
       size: 21316764
     - path: ./data/taxa/proteins.csv
-      md5: 5fd92574b305f4d652d35cd7bca38ac6
+      md5: cc0494917cc1f7e7c8c40604363c6884
       size: 23950681337
   label_taxa:
     cmd: python pipeline/s1.0_label_taxa.py
@@ -72,14 +72,75 @@ stages:
     params:
       pipeline/s1_data_processing_params.yaml:
         label_taxa.ogt_determination_method: true ogt only
-        label_taxa.ogt_threshold: 33.0
+        label_taxa.ogt_threshold: 40.0
     outs:
     - path: ./data/metrics/s1.0_metrics.yaml
-      md5: e3dc1b14e664e4fb162fb0338ca487ee
-      size: 27
+      md5: b81c7de57507e95b010902f79b970d99
+      size: 26
     - path: ./data/plots/ogt_hist.png
-      md5: 3829aacef7dbbcbda087976df5567ec7
-      size: 35539
+      md5: 871e6c2307c407eda0191b082617a367
+      size: 35538
     - path: ./data/taxa/labels.csv
-      md5: 69ee2d0057dc0c1c1fcfabcc98b3327c
-      size: 160870
+      md5: 22b516c22355a1697527f0099c5b8075
+      size: 161752
+  get_16s_blast_scores:
+    cmd: python pipeline/s1.2_get_16s_blast_scores.py
+    deps:
+    - path: ./data/taxa/16s_rRNA.csv
+      md5: 60d4e15a596f3b8175f744994b6bf60e
+      size: 21316764
+    - path: ./data/taxa/labels.csv
+      md5: 22b516c22355a1697527f0099c5b8075
+      size: 161752
+    - path: ./pipeline/s1.2_get_16s_blast_scores.py
+      md5: 1fb89dc4b48cfc72ab52ff90a496494f
+      size: 5713
+    params:
+      pipeline/s1_data_processing_params.yaml:
+        get_16s_blast_scores.blast_metrics:
+        - local_E_value
+        - scaled_local_query_percent_id
+        - scaled_local_symmetric_percent_id
+        - local_gap_compressed_percent_id
+        - local_average_coverage
+        get_16s_blast_scores.gapextend_penalty: 1
+        get_16s_blast_scores.gapopen_penalty: 2
+        get_16s_blast_scores.n_jobs: 4
+        get_16s_blast_scores.n_sample:
+        get_16s_blast_scores.penalty: -2
+        get_16s_blast_scores.reward: 1
+        get_16s_blast_scores.ungapped: false
+        get_16s_blast_scores.word_size: 28
+    outs:
+    - path: ./data/metrics/s1.2_metrics.yaml
+      md5: d8037d675c3ac5efbe7fd85ca5316cfd
+      size: 51
+    - path: ./data/taxa_pairs/pairwise_16s_blast.csv
+      md5: 3dc5252b0dd21a2781d190826b5b4311
+      size: 69641588
+  label_all_pairs:
+    cmd: python pipeline/s1.3_label_all_pairs.py
+    deps:
+    - path: ./data/taxa_pairs/pairwise_16s_blast.csv
+      md5: 3dc5252b0dd21a2781d190826b5b4311
+      size: 69641588
+    - path: ./pipeline/s1.3_label_all_pairs.py
+      md5: 5dd3c52d39771580c402bd0531929235
+      size: 3485
+    params:
+      pipeline/s1_data_processing_params.yaml:
+        label_all_pairs:
+          blast_metric_thresholds:
+            scaled_local_symmetric_percent_id:
+              thresh: 0.88
+              greater: true
+            local_average_coverage:
+              thresh: 0.75
+              greater: true
+    outs:
+    - path: ./data/metrics/s1.3_metrics.yaml
+      md5: 17ebe184c757a0eaebe16f820785d8e5
+      size: 67
+    - path: ./data/taxa_pairs/pair_labels.csv
+      md5: 669c48d2c3722f2177c26cc448c575dd
+      size: 9633344

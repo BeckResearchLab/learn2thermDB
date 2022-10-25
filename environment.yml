@@ -1,6 +1,7 @@
 name: learn2therm
 channels:
   - conda-forge
+  - bioconda
   - defaults
 dependencies:
   - aiohttp=3.8.3
@@ -84,8 +85,6 @@ dependencies:
   - libedit=3.1.20191231
   - libffi=3.4.2
   - libgd=2.3.3
-  - libgfortran=5.0.0
-  - libgfortran5=11.3.0
   - libgit2=1.5.0
   - libglib=2.72.1
   - libiconv=1.17
@@ -194,6 +193,7 @@ dependencies:
     - appdirs==1.4.4
     - appnope==0.1.3
     - argon2-cffi==21.3.0
+    - arrow==1.2.3
     - asttokens==2.0.8
     - async-timeout==4.0.2
     - asyncssh==2.12.0
@@ -211,6 +211,7 @@ dependencies:
     - click-didyoumean==0.3.0
     - click-plugins==1.1.1
     - click-repl==0.2.0
+    - codecarbon==2.1.4
     - colorama==0.4.5
     - commonmark==0.9.1
     - configobj==5.0.6
@@ -226,7 +227,7 @@ dependencies:
     - dvc-objects==0.4.0
     - dvc-render==0.0.11
     - dvc-task==0.1.2
-    - dvclive==0.0.0
+    - dvclive
     - ecdsa==0.18.0
     - entrypoints==0.4
     - executing==1.1.0
@@ -282,10 +283,12 @@ dependencies:
     - prompt-toolkit==3.0.31
     - ptyprocess==0.7.0
     - pure-eval==0.2.2
+    - py-cpuinfo==8.0.0
     - pyasn1==0.4.8
     - pycparser==2.21
     - pygments==2.13.0
     - pygtrie==2.5.0
+    - pynvml==11.4.1
     - pyopenssl==22.0.0
     - pyparsing==2.4.7
     - pyqt5-sip==12.11.0

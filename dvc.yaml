@@ -52,3 +52,60 @@ stages:
     metrics:
     - ./data/metrics/s1.1_metrics.yaml:
         cache: false
+  get_16s_blast_scores:
+    cmd: python pipeline/s1.2_get_16s_blast_scores.py
+    deps:
+    - ./pipeline/s1.2_get_16s_blast_scores.py
+    - ./data/taxa/labels.csv
+    - ./data/taxa/16s_rRNA.csv
+    outs:
+    - ./data/taxa_pairs/pairwise_16s_blast.csv
+    params:
+    - ./pipeline/s1_data_processing_params.yaml:
+      - get_16s_blast_scores.n_jobs
+      - get_16s_blast_scores.word_size
+      - get_16s_blast_scores.gapopen_penalty
+      - get_16s_blast_scores.gapextend_penalty
+      - get_16s_blast_scores.reward
+      - get_16s_blast_scores.penalty
+      - get_16s_blast_scores.ungapped
+      - get_16s_blast_scores.n_sample
+      - get_16s_blast_scores.blast_metrics
+    metrics:
+    - ./data/metrics/s1.2_metrics.yaml:
+        cache: false
+  label_all_pairs:
+    cmd: python pipeline/s1.3_label_all_pairs.py
+    deps:
+    - ./pipeline/s1.3_label_all_pairs.py
+    - ./data/taxa_pairs/pairwise_16s_blast.csv
+    outs:
+    - ./data/taxa_pairs/pair_labels.csv
+    params:
+    - ./pipeline/s1_data_processing_params.yaml:
+      - label_all_pairs
+    metrics:
+    - ./data/metrics/s1.3_metrics.yaml:
+        cache: false
+  get_protein_blast_scores:
+    cmd: python pipeline/s1.4_get_protein_blast_scores.py
+    deps:
+    - ./pipeline/s1.4_get_protein_blast_scores.py
+    - ./data/taxa_pairs/pair_labels.csv
+    - ./data/taxa/proteins.csv
+    outs:
+    - ./data/taxa_pairs/pairwise_16s_blast.csv
+    params:
+    - ./pipeline/s1_data_processing_params.yaml:
+      - get_protein_blast_scores.n_jobs
+      - get_protein_blast_scores.word_size
+      - get_protein_blast_scores.gapopen_penalty
+      - get_protein_blast_scores.gapextend_penalty
+      - get_protein_blast_scores.matrix
+      - get_protein_blast_scores.ungapped
+      - get_protein_blast_scores.n_sample
+      - get_protein_blast_scores.blast_metrics
+      - get_protein_blast_scores.word_score_thresh
+    metrics:
+    - ./data/metrics/s1.4_metrics.yaml:
+        cache: false

@@ -19,6 +19,6 @@ def start_logger_if_necessary(logger_name: str, log_file: str, log_level, filemo
     if len(logger.handlers) == 0:
         logger.setLevel(log_level)
         fh = logging.FileHandler(log_file, mode=filemode)
-        fh.setFormatter(logging.Formatter("%(asctime)s %(levelname)-8s %(message)s"))
+        fh.setFormatter(logging.Formatter("%(filename)s - %(asctime)s %(levelname)-8s %(message)s"))
         logger.addHandler(fh)
     return logger
