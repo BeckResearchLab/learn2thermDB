@@ -156,8 +156,8 @@ stages:
       md5: 1e3553083ea85e30feb35ae6f7a9c76d
       size: 9633344
     - path: ./pipeline/s1.4_get_protein_blast_scores.py
-      md5: 019fe25f742dce19ad6a135b2c870dea
-      size: 8501
+      md5: 63c9cd1cdea0a9495cef1974832eda17
+      size: 8527
     params:
       pipeline/s1_data_processing_params.yaml:
         get_protein_blast_scores.blast_metrics:
@@ -175,8 +175,8 @@ stages:
         get_protein_blast_scores.word_size: 3
     outs:
     - path: ./data/metrics/s1.4_metrics.yaml
-      md5: 22a20c1690edb4931fcba4030a013334
+      md5: 7222e5f4bf04d0ac3bf9fbdaca16d935
       size: 134
     - path: ./data/taxa_pairs/pairwise_protein_blast.csv
-      md5: 9ac2a79fd744e0f6145f874099532322
-      size: 376567843
+      md5: d370047d5a31bb2909008da344ffa821
+      size: 422576311

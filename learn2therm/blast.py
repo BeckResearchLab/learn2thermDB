@@ -38,11 +38,13 @@ class BlastFiles:
     subject_filename : str, name of fasta file with subject sequences
     output_filename : str, name of output file for blast to save reuslts, will be deleted out of context
     """
-    def __init__(self, query_iterator, subject_iterator, dbtype: str = 'nucl'):
+    def __init__(self, query_iterator, subject_iterator, dbtype: str = 'nucl', dev_sample_num: int = None):
         # we have to create the temporary fasta files
         logger.info("Creating temporary files to deposit blast inputs and outputs.")
         query_temp = tempfile.NamedTemporaryFile('w', delete=False, dir='./tmp/')
         logger.debug(f"query file: {query_temp.name}")
+        if dev_sample_num is not None:
+            logger.debug(f"Using only max {dev_sample_num} sequences from query and subject")
         self.qt = query_temp.name
         n = 0
         for id_, seq in query_iterator:
@@ -50,6 +52,9 @@ class BlastFiles:
                 continue
             query_temp.write(f">{id_}\n{seq}\n")
             n +=1
+            if dev_sample_num is not None:
+                if n >= dev_sample_num:
+                    break
         query_temp.close()
         logger.debug(f"added {n} sequences to query file")
 
@@ -65,6 +70,9 @@ class BlastFiles:
                 continue
             file.write(f">{id_}\n{seq}\n")
             n +=1
+            if dev_sample_num is not None:
+                if n >= dev_sample_num:
+                    break
         file.close()
         logger.debug(f"added {n} sequences to db file")
 

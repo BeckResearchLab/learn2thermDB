@@ -90,8 +90,8 @@ def run_blast_and_apply_blast_metric_and_append_pairwise_one_taxa_pair(
     # create iterators of protein sequences to give to blast input files
     # this file does not have an index column, we have been assuming that the position is the index, so do not
     # pass index col to kwargs
-    meso_iter = learn2therm.io.csv_id_seq_iterator(PROTEIN_SEQ_DIR+f"taxa_index_{meso_taxa_index}.csv", seq_col="protein_seq", sep=';')
-    thermo_iter = learn2therm.io.csv_id_seq_iterator(PROTEIN_SEQ_DIR+f"taxa_index_{thermo_taxa_index}.csv", seq_col="protein_seq", sep=';')
+    meso_iter = learn2therm.io.csv_id_seq_iterator(PROTEIN_SEQ_DIR+f"taxa_index_{meso_taxa_index}.csv", seq_col="protein_seq", sep=';', index_col=0)
+    thermo_iter = learn2therm.io.csv_id_seq_iterator(PROTEIN_SEQ_DIR+f"taxa_index_{thermo_taxa_index}.csv", seq_col="protein_seq", sep=';', index_col=0)
 
     time0 = time.time()
     with learn2therm.blast.BlastFiles(thermo_iter, meso_iter, dbtype='prot') as (query_fname, subject_fname, out_fname):
