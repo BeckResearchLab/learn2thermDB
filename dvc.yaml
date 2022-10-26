@@ -52,6 +52,9 @@ stages:
     metrics:
     - ./data/metrics/s1.1_metrics.yaml:
         cache: false
+    plots:
+    - ./data/plots/protein_length_hist.png:
+        cache: false
   get_16s_blast_scores:
     cmd: python pipeline/s1.2_get_16s_blast_scores.py
     deps:

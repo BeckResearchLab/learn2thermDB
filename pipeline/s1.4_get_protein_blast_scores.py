@@ -66,6 +66,7 @@ def apply_blast_metric_and_append_pairwise(
 def run_blast_and_apply_blast_metric_and_append_pairwise_one_taxa_pair(
     thermo_taxa_index: int,
     meso_taxa_index: int,
+    max_seq_length: int,
     metrics: List[str]
 ):
     """Filter proteins to only the proteins of a particular thermo-meso pair, and run blast on them.
@@ -83,15 +84,17 @@ def run_blast_and_apply_blast_metric_and_append_pairwise_one_taxa_pair(
     logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='a')
 
     # check the total number of pairwise seq we are doing
-    num_meso = sum(1 for _ in open(PROTEIN_SEQ_DIR+f"taxa_index_{meso_taxa_index}.csv", 'r')) - 1
-    num_thermo = sum(1 for _ in open(PROTEIN_SEQ_DIR+f"taxa_index_{thermo_taxa_index}.csv", 'r')) - 1
+    num_meso = (pd.read_csv(PROTEIN_SEQ_DIR+f"taxa_index_{meso_taxa_index}.csv", sep=';', usecols=[3]) <= max_seq_length)['protein_len'].sum() 
+    num_thermo = (pd.read_csv(PROTEIN_SEQ_DIR+f"taxa_index_{thermo_taxa_index}.csv", sep=';', usecols=[3]) <= max_seq_length)['protein_len'].sum()
     logger.info(f"Blasting pair {(thermo_taxa_index,meso_taxa_index)} with {(num_thermo, num_meso)} sequences")
 
     # create iterators of protein sequences to give to blast input files
     # this file does not have an index column, we have been assuming that the position is the index, so do not
     # pass index col to kwargs
-    meso_iter = learn2therm.io.csv_id_seq_iterator(PROTEIN_SEQ_DIR+f"taxa_index_{meso_taxa_index}.csv", seq_col="protein_seq", sep=';', index_col=0)
-    thermo_iter = learn2therm.io.csv_id_seq_iterator(PROTEIN_SEQ_DIR+f"taxa_index_{thermo_taxa_index}.csv", seq_col="protein_seq", sep=';', index_col=0)
+    meso_iter = learn2therm.io.csv_id_seq_iterator(
+        PROTEIN_SEQ_DIR+f"taxa_index_{meso_taxa_index}.csv", max_seq_length=max_seq_length, seq_col="protein_seq", sep=';', index_col=0)
+    thermo_iter = learn2therm.io.csv_id_seq_iterator(
+        PROTEIN_SEQ_DIR+f"taxa_index_{thermo_taxa_index}.csv", max_seq_length=max_seq_length, seq_col="protein_seq", sep=';', index_col=0)
 
     time0 = time.time()
     with learn2therm.blast.BlastFiles(thermo_iter, meso_iter, dbtype='prot') as (query_fname, subject_fname, out_fname):
@@ -171,7 +174,7 @@ if __name__ == '__main__':
     # we need to run blast on proteins in each pair
     # this can be done in parallel
     outs = Parallel(n_jobs=params['n_jobs'])(delayed(
-        lambda pair: run_blast_and_apply_blast_metric_and_append_pairwise_one_taxa_pair(*pair, metrics=params['blast_metrics'])
+        lambda pair: run_blast_and_apply_blast_metric_and_append_pairwise_one_taxa_pair(*pair, metrics=params['blast_metrics'], max_seq_length=params['max_protein_length'])
         )(pair) for pair in pairs)
     logger.debug(outs)
     emissions = c_tracker.stop()

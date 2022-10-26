@@ -7,6 +7,7 @@ import shutil
 
 from joblib import delayed, Parallel
 import pandas as pd
+import numpy as np
 from yaml import dump as yaml_dump
 from yaml import safe_load as yaml_load
 
@@ -128,3 +129,15 @@ if __name__ == '__main__':
     metrics['n_taxa_with_16srRNA'] = int(sum(has_16srRNA))
     with open('./data/metrics/s1.1_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)
+
+    # save length plot
+    length_list = []
+    for i, f in enumerate(os.listdir(OUTPUT_DIR_PROTEINS)):
+        lengths = pd.read_csv(OUTPUT_DIR_PROTEINS+f, usecols=[3], sep=';').values
+        length_list.append(lengths)
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    sns.set_style('talk')
+    fig, ax = plt.subplots()
+    sns.histplot(np.vstack(length_list), ax=ax)
+    plt.savefig(f'./data/plots/protein_length_hist.png', bbox_inches='tight', dpi=250)
