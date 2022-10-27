@@ -1,5 +1,13 @@
-# Parameters for scripts in the current directory for data processing steps
-# ----------------------------------------------------------------------------
+# parameters for execution of the pipeline, handled by dvc
+# execution of pipeline steps is dependant on these and data dependancy of the steps
+#########################################################################
+
+# S0 data extraction params
+get_bacdive_ogt:
+  n_jobs: 6                    # number of cores for parallel execution
+  n_sample: null                 # number of "data" to sample down to for testing
+
+# S1 data preparation params
 get_protein_sequences:
   n_jobs: 2                    # number of cores for parallel execution
   n_sample: null                 # number of "data" to sample down to for testing

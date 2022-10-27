@@ -141,7 +141,7 @@ if __name__ == '__main__':
     time0= time.time()
 
     # DVC tracked parameters
-    with open("./pipeline/s1_data_processing_params.yaml", "r") as stream:
+    with open("./params.yaml", "r") as stream:
         params = yaml_load(stream)['get_protein_blast_scores']
     logger.info(f"Loaded parameters: {params}")
 

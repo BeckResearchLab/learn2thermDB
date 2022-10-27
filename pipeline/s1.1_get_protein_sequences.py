@@ -96,7 +96,7 @@ if __name__ == '__main__':
     logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
 
     # DVC tracked parameters
-    with open("./pipeline/s1_data_processing_params.yaml", "r") as stream:
+    with open("./params.yaml", "r") as stream:
         params = yaml_load(stream)['get_protein_sequences']
     logger.info(f"Loaded parameters: {params}")
 
@@ -137,7 +137,7 @@ if __name__ == '__main__':
         length_list.append(lengths)
     import seaborn as sns
     import matplotlib.pyplot as plt
-    sns.set_style('talk')
+    sns.set_context('talk')
     fig, ax = plt.subplots()
     sns.histplot(np.vstack(length_list), ax=ax)
     plt.savefig(f'./data/plots/protein_length_hist.png', bbox_inches='tight', dpi=250)

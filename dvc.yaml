@@ -13,9 +13,8 @@ stages:
     outs:
     - ./data/taxa/taxa_info_and_ogt.csv
     params:
-    - ./pipeline/s0_data_extraction_params.yaml:
-      - get_bacdive_ogt.n_jobs
-      - get_bacdive_ogt.n_sample
+    - get_bacdive_ogt.n_jobs
+    - get_bacdive_ogt.n_sample
     metrics:
     - ./data/metrics/s0.1_metrics.yaml:
         cache: false
@@ -25,9 +24,8 @@ stages:
     - pipeline/s1.0_label_taxa.py
     - ./data/taxa/taxa_info_and_ogt.csv
     params:
-    - ./pipeline/s1_data_processing_params.yaml:
-      - label_taxa.ogt_threshold
-      - label_taxa.ogt_determination_method
+    - label_taxa.ogt_threshold
+    - label_taxa.ogt_determination_method
     outs:
     - ./data/taxa/labels.csv
     metrics:
@@ -46,9 +44,8 @@ stages:
     - ./data/taxa/16s_rRNA.csv
     - ./data/taxa/proteins
     params:
-    - ./pipeline/s1_data_processing_params.yaml:
-      - get_protein_sequences.n_jobs
-      - get_protein_sequences.n_sample
+    - get_protein_sequences.n_jobs
+    - get_protein_sequences.n_sample
     metrics:
     - ./data/metrics/s1.1_metrics.yaml:
         cache: false
@@ -64,16 +61,15 @@ stages:
     outs:
     - ./data/taxa_pairs/pairwise_16s_blast.csv
     params:
-    - ./pipeline/s1_data_processing_params.yaml:
-      - get_16s_blast_scores.n_jobs
-      - get_16s_blast_scores.word_size
-      - get_16s_blast_scores.gapopen_penalty
-      - get_16s_blast_scores.gapextend_penalty
-      - get_16s_blast_scores.reward
-      - get_16s_blast_scores.penalty
-      - get_16s_blast_scores.ungapped
-      - get_16s_blast_scores.n_sample
-      - get_16s_blast_scores.blast_metrics
+    - get_16s_blast_scores.n_jobs
+    - get_16s_blast_scores.word_size
+    - get_16s_blast_scores.gapopen_penalty
+    - get_16s_blast_scores.gapextend_penalty
+    - get_16s_blast_scores.reward
+    - get_16s_blast_scores.penalty
+    - get_16s_blast_scores.ungapped
+    - get_16s_blast_scores.n_sample
+    - get_16s_blast_scores.blast_metrics
     metrics:
     - ./data/metrics/s1.2_metrics.yaml:
         cache: false
@@ -85,8 +81,7 @@ stages:
     outs:
     - ./data/taxa_pairs/pair_labels.csv
     params:
-    - ./pipeline/s1_data_processing_params.yaml:
-      - label_all_pairs
+    - label_all_pairs.blast_metric_thresholds
     metrics:
     - ./data/metrics/s1.3_metrics.yaml:
         cache: false
@@ -99,16 +94,15 @@ stages:
     outs:
     - ./data/taxa_pairs/pairwise_protein_blast.csv
     params:
-    - ./pipeline/s1_data_processing_params.yaml:
-      - get_protein_blast_scores.n_jobs
-      - get_protein_blast_scores.word_size
-      - get_protein_blast_scores.gapopen_penalty
-      - get_protein_blast_scores.gapextend_penalty
-      - get_protein_blast_scores.matrix
-      - get_protein_blast_scores.ungapped
-      - get_protein_blast_scores.n_sample
-      - get_protein_blast_scores.blast_metrics
-      - get_protein_blast_scores.word_score_thresh
+    - get_protein_blast_scores.n_jobs
+    - get_protein_blast_scores.word_size
+    - get_protein_blast_scores.gapopen_penalty
+    - get_protein_blast_scores.gapextend_penalty
+    - get_protein_blast_scores.matrix
+    - get_protein_blast_scores.ungapped
+    - get_protein_blast_scores.n_sample
+    - get_protein_blast_scores.blast_metrics
+    - get_protein_blast_scores.word_score_thresh
     metrics:
     - ./data/metrics/s1.4_metrics.yaml:
         cache: false
