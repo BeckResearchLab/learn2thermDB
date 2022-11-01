@@ -62,7 +62,7 @@ if __name__ == '__main__':
     logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
 
     # DVC tracked parameters
-    with open("./pipeline/s1_data_processing_params.yaml", "r") as stream:
+    with open("./params.yaml", "r") as stream:
         params = yaml_load(stream)['get_16s_blast_scores']
     logger.info(f"Loaded parameters: {params}")
 

@@ -11,7 +11,6 @@ stages:
       md5: 7e3fa86ff45297a95e4e235097ca92c7.dir
       size: 52933152676
       nfiles: 16664
-
   get_bacdive_ogt:
     cmd: python pipeline/s0.1_get_bacdive_ogt.py
     deps:
@@ -20,10 +19,10 @@ stages:
       size: 52933152676
       nfiles: 16664
     - path: pipeline/s0.1_get_bacdive_ogt.py
-      md5: ff952257156a357088e62a1164eca5ce
-      size: 8539
+      md5: 237229bac42ebc65043e5a3145d9f483
+      size: 8511
     params:
-      pipeline/s0_data_extraction_params.yaml:
+      params.yaml:
         get_bacdive_ogt.n_jobs: 6
         get_bacdive_ogt.n_sample:
     outs:
@@ -44,18 +43,21 @@ stages:
       md5: a5bb1873b2aeac4026516a91dd94c3e1
       size: 3826414
     - path: pipeline/s1.1_get_protein_sequences.py
-      md5: 942e6f783cd671f62bdc585ba3a38dce
-      size: 5397
+      md5: 4993f72be9c50e3f3ff842d5611665c6
+      size: 5865
     params:
-      pipeline/s1_data_processing_params.yaml:
+      params.yaml:
         get_protein_sequences.n_jobs: 2
         get_protein_sequences.n_sample:
     outs:
     - path: ./data/metrics/s1.1_metrics.yaml
       md5: 8c34f4fefe92eac1fc9656ba83be235a
       size: 55
+    - path: ./data/plots/protein_length_hist.png
+      md5: 80b0e3c3f4a942c80d6dad7e0b11fe52
+      size: 56916
     - path: ./data/taxa/16s_rRNA.csv
-      md5: 533fb22500416e0a519bf68a6ca0423b
+      md5: a92b765ce49007a5b58a1908ce61d56d
       size: 21316764
     - path: ./data/taxa/proteins
       md5: 546f2c4a8d73cf1655c9414808b2e492.dir
@@ -68,10 +70,10 @@ stages:
       md5: a5bb1873b2aeac4026516a91dd94c3e1
       size: 3826414
     - path: pipeline/s1.0_label_taxa.py
-      md5: 885283271394a0d5f91db4f039113b2e
-      size: 3696
+      md5: c0fcb9fe2835e2a8d851c25d4a63ed80
+      size: 3668
     params:
-      pipeline/s1_data_processing_params.yaml:
+      params.yaml:
         label_taxa.ogt_determination_method: true ogt only
         label_taxa.ogt_threshold: 40.0
     outs:
@@ -88,16 +90,16 @@ stages:
     cmd: python pipeline/s1.2_get_16s_blast_scores.py
     deps:
     - path: ./data/taxa/16s_rRNA.csv
-      md5: 533fb22500416e0a519bf68a6ca0423b
+      md5: a92b765ce49007a5b58a1908ce61d56d
       size: 21316764
     - path: ./data/taxa/labels.csv
       md5: 22b516c22355a1697527f0099c5b8075
       size: 161752
     - path: ./pipeline/s1.2_get_16s_blast_scores.py
-      md5: 1fb89dc4b48cfc72ab52ff90a496494f
-      size: 5713
+      md5: 633e1442cbc84ba3fecc4f5fd3ce987c
+      size: 5685
     params:
-      pipeline/s1_data_processing_params.yaml:
+      params.yaml:
         get_16s_blast_scores.blast_metrics:
         - local_E_value
         - scaled_local_query_percent_id
@@ -114,37 +116,36 @@ stages:
         get_16s_blast_scores.word_size: 28
     outs:
     - path: ./data/metrics/s1.2_metrics.yaml
-      md5: d8037d675c3ac5efbe7fd85ca5316cfd
-      size: 51
+      md5: 7eb89654d80e74e3590da8699fe056bf
+      size: 54
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: 44e154f0ec676bf54e52f106970b6313
-      size: 69641588
+      md5: 4452f65eb74f7e09f18fbc43626c25fb
+      size: 1085130
   label_all_pairs:
     cmd: python pipeline/s1.3_label_all_pairs.py
     deps:
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: 44e154f0ec676bf54e52f106970b6313
-      size: 69641588
+      md5: 4452f65eb74f7e09f18fbc43626c25fb
+      size: 1085130
     - path: ./pipeline/s1.3_label_all_pairs.py
-      md5: 5dd3c52d39771580c402bd0531929235
-      size: 3485
+      md5: a2f4ec4833726e17ca90226d43999136
+      size: 3457
     params:
-      pipeline/s1_data_processing_params.yaml:
-        label_all_pairs:
-          blast_metric_thresholds:
-            scaled_local_symmetric_percent_id:
-              thresh: 0.88
-              greater: true
-            local_average_coverage:
-              thresh: 0.75
-              greater: true
+      params.yaml:
+        label_all_pairs.blast_metric_thresholds:
+          scaled_local_symmetric_percent_id:
+            thresh: 0.88
+            greater: true
+          local_average_coverage:
+            thresh: 0.75
+            greater: true
     outs:
     - path: ./data/metrics/s1.3_metrics.yaml
-      md5: 17ebe184c757a0eaebe16f820785d8e5
-      size: 67
+      md5: 713797d193ef573c9bf79fba10103d6c
+      size: 65
     - path: ./data/taxa_pairs/pair_labels.csv
-      md5: 1e3553083ea85e30feb35ae6f7a9c76d
-      size: 9633344
+      md5: 24af2deb37dd5470eff204268f798f6f
+      size: 127592
   get_protein_blast_scores:
     cmd: python pipeline/s1.4_get_protein_blast_scores.py
     deps:
@@ -153,13 +154,13 @@ stages:
       size: 24260212365
       nfiles: 16664
     - path: ./data/taxa_pairs/pair_labels.csv
-      md5: 1e3553083ea85e30feb35ae6f7a9c76d
-      size: 9633344
+      md5: 24af2deb37dd5470eff204268f798f6f
+      size: 127592
     - path: ./pipeline/s1.4_get_protein_blast_scores.py
-      md5: 63c9cd1cdea0a9495cef1974832eda17
-      size: 8527
+      md5: 19ccb606a753c82fc5015ce996457d16
+      size: 8740
     params:
-      pipeline/s1_data_processing_params.yaml:
+      params.yaml:
         get_protein_blast_scores.blast_metrics:
         - local_E_value
         - scaled_local_query_percent_id
@@ -169,7 +170,7 @@ stages:
         get_protein_blast_scores.gapopen_penalty: 11
         get_protein_blast_scores.matrix: BLOSUM62
         get_protein_blast_scores.n_jobs: 1
-        get_protein_blast_scores.n_sample: 1
+        get_protein_blast_scores.n_sample: 2
         get_protein_blast_scores.ungapped: false
         get_protein_blast_scores.word_score_thresh: 11
         get_protein_blast_scores.word_size: 3

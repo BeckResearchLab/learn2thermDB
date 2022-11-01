@@ -1,4 +1,4 @@
-"""Label the thermo-meso pairs that we will run BLASTP on
+"""Probe the effect of metric choice here on downstream blastp scores
 """
 import ast
 from curses import intrflush
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
 
     # DVC tracked parameters
-    with open("./params.yaml", "r") as stream:
+    with open("./pipeline/s1_data_processing_params.yaml", "r") as stream:
         params = yaml_load(stream)['label_all_pairs']
     logger.info(f"Loaded parameters: {params}")
 
