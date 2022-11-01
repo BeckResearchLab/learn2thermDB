@@ -175,8 +175,8 @@ stages:
         get_protein_blast_scores.word_size: 3
     outs:
     - path: ./data/metrics/s1.4_metrics.yaml
-      md5: 7222e5f4bf04d0ac3bf9fbdaca16d935
-      size: 134
+      md5: b5a2e81a7d8e81688be28cbe9a71a633
+      size: 133
     - path: ./data/taxa_pairs/pairwise_protein_blast.csv
-      md5: d370047d5a31bb2909008da344ffa821
-      size: 422576311
+      md5: 233f53c664434663fd63522c71879a2a
+      size: 422575881
