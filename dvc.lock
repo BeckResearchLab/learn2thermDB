@@ -11,7 +11,6 @@ stages:
       md5: 7e3fa86ff45297a95e4e235097ca92c7.dir
       size: 52933152676
       nfiles: 16664
-
   get_bacdive_ogt:
     cmd: python pipeline/s0.1_get_bacdive_ogt.py
     deps:
@@ -171,14 +170,14 @@ stages:
         get_protein_blast_scores.gapopen_penalty: 11
         get_protein_blast_scores.matrix: BLOSUM62
         get_protein_blast_scores.n_jobs: 1
-        get_protein_blast_scores.n_sample: 1
+        get_protein_blast_scores.n_sample: 2
         get_protein_blast_scores.ungapped: false
         get_protein_blast_scores.word_score_thresh: 11
         get_protein_blast_scores.word_size: 3
     outs:
     - path: ./data/metrics/s1.4_metrics.yaml
-      md5: aadb2706024e0f5479ba2e697ff1b62d
-      size: 134
+      md5: a66d0a9879612747d29b9f87e6744e52
+      size: 135
     - path: ./data/taxa_pairs/pairwise_protein_blast.csv
-      md5: d8fe99a29b35f1d41511d32c500fdc2c
-      size: 271947039
+      md5: 8e4fdcc6d42d28c8247d5d0832c9bcde
+      size: 1723471054

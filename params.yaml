@@ -46,7 +46,7 @@ get_protein_blast_scores:
   matrix: 'BLOSUM62'
   word_score_thresh: 11          # minumum score for word to be added to blast lookup table
   ungapped: false                  # whether to do ungapped alignment
-  n_sample: 1                     # number of thermophiles and mesophiles to sample for testing
+  n_sample: 2                     # number of thermophiles and mesophiles to sample for testing
   blast_metrics:
     - local_E_value
     - scaled_local_query_percent_id
