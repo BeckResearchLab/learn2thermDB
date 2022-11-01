@@ -12,6 +12,8 @@ def start_logger_if_necessary(logger_name: str, log_file: str, log_level, filemo
         path to file to log to
     log_level
         log level to respect
+    worker: str
+        name of worker using this logger
     filemode : str
         mode to apply to log file eg "a" for append
     """
