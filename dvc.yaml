@@ -94,15 +94,12 @@ stages:
     outs:
     - ./data/taxa_pairs/pairwise_protein_blast.csv
     params:
-    - get_protein_blast_scores.n_jobs
-    - get_protein_blast_scores.word_size
-    - get_protein_blast_scores.gapopen_penalty
-    - get_protein_blast_scores.gapextend_penalty
-    - get_protein_blast_scores.matrix
-    - get_protein_blast_scores.ungapped
-    - get_protein_blast_scores.n_sample
+    - get_protein_blast_scores.max_protein_length
+    - get_protein_blast_scores.max_protein_length
+    - get_protein_blast_scores.method
+    - get_protein_blast_scores.method_blast_params
+    - get_protein_blast_scores.method_diamond_params
     - get_protein_blast_scores.blast_metrics
-    - get_protein_blast_scores.word_score_thresh
     metrics:
     - ./data/metrics/s1.4_metrics.yaml:
         cache: false
