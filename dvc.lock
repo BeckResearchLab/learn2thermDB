@@ -96,8 +96,8 @@ stages:
       md5: 22b516c22355a1697527f0099c5b8075
       size: 161752
     - path: ./pipeline/s1.2_get_16s_blast_scores.py
-      md5: 633e1442cbc84ba3fecc4f5fd3ce987c
-      size: 5685
+      md5: 266bbd5848afd1e4017535caa5c8086e
+      size: 5762
     params:
       params.yaml:
         get_16s_blast_scores.blast_metrics:
@@ -108,7 +108,7 @@ stages:
         - local_average_coverage
         get_16s_blast_scores.gapextend_penalty: 1
         get_16s_blast_scores.gapopen_penalty: 2
-        get_16s_blast_scores.n_jobs: 4
+        get_16s_blast_scores.n_jobs: 6
         get_16s_blast_scores.n_sample:
         get_16s_blast_scores.penalty: -2
         get_16s_blast_scores.reward: 1
@@ -116,11 +116,11 @@ stages:
         get_16s_blast_scores.word_size: 28
     outs:
     - path: ./data/metrics/s1.2_metrics.yaml
-      md5: 7eb89654d80e74e3590da8699fe056bf
-      size: 54
+      md5: d8037d675c3ac5efbe7fd85ca5316cfd
+      size: 51
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: 4452f65eb74f7e09f18fbc43626c25fb
-      size: 1085130
+      md5: 69cf4b068beb13983eb42e9ca46e6be8
+      size: 69641588
   label_all_pairs:
     cmd: python pipeline/s1.3_label_all_pairs.py
     deps:

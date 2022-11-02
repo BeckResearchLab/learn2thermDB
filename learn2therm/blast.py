@@ -10,6 +10,7 @@ import os
 import shutil
 import re
 import time
+import subprocess
 
 import numpy as np
 import pandas as pd
@@ -458,7 +459,77 @@ class AlignmentHandler:
             time2 = time.time()
             logger.debug(f"Computing metrics for {self.pair_indexes} took {(time2-time1)/60}m")
 
-        return {'pw_space': pairwise_space, 'hits':hits}
+        return {'pw_space': pairwise_space, 'hits': hits}
+
+class BlastAlignmentHandler(AlignmentHandler):
+
+    def _call_alignment(self, query_file: str, subject_db: str, output_file: str):
+        """Parse the alignment parameters and call the correct CL command
+        
+        Parameters
+        ----------
+        query_file : str
+            path to temporary fast file containing queries
+        subject_db : str
+            path of temporary db containing subjects
+        output_file: str
+            path to temporary file to deposit alignment outputs, XML format
+        """
+        NcbiblastpCommandline(
+            query=query_file,
+            db=subject_db,
+            outfmt=5,
+            out=output_file,
+            max_target_seqs=10000000, # very large so we do not throw out any pairs. will have to increase if there is more than this num of mesos
+            evalue=10000000, # very large so we do not lose any hits
+            # the rest are tunable params
+            matrix=self.alignment_params['matrix'],
+            word_size=self.alignment_params['word_size'],
+            gapopen=self.alignment_params['gapopen_penalty'],
+            gapextend=self.alignment_params['gapextend_penalty'],
+            threshold=self.alignment_params['word_score_thresh'],
+            ungapped=self.alignment_params['ungapped'],
+            nthreads=self.alignment_params['n_jobs']
+        )()
+
+class DiamondAlignmentHandler(AlignmentHandler):
+
+    def _call_alignment(self, query_file: str, subject_db: str, output_file: str):
+        """Parse the alignment parameters and call the correct CL command
+        
+        Parameters
+        ----------
+        query_file : str
+            path to temporary fast file containing queries
+        subject_db : str
+            path of temporary db containing subjects
+        output_file: str
+            path to temporary file to deposit alignment outputs, XML format
+        """
+        raise NotImplemented()
+        # diamond requires a special DB type
+        command = f"diamond prepdb -d {subject_db}"
+        logger.debug(f"Updated DB for diamond for pair {self.pair_indexes}")
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # wait for it to be done
+        while process.poll() is None:
+            time.sleep(5)
+        stdout, stderr = process.communicate()
+        logger.debug(stdout)
+        if process.poll() != 0:
+            logger.error(stderr)
+            raise ValueError(f"Conversion to diamond db failed, check logs.")
+
+        # now run diamond
+        command = f"diamond blastp -d {subject_db} -q {query_file} -o output_file --outfmt 5"
+        command = command + f" --nthreads {self.alignment_params['n_jobs']}"
+        command = command + f" --{self.alignment_params['sensitivity']}"
+        command = command + f" --nthreads {self.alignment_params['n_jobs']}"
+        if self.alignment_params['iterate']:
+            command = command + " --iterate"
+        
+        # TODO
+        return
 
 
 

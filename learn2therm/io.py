@@ -41,7 +41,7 @@ def seq_io_gnuzipped(filepath: str, filetype: str):
         os.remove(tmp.name)
     return records
 
-def csv_id_seq_iterator(csv_filepath: str, seq_col: str, id_filter: Collection = None, chunksize: int = 512, max_seq_length: int=512, **kwargs):
+def csv_id_seq_iterator(csv_filepath: str, seq_col: str, id_filter: Collection = None, chunksize: int = 512, max_seq_length: int=None, **kwargs):
     """Returns a one by one iterator of seq ids and sequences to avoid OOM.
     
     Parameters
@@ -54,7 +54,7 @@ def csv_id_seq_iterator(csv_filepath: str, seq_col: str, id_filter: Collection =
         If given, only return sequences with the provided indexes
     chunksize : int, default 512
         Number of sequences that will be stored in memory at once.
-    max_seq_length : int, default 512
+    max_seq_length : int, default None
         Maximum length of sequence to return
     **kwargs passed to pandas read csv 
     """
@@ -78,7 +78,7 @@ def csv_id_seq_iterator(csv_filepath: str, seq_col: str, id_filter: Collection =
         logger.debug(f'Iterating chunk {i} seq in {csv_filepath}')
         for id_, seq in chunk.items():
             # skip long sequences
-            if len(seq) > max_seq_length:
+            if max_seq_length and len(seq) > max_seq_length:
                 continue
             # in the case that there were no id filters, the id in the chunk corresponds to the correct sequence id
             # but if there was a filter, many rows were skipped and the indexes got jumbled, so we have to recapitulate
