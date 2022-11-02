@@ -8,6 +8,7 @@ dependencies:
   - dask-core=2022.2.1
   - dask-jobqueue=0.8.1
   - distributed=2022.2.1
+  - joblib
   - dvc=2.27.2
   - dvc-data=0.10.0
   - dvc-http=2.19.1
