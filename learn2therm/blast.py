@@ -49,7 +49,8 @@ class BlastFiles:
     """
     def __init__(self, query_iterator, subject_iterator, dbtype: str = 'nucl', dev_sample_num: int = None):
         # we have to create the temporary fasta files
-        logger.info("Creating temporary files to deposit blast inputs and outputs.")
+        logger.debug("Creating temporary files to deposit blast inputs and outputs.")
+        os.makedirs('./tmp/', exist_ok=True)
         query_temp = tempfile.NamedTemporaryFile('w', delete=False, dir='./tmp/')
         logger.debug(f"query file: {query_temp.name}")
         if dev_sample_num is not None:
@@ -96,7 +97,7 @@ class BlastFiles:
         return self.qt, self.subject_fasta_file, self.ot
 
     def __exit__(self, type, value, traceback):
-        logger.info("Removing temporary files used by blast")
+        logger.debug("Removing temporary files used by blast")
         os.remove(self.qt)
         shutil.rmtree(self.st)
         os.remove(self.ot)
@@ -274,7 +275,7 @@ class AlignmentHandler:
         protein_deposit: str,
         alignment_score_deposit: str,
         alignment_params: dict = {},
-        metrics: dict = ['scaled_local_symmetric_percent_id'],
+        metrics: list = ['scaled_local_symmetric_percent_id'],
         restart: bool = True
     ):
         self.meso = meso_index
@@ -301,7 +302,7 @@ class AlignmentHandler:
                     raise ValueError(f"Specified metric {mname} not available.")
             self.metrics = metrics
         else:
-            raise ValueError(f"`metric` should be list")
+            raise ValueError(f"`metrics` should be list")
 
         self.restart = restart
 
@@ -327,8 +328,8 @@ class AlignmentHandler:
         else:
             if not self.protein_deposit.endswith('/'):
                 self.protein_deposit = self.protein_deposit+'/'
-            self.meso_input_path = self.protein_deposit+f"taxa_id_{self.meso}.csv"
-            self.thermo_input_path = self.protein_deposit+f"taxa_id_{self.thermo}.csv"
+            self.meso_input_path = self.protein_deposit+f"taxa_index_{self.meso}.csv"
+            self.thermo_input_path = self.protein_deposit+f"taxa_index_{self.thermo}.csv"
 
             if not os.path.exists(self.meso_input_path):
                 raise ValueError(f"Could not find protein file for taxa {self.meso}")
@@ -337,7 +338,7 @@ class AlignmentHandler:
         
         # output
         if not os.path.exists(self.alignment_score_deposit):
-            raise ValueError(f"{self.alignment_score_deposit} does not exist, cannot look for proteins")
+            os.makedirs(self.alignment_score_deposit, exist_ok=True)
         else:
             if not self.alignment_score_deposit.endswith('/'):
                 self.alignment_score_deposit = self.alignment_score_deposit+'/'
@@ -379,7 +380,7 @@ class AlignmentHandler:
             joined_df = joined_df.join(df.set_index(['query_id', 'subject_id']))
         out = joined_df.reset_index()
         # ensure ordering
-        out = out[['query_id', 'subject_id']+metrics]
+        out = out[['query_id', 'subject_id']+self.metrics]
         return out
 
     def run(self):
@@ -430,6 +431,7 @@ class AlignmentHandler:
         )
 
         # create the temporary files that a blastlike algorithm expects
+        logger.info(f"Pair {self.pair_indexes}, using alignment parameters {self.alignment_params}")
         time1 = time.time()
         with BlastFiles(thermo_iter, meso_iter, dbtype='prot') as (query_tmp, subject_tmp, out_tmp):
             time2 = time.time()
@@ -475,6 +477,7 @@ class BlastAlignmentHandler(AlignmentHandler):
         output_file: str
             path to temporary file to deposit alignment outputs, XML format
         """
+        # parse parameters 
         NcbiblastpCommandline(
             query=query_file,
             db=subject_db,
@@ -483,13 +486,7 @@ class BlastAlignmentHandler(AlignmentHandler):
             max_target_seqs=10000000, # very large so we do not throw out any pairs. will have to increase if there is more than this num of mesos
             evalue=10000000, # very large so we do not lose any hits
             # the rest are tunable params
-            matrix=self.alignment_params['matrix'],
-            word_size=self.alignment_params['word_size'],
-            gapopen=self.alignment_params['gapopen_penalty'],
-            gapextend=self.alignment_params['gapextend_penalty'],
-            threshold=self.alignment_params['word_score_thresh'],
-            ungapped=self.alignment_params['ungapped'],
-            nthreads=self.alignment_params['n_jobs']
+            **self.alignment_params
         )()
 
 class DiamondAlignmentHandler(AlignmentHandler):

@@ -79,7 +79,7 @@ def extract_proteins_from_one(taxa_index: int, filepath: str):
     with open(OUTPUT_DIR_PROTEINS+f'taxa_index_{taxa_index}.csv', "a") as g:
         fcntl.flock(g, fcntl.LOCK_EX)
         for i in range(len(protein_sequences['seq_len'])):
-            g.write(f"{taxa_index}_{i};{protein_sequences['sequence'][i]};{protein_sequences['desc'][i].replace(';', ',')};{protein_sequences['seq_len'][i]}\n")
+            g.write(f"{taxa_index}.{i};{protein_sequences['sequence'][i]};{protein_sequences['desc'][i].replace(';', ',')};{protein_sequences['seq_len'][i]}\n")
         fcntl.flock(g, fcntl.LOCK_UN)
     with open(OUTPUT_FILE_16srRNA, "a") as g:
         fcntl.flock(g, fcntl.LOCK_EX)
