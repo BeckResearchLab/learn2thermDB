@@ -9,7 +9,7 @@ get_bacdive_ogt:
 
 # S1 data preparation params
 get_protein_sequences:
-  n_jobs: 2                    # number of cores for parallel execution
+  n_jobs: 6                    # number of cores for parallel execution
   n_sample: null                 # number of "data" to sample down to for testing
 label_taxa:
   ogt_threshold: 40.0          # binary threshold to consider something as thermophilic
@@ -38,25 +38,26 @@ label_all_pairs:
       thresh: 0.75
       greater: true
 get_protein_blast_scores:
+  dask_cluster_class: LocalCluster
   max_protein_length: 512            # only consider proteins with length less than number
   method: 'blast'
+  n_jobs: 16
   method_blast_params:
-    n_jobs: 1                        # number of cpus to run in parallel         
+    num_threads: 1                        # number of cpus to run in parallel         
     word_size: 3                    # size of words for initial exact matching of nucleotides
-    gapopen_penalty: 11               # cost to open a gap
-    gapextend_penalty: 1             # cost to extend gap
+    gapopen: 11               # cost to open a gap
+    gapextend: 1             # cost to extend gap
     matrix: 'BLOSUM62'
-    word_score_thresh: 11          # minumum score for word to be added to blast lookup table
+    threshold: 11          # minumum score for word to be added to blast lookup table
     ungapped: false                  # whether to do ungapped alignment
   method_diamond_params:
-    n_jobs: 5
+    num_threads: 5
     sensitivity: 'sensitive'
     iterate: True                  # start with low sensitivity and only go lower towards target sensitivity for failure
     global_ranking: null           # hard limit on the number of Smith Waterman extensions that will be computed for each query.
-    gapopen_penalty: 11
-    gapextend_penalty: 1
+    gapopen: 11
+    gapextend: 1
     matrix: 'BLOSUM62'
-  n_sample: 2                     # number of thermophiles and mesophiles to sample for testing
   blast_metrics:
     - local_E_value
     - scaled_local_query_percent_id
