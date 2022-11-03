@@ -8,7 +8,9 @@ Measure the carbon and time requirements.
 from yaml import safe_load as yaml_load
 import os
 import time
-import tempdir
+import tempfile
+# set the dask config
+os.environ['DASK_CONFIG'] = './.config/dask/'
 
 import pandas as pd
 import logging
@@ -48,15 +50,15 @@ def worker_function(alignment_handler):
     return out_dic
 
 if __name__ == '__main__':
-    # set the dask config
-    os.environ['DASK_CONFIG'] = './config/dask/'
     # load params
     with open("./params.yaml", "r") as stream:
         params = yaml_load(stream)['get_protein_blast_scores']
 
     logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
     logger.info(f"Loaded parameters: {params}")
-
+    logger.debug(dask.config.config['jobqueue'])
+    
+    
     # get list if pairs to consider
     # this is a Series of boolean attached to index of pairs 
     logger.debug("Loading pair labels")
@@ -88,7 +90,7 @@ if __name__ == '__main__':
 
     # create place to deposit output. This will not be cleaned up but is clearly marked as
     # temporary for the user
-    output_dir = tempdir.TemporaryDirectory(dir='./tmp/', prefix='t1.4_resource_test')
+    output_dir = tempfile.TemporaryDirectory(dir='./tmp/', prefix='t1.4_resource_test')
     output_dir = output_dir.name
 
     aligners = [Aligner(

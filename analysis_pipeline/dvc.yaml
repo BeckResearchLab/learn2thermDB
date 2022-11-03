@@ -1,5 +1,6 @@
 stages:
   protein_alignment_resource_test:
+    wdir: ../
     cmd: python ./analysis_pipeline/t1.4_protein_alignment_resource_test.py
     deps:
     - ./analysis_pipeline/t1.4_protein_alignment_resource_test.py
