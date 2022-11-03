@@ -90,7 +90,7 @@ stages:
     cmd: python pipeline/s1.2_get_16s_blast_scores.py
     deps:
     - path: ./data/taxa/16s_rRNA.csv
-      md5: a92b765ce49007a5b58a1908ce61d56d
+      md5: ed7262aefe22827be08c8c8560b3ca67
       size: 21316764
     - path: ./data/taxa/labels.csv
       md5: 22b516c22355a1697527f0099c5b8075
@@ -119,14 +119,14 @@ stages:
       md5: d8037d675c3ac5efbe7fd85ca5316cfd
       size: 51
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: 69cf4b068beb13983eb42e9ca46e6be8
-      size: 69641588
+      md5: 0a7235444c93307e8bcf5b3b9f985585
+      size: 69641585
   label_all_pairs:
     cmd: python pipeline/s1.3_label_all_pairs.py
     deps:
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: 4452f65eb74f7e09f18fbc43626c25fb
-      size: 1085130
+      md5: 0a7235444c93307e8bcf5b3b9f985585
+      size: 69641585
     - path: ./pipeline/s1.3_label_all_pairs.py
       md5: a2f4ec4833726e17ca90226d43999136
       size: 3457
@@ -141,21 +141,21 @@ stages:
             greater: true
     outs:
     - path: ./data/metrics/s1.3_metrics.yaml
-      md5: 713797d193ef573c9bf79fba10103d6c
-      size: 65
+      md5: 17ebe184c757a0eaebe16f820785d8e5
+      size: 67
     - path: ./data/taxa_pairs/pair_labels.csv
-      md5: 24af2deb37dd5470eff204268f798f6f
-      size: 127592
+      md5: f2136cb3b6d8d5b17afb41d6d8e857b6
+      size: 9633344
   get_protein_blast_scores:
     cmd: python pipeline/s1.4_get_protein_blast_scores.py
     deps:
     - path: ./data/taxa/proteins
-      md5: 546f2c4a8d73cf1655c9414808b2e492.dir
+      md5: 905941f50af6d9eb35e960dcb3bcee85.dir
       size: 24260212365
       nfiles: 16664
     - path: ./data/taxa_pairs/pair_labels.csv
-      md5: 24af2deb37dd5470eff204268f798f6f
-      size: 127592
+      md5: f2136cb3b6d8d5b17afb41d6d8e857b6
+      size: 9633344
     - path: ./pipeline/s1.4_get_protein_blast_scores.py
       md5: 19ccb606a753c82fc5015ce996457d16
       size: 8740
@@ -166,18 +166,29 @@ stages:
         - scaled_local_query_percent_id
         - scaled_local_symmetric_percent_id
         - local_gap_compressed_percent_id
-        get_protein_blast_scores.gapextend_penalty: 1
-        get_protein_blast_scores.gapopen_penalty: 11
-        get_protein_blast_scores.matrix: BLOSUM62
-        get_protein_blast_scores.n_jobs: 1
-        get_protein_blast_scores.n_sample: 2
-        get_protein_blast_scores.ungapped: false
-        get_protein_blast_scores.word_score_thresh: 11
-        get_protein_blast_scores.word_size: 3
+        get_protein_blast_scores.dask_cluster_class: LocalCluster
+        get_protein_blast_scores.max_protein_length: 512
+        get_protein_blast_scores.method: blast
+        get_protein_blast_scores.method_blast_params:
+          num_threads: 1
+          word_size: 3
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          threshold: 11
+          ungapped: false
+        get_protein_blast_scores.method_diamond_params:
+          num_threads: 5
+          sensitivity: sensitive
+          iterate: true
+          global_ranking:
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
     outs:
     - path: ./data/metrics/s1.4_metrics.yaml
-      md5: b5a2e81a7d8e81688be28cbe9a71a633
-      size: 133
+      md5: a66d0a9879612747d29b9f87e6744e52
+      size: 135
     - path: ./data/taxa_pairs/pairwise_protein_blast.csv
-      md5: 233f53c664434663fd63522c71879a2a
-      size: 422575881
+      md5: 8e4fdcc6d42d28c8247d5d0832c9bcde
+      size: 1723471054
