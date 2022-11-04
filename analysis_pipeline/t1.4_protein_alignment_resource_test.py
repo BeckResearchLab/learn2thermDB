@@ -6,6 +6,7 @@ of pairs to run and it does not handle restarting.
 Measure the carbon and time requirements.
 """
 from yaml import safe_load as yaml_load
+from yaml import dump as yaml_dump
 import os
 import time
 import tempfile
@@ -14,6 +15,7 @@ os.environ['DASK_CONFIG'] = './.config/dask/'
 
 import pandas as pd
 import logging
+from logging_tree import printout
 
 from codecarbon import EmissionsTracker
 import dask
@@ -28,21 +30,25 @@ if 'LOGLEVEL' in os.environ:
     LOGLEVEL = getattr(logging, LOGLEVEL)
 else:
     LOGLEVEL = logging.INFO
-LOGNAME = ''
+LOGNAME = __file__
 LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 
 PROTEIN_SEQ_DIR = './data/taxa/proteins/'
-NUM_SAMPLE = 32
+NUM_SAMPLE = 4
 
 def worker_function(alignment_handler):
     """Run one taxa pair on a worker."""
-    worker = distributed.get_worker()
-    logger = learn2therm.utils.start_logger_if_necessary(f"{worker.name}_logger", LOGFILE, LOGLEVEL, filemode='a')
+    logging.setLoggerClass(learn2therm.utils.WorkerLogger)
+    logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='a')
+    logging.setLoggerClass(learn2therm.utils.WorkerLogger)
     fh = logger.handlers[-1]
     fh.setFormatter(logging.Formatter("%(filename)s:%(worker)s-%(asctime)s %(levelname)-8s %(message)s"))
-    logger = logging.LoggerAdapter(logger, {'worker': worker.name})
-
-    tracker = EmissionsTracker(project_name=f"t1.4_{worker.name}", output_dir='./logs/')
+    # logger = logging.LoggerAdapter(logger, {'worker': worker.name})
+    logger.info(f"Recieved pair {alignment_handler.pair_indexes}")
+    logger.info(printout())
+    
+    tracker = EmissionsTracker(project_name=f"t1.4", output_dir='./logs/')
+    tracker.start()
 
     out_dic = alignment_handler.run()
     emissions = tracker.stop()
@@ -53,8 +59,8 @@ if __name__ == '__main__':
     # load params
     with open("./params.yaml", "r") as stream:
         params = yaml_load(stream)['get_protein_blast_scores']
-
-    logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
+    
+    logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, logging.INFO, filemode='w')
     logger.info(f"Loaded parameters: {params}")
     logger.debug(dask.config.config['jobqueue'])
     
@@ -67,7 +73,9 @@ if __name__ == '__main__':
     logger.debug("Loading taxa indexes for pairs")
     pair_indexes = pd.read_csv('./data/taxa_pairs/pairwise_16s_blast.csv', usecols=[0,1])
     pairs = pair_indexes[pairs]
-
+    
+    print(printout())
+    
     # sample a small number for this test
     pairs = pairs.sample(n=NUM_SAMPLE)
     logger.debug(f"Using {len(pairs)} pairs for resource test")

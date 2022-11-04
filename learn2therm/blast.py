@@ -418,7 +418,7 @@ class AlignmentHandler:
             max_seq_length=self.max_seq_len,
             seq_col="protein_seq",
             sep=';',
-            index_col=0,
+            index_col='seq_id',
             chunksize=100
         )
         thermo_iter = learn2therm.io.csv_id_seq_iterator(
@@ -426,7 +426,7 @@ class AlignmentHandler:
             max_seq_length=self.max_seq_len,
             seq_col="protein_seq",
             sep=';',
-            index_col=0,
+            index_col='seq_id',
             chunksize=100
         )
 
