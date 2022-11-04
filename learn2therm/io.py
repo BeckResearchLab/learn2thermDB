@@ -6,6 +6,7 @@ import shutil
 import os
 
 import pandas as pd
+import numpy as np
 
 from typing import Collection
 
@@ -41,7 +42,7 @@ def seq_io_gnuzipped(filepath: str, filetype: str):
         os.remove(tmp.name)
     return records
 
-def csv_id_seq_iterator(csv_filepath: str, seq_col: str, id_filter: Collection = None, chunksize: int = 512, max_seq_length: int=None, **kwargs):
+def csv_id_seq_iterator(csv_filepath: str, seq_col: str, index_col: str=None, id_filter: Collection = None, chunksize: int = 512, max_seq_length: int=None, **kwargs):
     """Returns a one by one iterator of seq ids and sequences to avoid OOM.
     
     Parameters
@@ -60,11 +61,17 @@ def csv_id_seq_iterator(csv_filepath: str, seq_col: str, id_filter: Collection =
     """
     # first get the row numbers to consider
     if id_filter is not None:
-        if 'index_col' in kwargs:
-            row_indexes = pd.read_csv(csv_filepath, usecols=[kwargs['index_col']])
-            row_indexes = row_indexes[row_indexes.columns[0]]
+        if index_col is not None:
+            # get column positions to figure out which full col to load into memory
+            columns = pd.read_csv(csv_filepath, nrows=1, **kwargs).columns
+            index_col_position = np.argwhere(columns==index_col)[0][0]
+            print(index_col_position)
+            # load only that column
+            row_indexes = pd.read_csv(csv_filepath, usecols=[index_col_position], **kwargs)
+            row_indexes = pd.Series(row_indexes.set_index(index_col, drop=True).index)
+            print(row_indexes)
         else:
-            row_indexes = pd.read_csv(csv_filepath, usecols=[0]).index
+            row_indexes = pd.read_csv(csv_filepath, usecols=[0]).index # just take the first column becuase we only need the indexes
             row_indexes = pd.Series(index=row_indexes, data=row_indexes)
         row_indexes_to_keep_mask = row_indexes.isin(id_filter)
         skiprows = lambda row_num: False if row_num==0 else not row_indexes_to_keep_mask.loc[row_num-1]
@@ -73,7 +80,9 @@ def csv_id_seq_iterator(csv_filepath: str, seq_col: str, id_filter: Collection =
     else:
         skiprows=None
 
-    for i, df_chunk in enumerate(pd.read_csv(csv_filepath, chunksize=chunksize, skiprows=skiprows, **kwargs)):
+    for i, df_chunk in enumerate(pd.read_csv(csv_filepath, chunksize=chunksize, skiprows=skiprows, dtype=str, **kwargs)):
+        if index_col is not None:
+            df_chunk = df_chunk.set_index(index_col, drop=True)
         chunk = df_chunk[seq_col]
         logger.debug(f'Iterating chunk {i} seq in {csv_filepath}')
         for id_, seq in chunk.items():
