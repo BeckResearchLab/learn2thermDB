@@ -4,8 +4,8 @@ stages:
     cmd: python ./analysis_pipeline/t1.4_protein_alignment_resource_test.py
     deps:
     - path: ./analysis_pipeline/t1.4_protein_alignment_resource_test.py
-      md5: ebf0888ef0fcd10c2cffa9af1e4d5358
-      size: 4795
+      md5: c61bfae7bbe0ec56bbe1ebe530308181
+      size: 5927
     - path: ./data/taxa/proteins/
       md5: 905941f50af6d9eb35e960dcb3bcee85.dir
       size: 24260212365
@@ -39,8 +39,8 @@ stages:
           gapopen: 11
           gapextend: 1
           matrix: BLOSUM62
-        get_protein_blast_scores.n_jobs: 1
+        get_protein_blast_scores.n_jobs: 8
     outs:
     - path: ./data/metrics/t1.4_metrics.yaml
-      md5: b2981bc156e306bc2148acf60a99b010
-      size: 127
+      md5: 673e1931e496bd9bc21e76cdd96cc62a
+      size: 299

@@ -126,7 +126,7 @@ class BlastMetrics:
     def __init__(self, blast_record):
         self.record = blast_record
         self.qid = self.record.query.split(' ')[0]
-        logger.debug(f"Query {self.qid} with {len(self.record.alignments)} alignments with ids {[a.hit_id for a in self.record.alignments]}.")
+        logger.debug(f"Query {self.qid} with {len(self.record.alignments)} alignments.")
 
     def id_hsp_best_cov(self, alignment):
         """Determine HSP with the most average coverage of both sequences.
@@ -461,7 +461,7 @@ class AlignmentHandler:
             time2 = time.time()
             logger.debug(f"Computing metrics for {self.pair_indexes} took {(time2-time1)/60}m")
 
-        return {'pw_space': pairwise_space, 'hits': hits}
+        return {'pw_space': pairwise_space, 'hits': hits, 'execution_time': (time2-time0)/60}
 
 class BlastAlignmentHandler(AlignmentHandler):
 
