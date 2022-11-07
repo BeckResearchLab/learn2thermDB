@@ -2,6 +2,7 @@ name: learn2therm
 channels:
   - conda-forge
   - defaults
+  - bioconda
 dependencies:
   - biopython=1.79
   - dask=2022.2.1
@@ -23,6 +24,8 @@ dependencies:
   - pytorch=1.12.1
   - pyyaml=6.0
   - seaborn-base=0.12.0
+  - blast
+  - diamond
   - pip
   - pip:
     - bacdive==0.2
