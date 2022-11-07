@@ -166,11 +166,11 @@ stages:
         - scaled_local_query_percent_id
         - scaled_local_symmetric_percent_id
         - local_gap_compressed_percent_id
-        get_protein_blast_scores.dask_cluster_class: LocalCluster
-        get_protein_blast_scores.max_protein_length: 512
+        get_protein_blast_scores.dask_cluster_class: SLURMCluster
+        get_protein_blast_scores.max_protein_length: 100
         get_protein_blast_scores.method: blast
         get_protein_blast_scores.method_blast_params:
-          num_threads: 1
+          num_threads: 6
           word_size: 3
           gapopen: 11
           gapextend: 1
@@ -185,6 +185,7 @@ stages:
           gapopen: 11
           gapextend: 1
           matrix: BLOSUM62
+        get_protein_blast_scores.restart: false
     outs:
     - path: ./data/metrics/s1.4_metrics.yaml
       md5: a66d0a9879612747d29b9f87e6744e52

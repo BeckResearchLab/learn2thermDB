@@ -42,5 +42,5 @@ stages:
         get_protein_blast_scores.n_jobs: 8
     outs:
     - path: ./data/metrics/t1.4_metrics.yaml
-      md5: 673e1931e496bd9bc21e76cdd96cc62a
-      size: 299
+      md5: 05ef301fdf447e8d11b2712de4f04c0c
+      size: 302
