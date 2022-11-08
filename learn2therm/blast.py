@@ -486,6 +486,8 @@ class BlastAlignmentHandler(AlignmentHandler):
             max_target_seqs=10000000, # very large so we do not throw out any pairs. will have to increase if there is more than this num of mesos
             evalue=10000000, # very large so we do not lose any hits
             # the rest are tunable params
+            qcov_hsp_perc=0,
+            max_hsps=100,
             **self.alignment_params
         )()
 
@@ -503,11 +505,11 @@ class DiamondAlignmentHandler(AlignmentHandler):
         output_file: str
             path to temporary file to deposit alignment outputs, XML format
         """
-        raise NotImplemented()
+        time0 = time.time()
         # diamond requires a special DB type
-        command = f"diamond prepdb -d {subject_db}"
-        logger.debug(f"Updated DB for diamond for pair {self.pair_indexes}")
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        command = f"diamond makedb --in {subject_db} -d {subject_db}.diamond"
+        logger.debug(f"Updating DB for diamond for pair {self.pair_indexes}")
+        process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         # wait for it to be done
         while process.poll() is None:
             time.sleep(5)
@@ -516,16 +518,30 @@ class DiamondAlignmentHandler(AlignmentHandler):
         if process.poll() != 0:
             logger.error(stderr)
             raise ValueError(f"Conversion to diamond db failed, check logs.")
+        time1 = time.time()
+        logger.debug(f"Updated DB for diamond for pair {self.pair_indexes}, took {(time1-time0)/60}m")
 
         # now run diamond
-        command = f"diamond blastp -d {subject_db} -q {query_file} -o output_file --outfmt 5"
-        command = command + f" --nthreads {self.alignment_params['n_jobs']}"
+        command = f"diamond blastp -d {subject_db}.diamond -q {query_file} -o {output_file} --outfmt 5 --max-target-seqs 1000000 --max-hsps 100 --evalue 10000000 --query-cover 0 --subject-cover 0 --id 0 --masking 0"
         command = command + f" --{self.alignment_params['sensitivity']}"
-        command = command + f" --nthreads {self.alignment_params['n_jobs']}"
         if self.alignment_params['iterate']:
             command = command + " --iterate"
-        
-        # TODO
+        command = command + f" --matrix {self.alignment_params['matrix']}"
+        command = command + f" --gapopen {self.alignment_params['gapopen']}"
+        command = command + f" --gapextend {self.alignment_params['gapextend']}"
+        command = command + f" --threads {self.alignment_params['num_threads']}"
+        if self.alignment_params['global_ranking']:
+            command = command + f" --global_ranking {self.alignment_params['global_ranking']}"
+        print(command)
+        process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # wait for it to be done
+        while process.poll() is None:
+            time.sleep(5)
+        stdout, stderr = process.communicate()
+        logger.debug(stdout)
+        if process.poll() != 0:
+            logger.error(stderr)
+            raise ValueError(f"Diamond alignment failed, check logs.")
         return
 
 
