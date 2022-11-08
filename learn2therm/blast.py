@@ -486,7 +486,7 @@ class BlastAlignmentHandler(AlignmentHandler):
             max_target_seqs=10000000, # very large so we do not throw out any pairs. will have to increase if there is more than this num of mesos
             evalue=10000000, # very large so we do not lose any hits
             # the rest are tunable params
-            qcov_hsp_perc=0,
+            qcov_hsp_perc=50,
             max_hsps=100,
             **self.alignment_params
         )()
@@ -522,7 +522,7 @@ class DiamondAlignmentHandler(AlignmentHandler):
         logger.debug(f"Updated DB for diamond for pair {self.pair_indexes}, took {(time1-time0)/60}m")
 
         # now run diamond
-        command = f"diamond blastp -d {subject_db}.diamond -q {query_file} -o {output_file} --outfmt 5 --max-target-seqs 1000000 --max-hsps 100 --evalue 10000000 --query-cover 0 --subject-cover 0 --id 0 --masking 0"
+        command = f"diamond blastp -d {subject_db}.diamond -q {query_file} -o {output_file} --outfmt 5 --max-target-seqs 1000000 --max-hsps 100 --evalue 10000000 --query-cover 50 --subject-cover 0 --id 0 --masking 0"
         command = command + f" --{self.alignment_params['sensitivity']}"
         if self.alignment_params['iterate']:
             command = command + " --iterate"
