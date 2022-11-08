@@ -73,7 +73,7 @@ if __name__ == '__main__':
     pairs = pair_indexes[pairs]
     
     # sample a small number for this test
-    pairs = pairs.sample(n=NUM_SAMPLE)
+    pairs = pairs.sample(n=NUM_SAMPLE, random_state=777)
     logger.debug(f"Using {len(pairs)} pairs for resource test")
     # make it just a list of tuple for simplicity
     pairs = [(row['thermo_index'], row['meso_index']) for _, row in pairs.iterrows()]
