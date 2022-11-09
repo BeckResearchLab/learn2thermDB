@@ -43,7 +43,6 @@ class BlastFiles:
         logger.info("Creating temporary files to deposit blast inputs and outputs.")
         query_temp = tempfile.NamedTemporaryFile('w', delete=False, dir='./tmp/')
         logger.debug(f"query file: {query_temp.name}")
-        logger.info("test")
         self.qt = query_temp.name
         n = 0
         for id_, seq in query_iterator:
@@ -51,7 +50,6 @@ class BlastFiles:
                 continue
             query_temp.write(f">{id_}\n{seq}\n")
             n +=1
-            logger.debug('added one')
         query_temp.close()
         logger.debug(f"added {n} sequences to query file")
 

@@ -44,7 +44,7 @@ stages:
     - ./data/taxa/taxa_info_and_ogt.csv
     outs:
     - ./data/taxa/16s_rRNA.csv
-    - ./data/taxa/proteins.csv
+    - ./data/taxa/proteins
     params:
     - ./pipeline/s1_data_processing_params.yaml:
       - get_protein_sequences.n_jobs
@@ -92,9 +92,9 @@ stages:
     deps:
     - ./pipeline/s1.4_get_protein_blast_scores.py
     - ./data/taxa_pairs/pair_labels.csv
-    - ./data/taxa/proteins.csv
+    - ./data/taxa/proteins
     outs:
-    - ./data/taxa_pairs/pairwise_16s_blast.csv
+    - ./data/taxa_pairs/pairwise_protein_blast.csv
     params:
     - ./pipeline/s1_data_processing_params.yaml:
       - get_protein_blast_scores.n_jobs
