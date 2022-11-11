@@ -1,0 +1,19 @@
+stages:
+  protein_alignment_resource_test:
+    wdir: ../
+    cmd: python ./analysis_pipeline/t1.4_protein_alignment_resource_test.py
+    deps:
+    - ./analysis_pipeline/t1.4_protein_alignment_resource_test.py
+    - ./data/taxa_pairs/pair_labels.csv
+    - ./data/taxa/proteins/
+    params:
+    - get_protein_blast_scores.dask_cluster_class
+    - get_protein_blast_scores.max_protein_length
+    - get_protein_blast_scores.method
+    - get_protein_blast_scores.n_jobs
+    - get_protein_blast_scores.method_blast_params
+    - get_protein_blast_scores.method_diamond_params
+    - get_protein_blast_scores.blast_metrics
+    metrics:
+    - ./data/metrics/t1.4_metrics.yaml:
+        cache: false

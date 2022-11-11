@@ -7,6 +7,7 @@ import shutil
 
 from joblib import delayed, Parallel
 import pandas as pd
+import numpy as np
 from yaml import dump as yaml_dump
 from yaml import safe_load as yaml_load
 
@@ -78,7 +79,7 @@ def extract_proteins_from_one(taxa_index: int, filepath: str):
     with open(OUTPUT_DIR_PROTEINS+f'taxa_index_{taxa_index}.csv', "a") as g:
         fcntl.flock(g, fcntl.LOCK_EX)
         for i in range(len(protein_sequences['seq_len'])):
-            g.write(f"{taxa_index}_{i};{protein_sequences['sequence'][i]};{protein_sequences['desc'][i].replace(';', ',')};{protein_sequences['seq_len'][i]}\n")
+            g.write(f"{taxa_index}.{i};{protein_sequences['sequence'][i]};{protein_sequences['desc'][i].replace(';', ',')};{protein_sequences['seq_len'][i]}\n")
         fcntl.flock(g, fcntl.LOCK_UN)
     with open(OUTPUT_FILE_16srRNA, "a") as g:
         fcntl.flock(g, fcntl.LOCK_EX)
@@ -95,7 +96,7 @@ if __name__ == '__main__':
     logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
 
     # DVC tracked parameters
-    with open("./pipeline/s1_data_processing_params.yaml", "r") as stream:
+    with open("./params.yaml", "r") as stream:
         params = yaml_load(stream)['get_protein_sequences']
     logger.info(f"Loaded parameters: {params}")
 
@@ -128,3 +129,15 @@ if __name__ == '__main__':
     metrics['n_taxa_with_16srRNA'] = int(sum(has_16srRNA))
     with open('./data/metrics/s1.1_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)
+
+    # save length plot
+    length_list = []
+    for i, f in enumerate(os.listdir(OUTPUT_DIR_PROTEINS)):
+        lengths = pd.read_csv(OUTPUT_DIR_PROTEINS+f, usecols=[3], sep=';').values
+        length_list.append(lengths)
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    sns.set_context('talk')
+    fig, ax = plt.subplots()
+    sns.histplot(np.vstack(length_list), ax=ax)
+    plt.savefig(f'./data/plots/protein_length_hist.png', bbox_inches='tight', dpi=250)

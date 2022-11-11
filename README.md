@@ -44,7 +44,3 @@ Installable, importable code is found in `learn2therm` and should be installed g
 -environment.yml                            # Conda dependancies
 -docs/                                      # repository documentation
 ```
-
-### Exposition
-
-Testing that I can commit okay. Test 1.

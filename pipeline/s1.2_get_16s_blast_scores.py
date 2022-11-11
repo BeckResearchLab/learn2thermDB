@@ -50,6 +50,7 @@ def apply_blast_metric_and_append_pairwise(
     out = joined_df.reset_index()
     # ensure ordering
     out = out[['query_id', 'subject_id']+metrics]
+    logger.debug(f"Adding {len(out)} alignments for thermophile {metric_handler.qid}")
     # save to file
     with open(OUTFILENAME, "a") as g:
         fcntl.flock(g, fcntl.LOCK_EX)
@@ -62,7 +63,7 @@ if __name__ == '__main__':
     logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
 
     # DVC tracked parameters
-    with open("./pipeline/s1_data_processing_params.yaml", "r") as stream:
+    with open("./params.yaml", "r") as stream:
         params = yaml_load(stream)['get_16s_blast_scores']
     logger.info(f"Loaded parameters: {params}")
 
@@ -72,7 +73,7 @@ if __name__ == '__main__':
     # get the tax indexes of themophiles and mesophiles
     thermo_indexes = list(labels[labels == True].index)
     meso_indexes = list(labels[labels == False].index)
-    logger.info(f"Found taxa indexes for {len(thermo_indexes)} thermophiles and {len(meso_indexes)} mesophiles")
+    logger.info(f"Found taxa indexes for {thermo_indexes} thermophiles and {meso_indexes} mesophiles")
 
     # run blast
     # ###########

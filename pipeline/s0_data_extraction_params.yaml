@@ -1,5 +1,0 @@
-# Parameters for scripts in the current directory for data extraction steps
-# ----------------------------------------------------------------------------
-get_bacdive_ogt:
-  n_jobs: 6                    # number of cores for parallel execution
-  n_sample: null                 # number of "data" to sample down to for testing
