@@ -36,9 +36,14 @@ LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 
 PROTEIN_SEQ_DIR = './data/taxa/proteins/'
 NUM_SAMPLE = 32
+WORKER_WAKE_UP_TIME = 25 # this is to ensure that if a worker that is about to be shut down due to previous task completetion doesn't actually start running
 
 def worker_function(alignment_handler):
     """Run one taxa pair on a worker."""
+    # we want to wait for execution to see if this worker is actually being used
+    # or if it is in the process of being killed
+    time.sleep(WORKER_WAKE_UP_TIME)
+    # begin execution
     t0=time.time()
     worker_logfile = f'./logs/t1.4_protein_alignment_resource_test_workers/pair_{alignment_handler.pair_indexes}.log'
     logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, worker_logfile, LOGLEVEL, filemode='a', worker=True)
@@ -112,21 +117,37 @@ if __name__ == '__main__':
     t0 = time.time()
     Cluster = getattr(dask_jobqueue, params['dask_cluster_class'])
     cluster = Cluster(silence_logs=None)
-    cluster.adapt(minimum=params['n_jobs'], maximum=params['n_jobs'], target_duration='45m')
+    
+    # determine if we have the job capacity to be killing workers after jobs
+    # heuristically at three, the few is more likely that all jobs die
+    # this option is to save compute when a task would normally start on a worker that just
+    # finished a job
+    if params['n_jobs'] > 3:
+        terminate_on_complete = True
+        minimum_jobs = 2
+    else:
+        terminate_on_complete = False
+        minimum_jobs = 1
+    cluster.adapt(minimum=minimum_jobs, maximum=params['n_jobs'], target_duration='5s')
 
     logger.info(f"{cluster.job_script()}")
     
+    # create plugin to use for worker killing and start the client
     with distributed.Client(cluster) as client:
-        while len(client.scheduler_info()["workers"]) < params['n_jobs']:
-            time.sleep(3)
-        logger.info(f"Workers ready to go... submitting tasks.")
         # run the job
         results = []
         for future in distributed.as_completed(client.map(
             worker_function, aligners
         )):
-            results.append(future.result())
-
+            result = future.result()
+            logger.info(f"Completed one with: {result}")
+            if terminate_on_complete:
+                who_has = client.who_has(future)
+                closing = list(list(who_has.values())[0])
+                client.retire_workers(closing)
+                logger.debug(f"Retiring worker at {closing} that completed a task.")
+            results.append(result)
+            
     t1 = time.time()
 
     # compute metrics
