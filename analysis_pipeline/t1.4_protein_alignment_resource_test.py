@@ -102,17 +102,6 @@ if __name__ == '__main__':
     output_dir = tempfile.TemporaryDirectory(dir='./tmp/', prefix='t1.4_resource_test')
     output_dir = output_dir.name
 
-    aligners = [Aligner(
-        meso_index=mi,
-        thermo_index=ti,
-        max_seq_len=params['max_protein_length'],
-        protein_deposit=PROTEIN_SEQ_DIR,
-        alignment_score_deposit=output_dir,
-        metrics=params['blast_metrics'],
-        alignment_params=aligner_params,
-        restart=True
-    ) for (ti, mi) in pairs]
-
     # start a cluster object and run it
     t0 = time.time()
     Cluster = getattr(dask_jobqueue, params['dask_cluster_class'])
@@ -123,10 +112,8 @@ if __name__ == '__main__':
     # this option is to save compute when a task would normally start on a worker that just
     # finished a job
     if params['n_jobs'] > 3:
-        terminate_on_complete = True
         minimum_jobs = 2
     else:
-        terminate_on_complete = False
         minimum_jobs = 1
     cluster.adapt(minimum=minimum_jobs, maximum=params['n_jobs'], target_duration='5s')
 
@@ -136,22 +123,25 @@ if __name__ == '__main__':
     with distributed.Client(cluster) as client:
         # run the job
         results = []
-        for future in distributed.as_completed(client.map(
-            worker_function, aligners
-        )):
-            result = future.result()
-            logger.info(f"Completed one with: {result}")
-            if terminate_on_complete:
-                who_has = client.who_has(future)
-                closing = list(list(who_has.values())[0])
-                client.retire_workers(closing)
-                logger.debug(f"Retiring worker at {closing} that completed a task.")
-            results.append(result)
+        with learn2therm.blast.AlignmentClusterFutures(
+            pairs=pairs,
+            client=client,
+            worker_function=worker_function,
+            max_seq_len=params['max_protein_length'],
+            protein_deposit=PROTEIN_SEQ_DIR,
+            alignment_score_deposit=output_dir,
+            metrics=params['blast_metrics'],
+            alignment_params=aligner_params,
+            restart=True
+        ) as futures:
+            for future in futures:
+                pass
             
     t1 = time.time()
-
+    logger.info(f'Completed all tasks, took {(t1-t0)/60} min')
+    
     # compute metrics
-    results = pd.DataFrame(results)
+    results = pd.read_csv(output_dir+'/completion_state.metadat', index_col=0)
     metrics = {}
     metrics['apx_minutes_per_pair_avg'] = float(results['execution_time'].mean())
     metrics['apx_minutes_per_pair_std'] = float(results['execution_time'].std())
