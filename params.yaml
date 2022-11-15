@@ -39,7 +39,7 @@ label_all_pairs:
       greater: true
 get_protein_blast_scores:
   dask_cluster_class: 'SLURMCluster'
-  max_protein_length: 350            # only consider proteins with length less than number
+  max_protein_length: 400            # only consider proteins with length less than number
   method: 'blast'
   n_jobs: 8
   restart: false
