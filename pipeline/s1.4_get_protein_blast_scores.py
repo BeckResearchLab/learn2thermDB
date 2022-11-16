@@ -135,7 +135,7 @@ if __name__ == '__main__':
                     metrics['hits'] = float(results['hits'].sum())
 
                     # get the carbon cost
-                    co2 = pd.read_csv('./logs/s1.4_get_protein_blast_scores_workers/emissions.csv')['emissions']
+                    co2 = pd.read_csv('./data/taxa_pairs/protein_alignment/emissions.csv')['emissions']
                     metrics['co2'] = float(co2.sum())
                     with open('./data/metrics/s1.4_metrics.yaml', "w") as stream:
                         yaml_dump(metrics, stream)
