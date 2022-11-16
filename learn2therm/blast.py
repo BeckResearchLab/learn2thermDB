@@ -609,7 +609,7 @@ class AlignmentClusterFutures:
             alignment_score_deposit = alignment_score_deposit + '/'
         self.alignment_score_deposit = alignment_score_deposit
         
-        if restart or os.path.exists(alignment_score_deposit+'completion_state.metadat'):
+        if restart or not os.path.exists(alignment_score_deposit+'completion_state.metadat'):
             logger.info(f"Starting execution of {len(pairs)} from scratch")
             shutil.rmtree(alignment_score_deposit, ignore_errors=True)
             os.makedirs(alignment_score_deposit)
