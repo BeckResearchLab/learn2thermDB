@@ -609,35 +609,32 @@ class AlignmentClusterFutures:
             alignment_score_deposit = alignment_score_deposit + '/'
         self.alignment_score_deposit = alignment_score_deposit
         
-        if restart:
+        if restart or os.path.exists(alignment_score_deposit+'completion_state.metadat'):
             logger.info(f"Starting execution of {len(pairs)} from scratch")
             shutil.rmtree(alignment_score_deposit, ignore_errors=True)
             os.makedirs(alignment_score_deposit)
             self.metadata=None
+
         else:
-            # need to cleanup erroneous files
-            if not os.path.exists(alignment_score_deposit+'completion_state.metadat'):
-                raise ValueError(f"Cannot find file {alignment_score_deposit+'completion_state.metadat'}, cannot resume.")
-            else:
-                self.metadata=pd.read_csv(alignment_score_deposit+'completion_state.metadat', index_col=0)
-                completed = self.metadata['pair'].values
-                logger.info(f"Completed pairs: {completed}")
-                
-                # check existing files
-                existing_files = os.listdir(alignment_score_deposit)
-                existing_files = [f for f in existing_files if f.startswith('taxa')]
-                cleanup_counter = 0
-                for filename in existing_files:
-                    pair = filename.split('_')[-1].split('.')[0]
-                    if pair in completed:
-                        pass
-                        logger.info(f"Pair {pair} already completed")
-                    else:
-                        logger.info(f"Pair {pair} erroneously ended, cleaning up file")
-                        os.remove(alignment_score_deposit+filename)
-                        cleanup_counter += 1
-                
-            logger.info(f"Found {len(completed)} pairs already complete. Cleaned up {cleanup_counter} erroneous files.")
+            self.metadata=pd.read_csv(alignment_score_deposit+'completion_state.metadat', index_col=0)
+            completed = self.metadata['pair'].values
+            logger.info(f"Completed pairs: {completed}")
+
+            # check existing files
+            existing_files = os.listdir(alignment_score_deposit)
+            existing_files = [f for f in existing_files if f.startswith('taxa')]
+            cleanup_counter = 0
+            for filename in existing_files:
+                pair = filename.split('_')[-1].split('.')[0]
+                if pair in completed:
+                    pass
+                    logger.info(f"Pair {pair} already completed")
+                else:
+                    logger.info(f"Pair {pair} erroneously ended, cleaning up file")
+                    os.remove(alignment_score_deposit+filename)
+                    cleanup_counter += 1
+
+        logger.info(f"Found {len(completed)} pairs already complete. Cleaned up {cleanup_counter} erroneous files.")
             
         # create aligners and send out the job 
         aligners = [aligner_class(
