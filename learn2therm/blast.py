@@ -530,8 +530,8 @@ class DiamondAlignmentHandler(AlignmentHandler):
             raise ValueError(f"Conversion to diamond db failed, check logs.")
         time1 = time.time()
         logger.debug(f"Updated DB for diamond for pair {self.pair_indexes}, took {(time1-time0)/60}m")
-
-        # now run diamond
+        
+        
         command = f"diamond blastp -d {subject_db}.diamond -q {query_file} -o {output_file} --outfmt 5 --max-target-seqs 1000000 --max-hsps 100 --evalue 10000000 --query-cover 50 --subject-cover 0 --id 0 --masking 0"
         command = command + f" --{self.alignment_params['sensitivity']}"
         if self.alignment_params['iterate']:
@@ -542,7 +542,9 @@ class DiamondAlignmentHandler(AlignmentHandler):
         command = command + f" --threads {self.alignment_params['num_threads']}"
         if self.alignment_params['global_ranking']:
             command = command + f" --global_ranking {self.alignment_params['global_ranking']}"
-        print(command)
+        
+        logger.debug(f"Diamond command: {command}")
+        
         process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         # wait for it to be done
         while process.poll() is None:
@@ -623,7 +625,7 @@ class AlignmentClusterFutures:
                 
                 # check existing files
                 existing_files = os.listdir(alignment_score_deposit)
-                existing_files = [f for f in existing_files if f.endswith('.csv')]
+                existing_files = [f for f in existing_files if f.startswith('taxa')]
                 cleanup_counter = 0
                 for filename in existing_files:
                     pair = filename.split('_')[-1].split('.')[0]

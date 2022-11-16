@@ -1,7 +1,7 @@
 """Test a few taxa pair alignments using current parameters.
 
 This script looks a lot like the true s.14 script, however it takes a small sample
-of pairs to run and it does not handle restarting.
+of pairs.
 
 Measure the carbon and time requirements.
 """
@@ -129,6 +129,7 @@ if __name__ == '__main__':
             worker_function=worker_function,
             max_seq_len=params['max_protein_length'],
             protein_deposit=PROTEIN_SEQ_DIR,
+            aligner_class=Aligner,
             alignment_score_deposit=output_dir,
             metrics=params['blast_metrics'],
             alignment_params=aligner_params,
