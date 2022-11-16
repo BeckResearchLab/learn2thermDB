@@ -128,6 +128,17 @@ if __name__ == '__main__':
         ) as futures:
             for i, future in enumerate(futures):
                 if (i+1) % CHECKPOINT_EVERY == 0:
+                    # compute metrics
+                    results = pd.read_csv(OUTPUT_DIR+'/completion_state.metadat', index_col=0)
+                    metrics = {}
+                    metrics['perc_protein_pairwise'] = float((results['hits']/results['pw_space']).mean())
+                    metrics['hits'] = float(results['hits'].sum())
+
+                    # get the carbon cost
+                    co2 = pd.read_csv('./logs/s1.4_get_protein_blast_scores_workers/emissions.csv')['emissions']
+                    metrics['co2'] = float(co2.sum())
+                    with open('./data/metrics/s1.4_metrics.yaml', "w") as stream:
+                        yaml_dump(metrics, stream)
                     make_checkpoint()
             
     t1 = time.time()
