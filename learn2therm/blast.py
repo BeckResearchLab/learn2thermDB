@@ -634,7 +634,7 @@ class AlignmentClusterFutures:
                     os.remove(alignment_score_deposit+filename)
                     cleanup_counter += 1
 
-        logger.info(f"Found {len(completed)} pairs already complete. Cleaned up {cleanup_counter} erroneous files.")
+            logger.info(f"Found {len(completed)} pairs already complete. Cleaned up {cleanup_counter} erroneous files.")
             
         # create aligners and send out the job 
         aligners = [aligner_class(
