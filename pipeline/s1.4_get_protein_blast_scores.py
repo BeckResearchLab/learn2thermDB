@@ -59,13 +59,14 @@ def worker_function(alignment_handler):
 
 if __name__ == '__main__':
     # clear logs
-    shutil.rmtree('./logs/s1.4_get_protein_blast_scores_workers/', ignore_errors=True, onerror=None)
-    os.mkdir('./logs/s1.4_get_protein_blast_scores_workers/')
+    
     # load params
     with open("./params.yaml", "r") as stream:
         params = yaml_load(stream)['get_protein_blast_scores']
     if params['restart']:
         logger = learn2therm.utils.start_logger_if_necessary("", LOGFILE, logging.INFO, filemode='w')
+        shutil.rmtree('./logs/s1.4_get_protein_blast_scores_workers/', ignore_errors=True, onerror=None)
+        os.mkdir('./logs/s1.4_get_protein_blast_scores_workers/')
     else:
         logger = learn2therm.utils.start_logger_if_necessary("", LOGFILE, logging.INFO, filemode='a')
     logger.info(f"Loaded parameters: {params}")
