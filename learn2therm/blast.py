@@ -418,6 +418,10 @@ class AlignmentHandler:
             try:
                 hits = len(pd.read_csv(self.output_path, usecols=[0]))
             except pd.errors.EmptyDataError:
+                # it is possible we run into an empty file. If this is the case, it is because
+                # another worker started it but timed out. This is okay
+                # if we start again we will also time out, so instead
+                # cut our losses for that pair
                 hits = 0
             return {'pair': self.pair_indexes, 'pw_space': pairwise_space, 'hits':hits}
 
@@ -477,7 +481,11 @@ class AlignmentHandler:
         return {'pair': self.pair_indexes, 'pw_space': pairwise_space, 'hits': hits, 'execution_time': (time2-time0)/60}
 
 class BlastAlignmentHandler(AlignmentHandler):
-
+    """Alignment using blastp
+    
+    Biopython's NcbiBlasp API is used, but at command line that is actually called
+    is `blastp`
+    """
     def _call_alignment(self, query_file: str, subject_db: str, output_file: str):
         """Parse the alignment parameters and call the correct CL command
         
@@ -505,7 +513,16 @@ class BlastAlignmentHandler(AlignmentHandler):
         )()
 
 class DiamondAlignmentHandler(AlignmentHandler):
-
+    """Alignment using Diamond
+    
+    https://github.com/bbuchfink/diamond
+    
+    Note the database file first has to be updated. Currently we create a brand
+    new diamond database directly from the fasta because the diamond DB conversion
+    from blast is not yet conda installable. This is minimal extra overhead.
+    
+    Calls `diamond`.
+    """
     def _call_alignment(self, query_file: str, subject_db: str, output_file: str):
         """Parse the alignment parameters and call the correct CL command
         
@@ -563,7 +580,7 @@ class AlignmentClusterFutures:
     """Prepares and tracks the state of execution for a set of taxa pair alignments.
     
     This class exists to ensure that the correct work is skipped in the case that 
-    we want to allow task skipping, and that no excess compute is wasted to job times
+    we want to allow task skipping, and that no excess compute is wasted to job times.
     
     The aligner handlers will skip work if the output files already exists. Unfortunately,
     they would skip taxa pairs that started but did not finish due to the cluster going down.
@@ -571,7 +588,8 @@ class AlignmentClusterFutures:
     completed in worker time.
     
     Additionally, compute is wasted if a taxa pair starts on a worker that does not have enough
-    time left to complete the job. This class ensures each task gets its own worker.
+    time left to complete the job. This class ensures each task gets its own worker, which shuts
+    down after completion.
     
     Parameters
     ----------
@@ -612,18 +630,22 @@ class AlignmentClusterFutures:
             alignment_score_deposit = alignment_score_deposit + '/'
         self.alignment_score_deposit = alignment_score_deposit
         
+        # prepare and empty deposit if either we asked for restart
+        # or cannot find existing metadata
         if restart or not os.path.exists(alignment_score_deposit+'completion_state.metadat'):
             logger.info(f"Starting execution of {len(pairs)} from scratch")
             shutil.rmtree(alignment_score_deposit, ignore_errors=True)
             os.makedirs(alignment_score_deposit)
             self.metadata=None
-
+        
+        # otherwise load the metadata
         else:
             self.metadata=pd.read_csv(alignment_score_deposit+'completion_state.metadat', index_col=0)
             completed = self.metadata['pair'].values
             logger.info(f"Completed pairs: {completed}")
 
-            # check existing files
+            # check existing files and clean the ones that were not completed
+            # or timed out, which will be stored in metadata
             existing_files = os.listdir(alignment_score_deposit)
             existing_files = [f for f in existing_files if f.startswith('taxa')]
             cleanup_counter = 0
