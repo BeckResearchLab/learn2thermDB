@@ -415,7 +415,10 @@ class AlignmentHandler:
         # if we have already done this part, get the results so that we can compute global
         # metrics and escape
         if self.output_exists:
-            hits = len(pd.read_csv(self.output_path, usecols=[0]))
+            try:
+                hits = len(pd.read_csv(self.output_path, usecols=[0]))
+            except pd.errors.EmptyDataError:
+                hits = 0
             return {'pair': self.pair_indexes, 'pw_space': pairwise_space, 'hits':hits}
 
         # create the iterators over the actual protein sequences

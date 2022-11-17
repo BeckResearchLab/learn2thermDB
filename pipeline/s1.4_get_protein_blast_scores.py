@@ -64,7 +64,10 @@ if __name__ == '__main__':
     # load params
     with open("./params.yaml", "r") as stream:
         params = yaml_load(stream)['get_protein_blast_scores']
-    logger = learn2therm.utils.start_logger_if_necessary("", LOGFILE, logging.INFO, filemode='w')
+    if params['restart']:
+        logger = learn2therm.utils.start_logger_if_necessary("", LOGFILE, logging.INFO, filemode='w')
+    else:
+        logger = learn2therm.utils.start_logger_if_necessary("", LOGFILE, logging.INFO, filemode='a')
     logger.info(f"Loaded parameters: {params}")
     
     # get list if pairs to consider
