@@ -21,7 +21,7 @@ stages:
         - scaled_local_symmetric_percent_id
         - local_gap_compressed_percent_id
         get_protein_blast_scores.dask_cluster_class: SLURMCluster
-        get_protein_blast_scores.max_protein_length: 250
+        get_protein_blast_scores.max_protein_length: 300
         get_protein_blast_scores.method: diamond
         get_protein_blast_scores.method_blast_params:
           num_threads: 6
@@ -42,5 +42,5 @@ stages:
         get_protein_blast_scores.n_jobs: 8
     outs:
     - path: ./data/metrics/t1.4_metrics.yaml
-      md5: 33dab61bf5d9682d05ef89d12d6ae3e6
+      md5: 29fb6d28474f1d64339db4f61d9646cc
       size: 304
