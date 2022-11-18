@@ -60,9 +60,9 @@ stages:
       md5: ed7262aefe22827be08c8c8560b3ca67
       size: 21316764
     - path: ./data/taxa/proteins
-      md5: 905941f50af6d9eb35e960dcb3bcee85.dir
-      size: 24260212365
-      nfiles: 16664
+      md5: 8031a8d052ce815c5fabbc10ba7d7f74.dir
+      size: 24264372254
+      nfiles: 16666
   label_taxa:
     cmd: python pipeline/s1.0_label_taxa.py
     deps:

@@ -39,10 +39,10 @@ label_all_pairs:
       greater: true
 get_protein_blast_scores:
   dask_cluster_class: 'SLURMCluster'
-  max_protein_length: 250            # only consider proteins with length less than number
-  method: 'blast'
-  n_jobs: 30
-  restart: false
+  max_protein_length: 100            # only consider proteins with length less than number
+  method: 'diamond'
+  n_jobs: 8
+  restart: true
   method_blast_params:
     num_threads: 6                        # number of cpus to run in parallel         
     word_size: 3                    # size of words for initial exact matching of nucleotides
@@ -52,9 +52,9 @@ get_protein_blast_scores:
     threshold: 11          # minumum score for word to be added to blast lookup table
     ungapped: false                  # whether to do ungapped alignment
   method_diamond_params:
-    num_threads: 5
+    num_threads: 6
     sensitivity: 'sensitive'
-    iterate: True                  # start with low sensitivity and only go lower towards target sensitivity for failure
+    iterate: false                  # start with low sensitivity and only go lower towards target sensitivity for failure
     global_ranking: null           # hard limit on the number of Smith Waterman extensions that will be computed for each query.
     gapopen: 11
     gapextend: 1

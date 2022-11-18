@@ -36,7 +36,7 @@ LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 
 PROTEIN_SEQ_DIR = './data/taxa/proteins/'
 NUM_SAMPLE = 32
-WORKER_WAKE_UP_TIME = 8 # this is to ensure that if a worker that is about to be shut down due to previous task completetion doesn't actually start running
+WORKER_WAKE_UP_TIME = 25 # this is to ensure that if a worker that is about to be shut down due to previous task completetion doesn't actually start running
 
 def worker_function(alignment_handler):
     """Run one taxa pair on a worker."""
