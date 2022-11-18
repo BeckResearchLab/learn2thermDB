@@ -7,14 +7,12 @@ import os
 
 from Bio.Blast.Applications import NcbiblastnCommandline
 from Bio.Blast import NCBIXML
-from joblib import Parallel, delayed
 import pandas as pd
 from yaml import dump as yaml_dump
 from yaml import safe_load as yaml_load
 
 import learn2therm.blast
 import learn2therm.io
-import learn2therm.blast
 import learn2therm.utils
 
 from typing import List
@@ -107,7 +105,7 @@ if __name__ == '__main__':
             reward=params['reward'],
             penalty=params['penalty'],
             ungapped=params['ungapped'],
-            num_threads=params['n_jobs']
+            num_threads=params['num_threads']
         )()
         logger.info('Blast complete. Parsing and saving metrics.')
 
