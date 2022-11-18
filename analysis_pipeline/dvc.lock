@@ -33,7 +33,7 @@ stages:
           ungapped: false
         get_protein_blast_scores.method_diamond_params:
           num_threads: 6
-          sensitivity: sensitive
+          sensitivity: ultra-sensitive
           iterate: false
           global_ranking:
           gapopen: 11
@@ -42,5 +42,5 @@ stages:
         get_protein_blast_scores.n_jobs: 8
     outs:
     - path: ./data/metrics/t1.4_metrics.yaml
-      md5: fcda920935bf650bf2197e804581743b
-      size: 302
+      md5: f7da651afb0244e0cb95195125758052
+      size: 301

@@ -53,7 +53,7 @@ get_protein_blast_scores:
     ungapped: false                  # whether to do ungapped alignment
   method_diamond_params:
     num_threads: 6
-    sensitivity: 'sensitive'
+    sensitivity: 'ultra-sensitive'
     iterate: false                  # start with low sensitivity and only go lower towards target sensitivity for failure
     global_ranking: null           # hard limit on the number of Smith Waterman extensions that will be computed for each query.
     gapopen: 11
