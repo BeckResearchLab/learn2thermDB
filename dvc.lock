@@ -18,6 +18,15 @@ stages:
       md5: 7e3fa86ff45297a95e4e235097ca92c7.dir
       size: 52933152676
       nfiles: 16664
+    - path: ./learn2therm/bacdive.py
+      md5: ef9b89b5b556c61b7ab306a1e13be513
+      size: 1383
+    - path: ./learn2therm/io.py
+      md5: dde10312ffe9c0fd46a756ea85f348ce
+      size: 3887
+    - path: ./learn2therm/utils.py
+      md5: 4845b20446345d469e7eae2a6968e962
+      size: 1766
     - path: pipeline/s0.1_get_bacdive_ogt.py
       md5: 237229bac42ebc65043e5a3145d9f483
       size: 8511
@@ -42,6 +51,12 @@ stages:
     - path: ./data/taxa/taxa_info_and_ogt.csv
       md5: a5bb1873b2aeac4026516a91dd94c3e1
       size: 3826414
+    - path: ./learn2therm/io.py
+      md5: dde10312ffe9c0fd46a756ea85f348ce
+      size: 3887
+    - path: ./learn2therm/utils.py
+      md5: 4845b20446345d469e7eae2a6968e962
+      size: 1766
     - path: pipeline/s1.1_get_protein_sequences.py
       md5: 5f3f687021666da337b95ae938bb1363
       size: 5865
@@ -57,18 +72,21 @@ stages:
       md5: 80b0e3c3f4a942c80d6dad7e0b11fe52
       size: 56916
     - path: ./data/taxa/16s_rRNA.csv
-      md5: ed7262aefe22827be08c8c8560b3ca67
+      md5: 7fa11ee6da366923ea2a42a17b4d4387
       size: 21316764
     - path: ./data/taxa/proteins
-      md5: 8031a8d052ce815c5fabbc10ba7d7f74.dir
-      size: 24264372254
-      nfiles: 16666
+      md5: 905941f50af6d9eb35e960dcb3bcee85.dir
+      size: 24260212365
+      nfiles: 16664
   label_taxa:
     cmd: python pipeline/s1.0_label_taxa.py
     deps:
     - path: ./data/taxa/taxa_info_and_ogt.csv
       md5: a5bb1873b2aeac4026516a91dd94c3e1
       size: 3826414
+    - path: ./learn2therm/utils.py
+      md5: 4845b20446345d469e7eae2a6968e962
+      size: 1766
     - path: pipeline/s1.0_label_taxa.py
       md5: c0fcb9fe2835e2a8d851c25d4a63ed80
       size: 3668
@@ -90,14 +108,23 @@ stages:
     cmd: python pipeline/s1.2_get_16s_blast_scores.py
     deps:
     - path: ./data/taxa/16s_rRNA.csv
-      md5: ed7262aefe22827be08c8c8560b3ca67
+      md5: 7fa11ee6da366923ea2a42a17b4d4387
       size: 21316764
     - path: ./data/taxa/labels.csv
       md5: 22b516c22355a1697527f0099c5b8075
       size: 161752
+    - path: ./learn2therm/blast.py
+      md5: 414afa5abb1506c63ace90ff598ccd0a
+      size: 29838
+    - path: ./learn2therm/io.py
+      md5: dde10312ffe9c0fd46a756ea85f348ce
+      size: 3887
+    - path: ./learn2therm/utils.py
+      md5: 4845b20446345d469e7eae2a6968e962
+      size: 1766
     - path: ./pipeline/s1.2_get_16s_blast_scores.py
-      md5: 266bbd5848afd1e4017535caa5c8086e
-      size: 5762
+      md5: 575ae8c515152971db113b8a5d96d91c
+      size: 5727
     params:
       params.yaml:
         get_16s_blast_scores.blast_metrics:
@@ -108,8 +135,8 @@ stages:
         - local_average_coverage
         get_16s_blast_scores.gapextend_penalty: 1
         get_16s_blast_scores.gapopen_penalty: 2
-        get_16s_blast_scores.n_jobs: 6
         get_16s_blast_scores.n_sample:
+        get_16s_blast_scores.num_threads: 6
         get_16s_blast_scores.penalty: -2
         get_16s_blast_scores.reward: 1
         get_16s_blast_scores.ungapped: false
@@ -119,17 +146,20 @@ stages:
       md5: d8037d675c3ac5efbe7fd85ca5316cfd
       size: 51
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: 0a7235444c93307e8bcf5b3b9f985585
+      md5: 2c9e92818bc1b3fd5c5ee09238f42e9b
       size: 69641585
   label_all_pairs:
     cmd: python pipeline/s1.3_label_all_pairs.py
     deps:
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: 0a7235444c93307e8bcf5b3b9f985585
+      md5: 2c9e92818bc1b3fd5c5ee09238f42e9b
       size: 69641585
+    - path: ./learn2therm/utils.py
+      md5: 4845b20446345d469e7eae2a6968e962
+      size: 1766
     - path: ./pipeline/s1.3_label_all_pairs.py
-      md5: a2f4ec4833726e17ca90226d43999136
-      size: 3457
+      md5: f0d91704f22ee5db710eee93b4a16607
+      size: 3385
     params:
       params.yaml:
         label_all_pairs.blast_metric_thresholds:
@@ -144,7 +174,7 @@ stages:
       md5: 17ebe184c757a0eaebe16f820785d8e5
       size: 67
     - path: ./data/taxa_pairs/pair_labels.csv
-      md5: f2136cb3b6d8d5b17afb41d6d8e857b6
+      md5: 6a6552ea7762b14a007aa2811a63ba45
       size: 9633344
   get_protein_blast_scores:
     cmd: python pipeline/s1.4_get_protein_blast_scores.py
