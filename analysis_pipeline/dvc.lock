@@ -4,12 +4,12 @@ stages:
     cmd: python ./analysis_pipeline/t1.4_protein_alignment_resource_test.py
     deps:
     - path: ./analysis_pipeline/t1.4_protein_alignment_resource_test.py
-      md5: 943e24c70dbee330a5132b86c8e43469
-      size: 6991
+      md5: a0ed6a56ee3a6f7a25e885e705d12be6
+      size: 6657
     - path: ./data/taxa/proteins/
-      md5: 905941f50af6d9eb35e960dcb3bcee85.dir
-      size: 24260212365
-      nfiles: 16664
+      md5: 8031a8d052ce815c5fabbc10ba7d7f74.dir
+      size: 24264372254
+      nfiles: 16666
     - path: ./data/taxa_pairs/pair_labels.csv
       md5: f2136cb3b6d8d5b17afb41d6d8e857b6
       size: 9633344
@@ -21,8 +21,8 @@ stages:
         - scaled_local_symmetric_percent_id
         - local_gap_compressed_percent_id
         get_protein_blast_scores.dask_cluster_class: SLURMCluster
-        get_protein_blast_scores.max_protein_length: 300
-        get_protein_blast_scores.method: blast
+        get_protein_blast_scores.max_protein_length: 100
+        get_protein_blast_scores.method: diamond
         get_protein_blast_scores.method_blast_params:
           num_threads: 6
           word_size: 3
@@ -32,9 +32,9 @@ stages:
           threshold: 11
           ungapped: false
         get_protein_blast_scores.method_diamond_params:
-          num_threads: 5
-          sensitivity: sensitive
-          iterate: true
+          num_threads: 6
+          sensitivity: ultra-sensitive
+          iterate: false
           global_ranking:
           gapopen: 11
           gapextend: 1
@@ -42,5 +42,5 @@ stages:
         get_protein_blast_scores.n_jobs: 8
     outs:
     - path: ./data/metrics/t1.4_metrics.yaml
-      md5: 51005a5a86ea00f59552bfb4c54c1648
-      size: 300
+      md5: 5d58a021d135f813cfbe2e3a06927094
+      size: 303

@@ -1,7 +1,7 @@
-apx_co2_per_pair_avg: 0.003534946169504047
-apx_co2_per_pair_std: 0.0017207001680053667
-apx_hits_per_pair_avg: 80410.90625
-apx_hits_per_pair_std: 36583.01278564682
-apx_minutes_per_pair_avg: 11.825339590882262
-apx_minutes_per_pair_std: 5.181859929012994
-apx_perc_protein_pairwise: 0.014532947868223229
+apx_co2_per_pair_avg: 5.038379731637921e-05
+apx_co2_per_pair_std: 6.724239649938455e-06
+apx_hits_per_pair_avg: 170.6875
+apx_hits_per_pair_std: 145.67206597852456
+apx_minutes_per_pair_avg: 0.24161548366149263
+apx_minutes_per_pair_std: 0.02627741679535974
+apx_perc_protein_pairwise: 0.0012675855696248095
