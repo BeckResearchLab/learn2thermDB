@@ -38,7 +38,7 @@ def get_one_ogt_from_taxid(client: learn2therm.bacdive.BacdiveClient, taxid: int
         bacdive_output = next(client.retrieve())
         bacdive_id = bacdive_output['General']['BacDive-ID']
         # we must parse for temperatures carefully, multiple experiments may be listed.
-        # lets get them all and we can process the results into a single label downstream
+        # let's get them all and we can process the results into a single label downstream
         temp_labels = {'growth': [], 'max': None, 'min': None}
         logger.debug(f"Growth conditions for taxid {taxid}: {bacdive_output['Culture and growth conditions']}")
         if 'culture temp' in bacdive_output['Culture and growth conditions']:

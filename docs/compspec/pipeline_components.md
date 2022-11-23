@@ -6,7 +6,7 @@ Each DVC stage is associated with a script
 1. `s0.0_get_ncbi_refseq.sh`  
    Retrieve NCBI refseq genome files.  
    _Outputs_: `data/refseq` containing gbff files for all bacteria and archaea  
-   _Metrics_: `data_extraction.number_taxa`
+   _Metrics_: no metrics
 2. `s0.1_get_bacdive_ogt.py`
    Retrieve optimal growth temperatures from bacdive.  
    Loops the refseq files and uses `taxid` to search bacdive.  
