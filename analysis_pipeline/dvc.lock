@@ -44,3 +44,55 @@ stages:
     - path: ./data/metrics/t1.4_metrics.yaml
       md5: 5d58a021d135f813cfbe2e3a06927094
       size: 303
+  protein_alignment_blast_dia_compare:
+    cmd: python ./analysis_pipeline/t1.5_protein_alignment_hits_blast_vs_diamond.py
+    deps:
+    - path: ./analysis_pipeline/t1.5_protein_alignment_hits_blast_vs_diamond.py
+      md5: 9dc7565d25bcb6050c4222978fc3cdd5
+      size: 8210
+    - path: ./data/taxa/proteins/
+      md5: 905941f50af6d9eb35e960dcb3bcee85.dir
+      size: 24260212365
+      nfiles: 16664
+    - path: ./data/taxa_pairs/pair_labels.csv
+      md5: e315bd05d1f5aa47e198e42e49046f42
+      size: 9633344
+    - path: ./data/taxa_pairs/pairwise_16s_blast.csv
+      md5: 425198fcaf0709a9a4959f84e5194d6d
+      size: 69641584
+    - path: ./learn2therm/blast.py
+      md5: 414afa5abb1506c63ace90ff598ccd0a
+      size: 29838
+    - path: ./learn2therm/utils.py
+      md5: 4845b20446345d469e7eae2a6968e962
+      size: 1766
+    params:
+      params.yaml:
+        get_protein_blast_scores.blast_metrics:
+        - local_E_value
+        - scaled_local_query_percent_id
+        - scaled_local_symmetric_percent_id
+        - local_gap_compressed_percent_id
+        get_protein_blast_scores.dask_cluster_class: SLURMCluster
+        get_protein_blast_scores.max_protein_length: 250
+        get_protein_blast_scores.method_blast_params:
+          num_threads: 6
+          word_size: 3
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          threshold: 11
+          ungapped: false
+        get_protein_blast_scores.method_diamond_params:
+          num_threads: 6
+          sensitivity: ultra-sensitive
+          iterate: false
+          global_ranking:
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+        get_protein_blast_scores.n_jobs: 16
+    outs:
+    - path: ./data/analysis/blast_vs_diamond_hits.csv
+      md5: c02dd449559e2bdbb1c7a3891a48ad85
+      size: 6044

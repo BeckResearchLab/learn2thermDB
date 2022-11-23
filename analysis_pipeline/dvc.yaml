@@ -8,6 +8,7 @@ stages:
     - ./learn2therm/blast.py
     - ./data/taxa_pairs/pair_labels.csv
     - ./data/taxa/proteins/
+    - ./data/taxa_pairs/pairwise_16s_blast.csv
     params:
     - get_protein_blast_scores.dask_cluster_class
     - get_protein_blast_scores.max_protein_length
@@ -19,3 +20,22 @@ stages:
     metrics:
     - ./data/metrics/t1.4_metrics.yaml:
         cache: false
+  protein_alignment_blast_dia_compare:
+    wdir: ../
+    cmd: python ./analysis_pipeline/t1.5_protein_alignment_hits_blast_vs_diamond.py
+    deps:
+    - ./analysis_pipeline/t1.5_protein_alignment_hits_blast_vs_diamond.py
+    - ./learn2therm/utils.py
+    - ./learn2therm/blast.py
+    - ./data/taxa_pairs/pair_labels.csv
+    - ./data/taxa/proteins/
+    - ./data/taxa_pairs/pairwise_16s_blast.csv
+    params:
+    - get_protein_blast_scores.dask_cluster_class
+    - get_protein_blast_scores.max_protein_length
+    - get_protein_blast_scores.n_jobs
+    - get_protein_blast_scores.method_blast_params
+    - get_protein_blast_scores.method_diamond_params
+    - get_protein_blast_scores.blast_metrics
+    outs:
+    - ./data/analysis/blast_vs_diamond_hits.csv
