@@ -15,7 +15,7 @@ import pandas as pd
 import logging
 import logging_tree
 
-from codecarbon import EmissionsTracker
+from codecarbon import OfflineEmissionsTracker
 import dask
 import dask_jobqueue
 import distributed
@@ -37,6 +37,15 @@ OUTPUT_DIR = './data/taxa_pairs/protein_alignment/'
 WORKER_WAKE_UP_TIME = 25 # this is to ensure that if a worker that is about to be shut down due to previous task completetion doesn't actually start running
 CHECKPOINT_EVERY = 20
 
+def try_again_read_csv(filepath: str, retries: int = 5, **kwargs):
+    i = 0
+    while i < retries:
+        try:
+            return pd.read_csv(filepath, **kwargs)
+        except pd.error.EmptyDataError:
+            pass
+    raise pd.error.EmptyDataError(f"Tried {retries} times to read file {filepath}")
+
 def worker_function(alignment_handler):
     """Run one taxa pair on a worker."""
     # we want to wait for execution to see if this worker is actually being used
@@ -51,7 +60,12 @@ def worker_function(alignment_handler):
 
     logger.info(f"recieved pair {alignment_handler.pair_indexes}")
     
-    with EmissionsTracker(project_name=f"s1.4_{alignment_handler.pair_indexes}", output_dir='./data/taxa_pairs/protein_alignment/') as tracker:
+    with OfflineEmissionsTracker(
+        project_name=f"s1.4_{alignment_handler.pair_indexes}",
+        output_dir='./data/taxa_pairs/protein_alignment/',
+        country_iso_code='USA',
+        region='Washington'
+    ) as tracker:
         out_dic = alignment_handler.run()
     t1=time.time()
     logger.info(f"Completed pair {alignment_handler.pair_indexes}. Took {(t1-t0)/60}m")
@@ -64,7 +78,7 @@ if __name__ == '__main__':
     with open("./params.yaml", "r") as stream:
         params = yaml_load(stream)['get_protein_blast_scores']
     if params['restart']:
-        logger = learn2therm.utils.start_logger_if_necessary("", LOGFILE, logging.INFO, filemode='w')
+        logger = learn2therm.utils.start_logger_if_necessary("", LOGFILE, LOGLEVEL, filemode='w')
         shutil.rmtree('./logs/s1.4_get_protein_blast_scores_workers/', ignore_errors=True, onerror=None)
         os.mkdir('./logs/s1.4_get_protein_blast_scores_workers/')
     else:
@@ -133,13 +147,13 @@ if __name__ == '__main__':
             for i, future in enumerate(futures):
                 if (i+1) % CHECKPOINT_EVERY == 0:
                     # compute metrics
-                    results = pd.read_csv(OUTPUT_DIR+'/completion_state.metadat', index_col=0)
+                    results = try_again_read_csv(OUTPUT_DIR+'/completion_state.metadat', index_col=0)
                     metrics = {}
                     metrics['perc_protein_pairwise'] = float((results['hits']/results['pw_space']).mean())
                     metrics['hits'] = float(results['hits'].sum())
 
                     # get the carbon cost
-                    co2 = pd.read_csv('./data/taxa_pairs/protein_alignment/emissions.csv')['emissions']
+                    co2 = try_again_read_csv('./data/taxa_pairs/protein_alignment/emissions.csv')['emissions']
                     metrics['co2'] = float(co2.sum())
                     with open('./data/metrics/s1.4_metrics.yaml', "w") as stream:
                         yaml_dump(metrics, stream)
@@ -149,13 +163,13 @@ if __name__ == '__main__':
     logger.info(f'Completed all tasks, took {(t1-t0)/60} min')
     
     # compute metrics
-    results = pd.read_csv(OUTPUT_DIR+'/completion_state.metadat', index_col=0)
+    results = try_again_read_csv(OUTPUT_DIR+'/completion_state.metadat', index_col=0)
     metrics = {}
     metrics['perc_protein_pairwise'] = float((results['hits']/results['pw_space']).mean())
     metrics['hits'] = float(results['hits'].sum())
             
     # get the carbon cost
-    co2 = pd.read_csv('./logs/s1.4_get_protein_blast_scores_workers/emissions.csv')['emissions']
+    co2 = try_again_read_csv('./logs/s1.4_get_protein_blast_scores_workers/emissions.csv')['emissions']
     metrics['co2'] = float(co2.sum())
     with open('./data/metrics/s1.4_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)
