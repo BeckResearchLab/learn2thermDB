@@ -44,6 +44,7 @@ def try_again_read_csv(filepath: str, retries: int = 5, **kwargs):
             return pd.read_csv(filepath, **kwargs)
         except pd.error.EmptyDataError:
             time.sleep(1)
+            i += 1
     raise pd.error.EmptyDataError(f"Tried {retries} times to read file {filepath}")
 
 def worker_function(alignment_handler):
