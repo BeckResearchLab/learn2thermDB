@@ -35,7 +35,7 @@ LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 PROTEIN_SEQ_DIR = './data/taxa/proteins/'
 OUTPUT_DIR = './data/taxa_pairs/protein_alignment/'
 WORKER_WAKE_UP_TIME = 25 # this is to ensure that if a worker that is about to be shut down due to previous task completetion doesn't actually start running
-CHECKPOINT_EVERY = 1000
+CHECKPOINT_EVERY = 500
 
 def try_again_read_csv(filepath: str, retries: int = 5, **kwargs):
     i = 0
@@ -63,7 +63,7 @@ def worker_function(alignment_handler):
     
     with OfflineEmissionsTracker(
         project_name=f"s1.4_{alignment_handler.pair_indexes}",
-        output_dir='./data/taxa_pairs/protein_alignment/',
+        output_dir='./logs/',
         country_iso_code='USA',
         region='Washington'
     ) as tracker:
@@ -152,10 +152,7 @@ if __name__ == '__main__':
                     metrics = {}
                     metrics['perc_protein_pairwise'] = float((results['hits']/results['pw_space']).mean())
                     metrics['hits'] = float(results['hits'].sum())
-
-                    # get the carbon cost
-                    co2 = try_again_read_csv('./data/taxa_pairs/protein_alignment/emissions.csv')['emissions']
-                    metrics['co2'] = float(co2.sum())
+                    
                     with open('./data/metrics/s1.4_metrics.yaml', "w") as stream:
                         yaml_dump(metrics, stream)
                     make_checkpoint()
@@ -168,10 +165,6 @@ if __name__ == '__main__':
     metrics = {}
     metrics['perc_protein_pairwise'] = float((results['hits']/results['pw_space']).mean())
     metrics['hits'] = float(results['hits'].sum())
-            
-    # get the carbon cost
-    co2 = try_again_read_csv('./logs/s1.4_get_protein_blast_scores_workers/emissions.csv')['emissions']
-    metrics['co2'] = float(co2.sum())
     with open('./data/metrics/s1.4_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)
 
