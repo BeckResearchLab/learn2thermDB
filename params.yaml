@@ -39,10 +39,11 @@ label_all_pairs:
       greater: true
 get_protein_blast_scores:
   dask_cluster_class: 'SLURMCluster'
-  max_protein_length: 250            # only consider proteins with length less than number
+  max_protein_length: 400            # only consider proteins with length less than number
   method: 'diamond'
-  n_jobs: 16
+  n_jobs: 36
   restart: true
+  checkpoint: null                   # if int, dvc will checkpoint every N, currently is broken because dask continues to run workers while checkpointing
   method_blast_params:
     num_threads: 6                        # number of cpus to run in parallel         
     word_size: 3                    # size of words for initial exact matching of nucleotides

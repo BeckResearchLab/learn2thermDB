@@ -35,7 +35,6 @@ LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 PROTEIN_SEQ_DIR = './data/taxa/proteins/'
 OUTPUT_DIR = './data/taxa_pairs/protein_alignment/'
 WORKER_WAKE_UP_TIME = 25 # this is to ensure that if a worker that is about to be shut down due to previous task completetion doesn't actually start running
-CHECKPOINT_EVERY = 500
 
 def try_again_read_csv(filepath: str, retries: int = 5, **kwargs):
     i = 0
@@ -146,7 +145,7 @@ if __name__ == '__main__':
             restart=params['restart']
         ) as futures:
             for i, future in enumerate(futures):
-                if (i+1) % CHECKPOINT_EVERY == 0:
+                if params['checkpoint'] and (i+1) % params['checkpoint'] == 0:
                     # compute metrics
                     results = try_again_read_csv(OUTPUT_DIR+'/completion_state.metadat', index_col=0)
                     metrics = {}
