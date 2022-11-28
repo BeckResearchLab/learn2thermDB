@@ -122,7 +122,7 @@ if __name__ == '__main__':
     # this option is to save compute when a task would normally start on a worker that just
     # finished a job
     if params['n_jobs'] > 3:
-        minimum_jobs = 2
+        minimum_jobs = params['n_jobs'] - 1
     else:
         minimum_jobs = 1
     cluster.adapt(minimum=minimum_jobs, maximum=params['n_jobs'], target_duration='5s')
