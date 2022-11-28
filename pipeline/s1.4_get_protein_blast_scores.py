@@ -35,7 +35,7 @@ LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 PROTEIN_SEQ_DIR = './data/taxa/proteins/'
 OUTPUT_DIR = './data/taxa_pairs/protein_alignment/'
 WORKER_WAKE_UP_TIME = 25 # this is to ensure that if a worker that is about to be shut down due to previous task completetion doesn't actually start running
-CHECKPOINT_EVERY = 20
+CHECKPOINT_EVERY = 1000
 
 def try_again_read_csv(filepath: str, retries: int = 5, **kwargs):
     i = 0
@@ -43,7 +43,7 @@ def try_again_read_csv(filepath: str, retries: int = 5, **kwargs):
         try:
             return pd.read_csv(filepath, **kwargs)
         except pd.error.EmptyDataError:
-            pass
+            time.sleep(1)
     raise pd.error.EmptyDataError(f"Tried {retries} times to read file {filepath}")
 
 def worker_function(alignment_handler):
