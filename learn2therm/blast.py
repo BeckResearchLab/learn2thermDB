@@ -681,7 +681,7 @@ class AlignmentClusterState:
             # now cleanup the incoming pairs to only the ones that are not done
             new_pairs = []
             for pair in pairs:
-                if '-'.join(pair) in completed:
+                if '-'.join([str(pair[0]), str(pair[1])]) in completed:
                     pass
                 else:
                     new_pairs.append(pair)

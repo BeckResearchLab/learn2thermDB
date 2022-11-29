@@ -64,7 +64,7 @@ def worker_function(alignment_handler, wakeup=None):
     
     with OfflineEmissionsTracker(
         project_name=f"s1.4_{alignment_handler.pair_indexes}",
-        output_dir='./logs/',
+        output_dir=OUTPUT_DIR,
         country_iso_code='USA',
         region='Washington'
     ) as tracker:
