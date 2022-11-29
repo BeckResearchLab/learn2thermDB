@@ -10,7 +10,7 @@ from Bio.Blast import NCBIXML
 import pandas as pd
 from yaml import dump as yaml_dump
 from yaml import safe_load as yaml_load
-from code_carbon import OfflineEmissionsTracker
+from codecarbon import OfflineEmissionsTracker
 
 import learn2therm.blast
 import learn2therm.io
