@@ -172,7 +172,7 @@ if __name__ == '__main__':
             metrics=params['blast_metrics'],
             alignment_params=aligner_params,
             restart=params['restart'] and not params['primary_sweep'],
-            killer_workers=False
+            killer_workers=True
         ) as futures:
             for i, future in enumerate(futures):
                 if params['checkpoint'] and (i+1) % params['checkpoint'] == 0:
