@@ -665,6 +665,7 @@ class AlignmentClusterState:
             existing_files = os.listdir(alignment_score_deposit)
             existing_files = [f for f in existing_files if f.startswith('taxa')]
             cleanup_counter = 0
+            
             for filename in existing_files:
                 pair = filename.split('_')[-1].split('.')[0]
                 if pair in completed:
@@ -676,6 +677,17 @@ class AlignmentClusterState:
                     cleanup_counter += 1
 
             logger.info(f"Found {len(completed)} pairs already complete. Cleaned up {cleanup_counter} erroneous files.")
+            
+            # now cleanup the incoming pairs to only the ones that are not done
+            new_pairs = []
+            for pair in pairs:
+                if '-'.join(pair) in completed:
+                    pass
+                else:
+                    new_pairs.append(pair)
+
+            logger.info(f"Trying again for {len(new_pairs)} pairs.")
+            pairs = new_pairs
             
         # create aligners and send out the job 
         aligners = [aligner_class(
