@@ -6,6 +6,7 @@ import fcntl
 import shutil
 
 from joblib import delayed, Parallel
+from codecarbon import OfflineEmissionsTracker
 import pandas as pd
 import numpy as np
 from yaml import dump as yaml_dump
@@ -115,7 +116,13 @@ if __name__ == '__main__':
     os.makedirs(OUTPUT_DIR_PROTEINS)
 
     # get the info in parallel
-    outputs = Parallel(n_jobs=params['n_jobs'])(delayed(extract_proteins_from_one)(taxa_index, file) for taxa_index, file in taxa.items())
+    with OfflineEmissionsTracker(
+        project_name=f"s1.1",
+        output_dir='./logs/',
+        country_iso_code='USA',
+        region='Washington'
+    ) as tracker:
+        outputs = Parallel(n_jobs=params['n_jobs'])(delayed(extract_proteins_from_one)(taxa_index, file) for taxa_index, file in taxa.items())
 
     # process into two files, one for proteins, one for 16s rRNA
     proteins_counts, has_16srRNA = list(zip(*outputs))
