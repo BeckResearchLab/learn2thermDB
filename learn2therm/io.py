@@ -65,11 +65,9 @@ def csv_id_seq_iterator(csv_filepath: str, seq_col: str, index_col: str=None, id
             # get column positions to figure out which full col to load into memory
             columns = pd.read_csv(csv_filepath, nrows=1, **kwargs).columns
             index_col_position = np.argwhere(columns==index_col)[0][0]
-            print(index_col_position)
             # load only that column
             row_indexes = pd.read_csv(csv_filepath, usecols=[index_col_position], **kwargs)
             row_indexes = pd.Series(row_indexes.set_index(index_col, drop=True).index)
-            print(row_indexes)
         else:
             row_indexes = pd.read_csv(csv_filepath, usecols=[0]).index # just take the first column becuase we only need the indexes
             row_indexes = pd.Series(index=row_indexes, data=row_indexes)

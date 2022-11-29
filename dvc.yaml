@@ -9,6 +9,9 @@ stages:
     cmd: python pipeline/s0.1_get_bacdive_ogt.py
     deps:
     - pipeline/s0.1_get_bacdive_ogt.py
+    - ./learn2therm/bacdive.py
+    - ./learn2therm/io.py
+    - ./learn2therm/utils.py
     - ./data/refseq
     outs:
     - ./data/taxa/taxa_info_and_ogt.csv
@@ -22,6 +25,7 @@ stages:
     cmd: python pipeline/s1.0_label_taxa.py
     deps:
     - pipeline/s1.0_label_taxa.py
+    - ./learn2therm/utils.py
     - ./data/taxa/taxa_info_and_ogt.csv
     params:
     - label_taxa.ogt_threshold
@@ -38,6 +42,8 @@ stages:
     cmd: python pipeline/s1.1_get_protein_sequences.py
     deps:
     - pipeline/s1.1_get_protein_sequences.py
+    - ./learn2therm/io.py
+    - ./learn2therm/utils.py
     - ./data/refseq
     - ./data/taxa/taxa_info_and_ogt.csv
     outs:
@@ -56,12 +62,15 @@ stages:
     cmd: python pipeline/s1.2_get_16s_blast_scores.py
     deps:
     - ./pipeline/s1.2_get_16s_blast_scores.py
+    - ./learn2therm/io.py
+    - ./learn2therm/utils.py
+    - ./learn2therm/blast.py
     - ./data/taxa/labels.csv
     - ./data/taxa/16s_rRNA.csv
     outs:
     - ./data/taxa_pairs/pairwise_16s_blast.csv
     params:
-    - get_16s_blast_scores.n_jobs
+    - get_16s_blast_scores.num_threads
     - get_16s_blast_scores.word_size
     - get_16s_blast_scores.gapopen_penalty
     - get_16s_blast_scores.gapextend_penalty
@@ -77,6 +86,7 @@ stages:
     cmd: python pipeline/s1.3_label_all_pairs.py
     deps:
     - ./pipeline/s1.3_label_all_pairs.py
+    - ./learn2therm/utils.py
     - ./data/taxa_pairs/pairwise_16s_blast.csv
     outs:
     - ./data/taxa_pairs/pair_labels.csv
@@ -89,10 +99,14 @@ stages:
     cmd: python pipeline/s1.4_get_protein_blast_scores.py
     deps:
     - ./pipeline/s1.4_get_protein_blast_scores.py
+    - ./learn2therm/blast.py
+    - ./learn2therm/utils.py
     - ./data/taxa_pairs/pair_labels.csv
     - ./data/taxa/proteins
+    - ./data/taxa_pairs/pairwise_16s_blast.csv
     outs:
-    - ./data/taxa_pairs/pairwise_protein_blast.csv
+    - ./data/taxa_pairs/protein_alignment/:
+        checkpoint: true
     params:
     - get_protein_blast_scores.dask_cluster_class
     - get_protein_blast_scores.max_protein_length
@@ -101,6 +115,8 @@ stages:
     - get_protein_blast_scores.method_diamond_params
     - get_protein_blast_scores.blast_metrics
     - get_protein_blast_scores.restart
+    - get_protein_blast_scores.n_jobs
     metrics:
     - ./data/metrics/s1.4_metrics.yaml:
         cache: false
+        persist: true
