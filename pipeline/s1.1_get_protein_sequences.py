@@ -118,7 +118,7 @@ if __name__ == '__main__':
     # get the info in parallel
     with OfflineEmissionsTracker(
         project_name=f"s1.1",
-        output_dir='./logs/',
+        output_dir=OUTPUT_DIR_PROTEINS,
         country_iso_code='USA',
         region='Washington'
     ) as tracker:

@@ -90,7 +90,8 @@ if __name__ == '__main__':
     
     with OfflineEmissionsTracker(
         project_name=f"s1.2",
-        output_dir='./logs/',
+        output_dir='./data/taxa_pairs/',
+        output_file='16s_align_emissions.csv',
         country_iso_code='USA',
         region='Washington'
     ) as tracker:
