@@ -69,6 +69,7 @@ stages:
     - ./data/taxa/16s_rRNA.csv
     outs:
     - ./data/taxa_pairs/pairwise_16s_blast.csv
+    - ./data/taxa_pairs/16s_align_emissions.csv
     params:
     - get_16s_blast_scores.num_threads
     - get_16s_blast_scores.word_size
