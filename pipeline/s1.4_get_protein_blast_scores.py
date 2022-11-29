@@ -37,6 +37,7 @@ OUTPUT_DIR = './data/taxa_pairs/protein_alignment/'
 WORKER_WAKE_UP_TIME = 25 # this is to ensure that if a worker that is about to be shut down due to previous task completetion doesn't actually start running
 
 def try_again_read_csv(filepath: str, retries: int = 5, **kwargs):
+    """Meant to circumvent weird error where pandas interacts with code_carbon"""
     i = 0
     while i < retries:
         try:
@@ -46,11 +47,12 @@ def try_again_read_csv(filepath: str, retries: int = 5, **kwargs):
             i += 1
     raise pd.error.EmptyDataError(f"Tried {retries} times to read file {filepath}")
 
-def worker_function(alignment_handler):
+def worker_function(alignment_handler, wakeup=None):
     """Run one taxa pair on a worker."""
     # we want to wait for execution to see if this worker is actually being used
     # or if it is in the process of being killed
-    time.sleep(WORKER_WAKE_UP_TIME)
+    if wakeup is not None:
+        time.sleep(wakeup)
     # begin execution
     t0=time.time()
     worker_logfile = f'./logs/s1.4_get_protein_blast_scores_workers/pair_{alignment_handler.pair_indexes}.log'
@@ -72,8 +74,6 @@ def worker_function(alignment_handler):
     return out_dic
 
 if __name__ == '__main__':
-    # clear logs
-    
     # load params
     with open("./params.yaml", "r") as stream:
         params = yaml_load(stream)['get_protein_blast_scores']
@@ -130,19 +130,49 @@ if __name__ == '__main__':
     
     # create plugin to use for worker killing and start the client
     with distributed.Client(cluster) as client:
-        # run the job
-        results = []
-        with learn2therm.blast.AlignmentClusterFutures(
+        if params['primary_sweep']:
+            # run one without killer workers, faster option for 
+            # fast tasks
+            logger.info(f"Running primary fast sweep")
+            with learn2therm.blast.AlignmentClusterState(
+                pairs=pairs,
+                client=client,
+                worker_function=lambda a: worker_function(a, None),
+                max_seq_len=params['max_protein_length'],
+                protein_deposit=PROTEIN_SEQ_DIR,
+                aligner_class=Aligner,
+                alignment_score_deposit=OUTPUT_DIR,
+                metrics=params['blast_metrics'],
+                alignment_params=aligner_params,
+                restart=params['restart'],
+                killer_workers=False
+            ) as futures:
+                for i, future in enumerate(futures):
+                    if params['checkpoint'] and (i+1) % params['checkpoint'] == 0:
+                        # compute metrics
+                        results = try_again_read_csv(OUTPUT_DIR+'/completion_state.metadat', index_col=0)
+                        metrics = {}
+                        metrics['perc_protein_pairwise'] = float((results['hits']/results['pw_space']).mean())
+                        metrics['hits'] = float(results['hits'].sum())
+
+                        with open('./data/metrics/s1.4_metrics.yaml', "w") as stream:
+                            yaml_dump(metrics, stream)
+                        make_checkpoint()
+
+        # now run one with killer workers
+        logger.info(f"Running safe sweep")
+        with learn2therm.blast.AlignmentClusterState(
             pairs=pairs,
             client=client,
-            worker_function=worker_function,
+            worker_function=lambda a: worker_function(a, WORKER_WAKE_UP_TIME),
             max_seq_len=params['max_protein_length'],
             protein_deposit=PROTEIN_SEQ_DIR,
             aligner_class=Aligner,
             alignment_score_deposit=OUTPUT_DIR,
             metrics=params['blast_metrics'],
             alignment_params=aligner_params,
-            restart=params['restart']
+            restart=params['restart'] and not params['primary_sweep'],
+            killer_workers=False
         ) as futures:
             for i, future in enumerate(futures):
                 if params['checkpoint'] and (i+1) % params['checkpoint'] == 0:

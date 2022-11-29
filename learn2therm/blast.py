@@ -576,7 +576,7 @@ class DiamondAlignmentHandler(AlignmentHandler):
             raise ValueError(f"Diamond alignment failed, check logs.")
         return
 
-class AlignmentClusterFutures:
+class AlignmentClusterState:
     """Prepares and tracks the state of execution for a set of taxa pair alignments.
     
     This class exists to ensure that the correct work is skipped in the case that 
@@ -588,8 +588,18 @@ class AlignmentClusterFutures:
     completed in worker time.
     
     Additionally, compute is wasted if a taxa pair starts on a worker that does not have enough
-    time left to complete the job. This class ensures each task gets its own worker, which shuts
+    time left to complete the job. This class can ensure each task gets its own worker, which shuts
     down after completion.
+    
+    Two primary modes should be used:
+    killer_workers = False
+        - use when tasks are fast. In this case, workers are not closed after each task
+        - some percentage of tasks will get cutoff even if they are quick, and subsequent
+          handlers will skip them
+    killer_workers = True
+        - always use when tasks are long
+        - when tasks are short, this adds non negligable overhead, so instead should be used
+          as final sweep
     
     Parameters
     ----------
@@ -610,8 +620,10 @@ class AlignmentClusterFutures:
         parameters to pass to alignment method
     metrics: dict
         metric names to compute
-    restart: bool
+    restart: bool, default True
         whether to completely restart all work regardless of execution state
+    killer_workers: bool, default True
+        Whether or not to kill worker after each task
     """
     def __init__(
         self,
@@ -624,8 +636,11 @@ class AlignmentClusterFutures:
         worker_function: callable = lambda handler: handler.run(),
         alignment_params: dict = {},
         metrics: list = ['scaled_local_symmetric_percent_id'],
-        restart: bool = True
+        restart: bool = True,
+        killer_workers: bool = True
     ):
+        self.killer_workers = killer_workers
+
         if not alignment_score_deposit.endswith('/'):
             alignment_score_deposit = alignment_score_deposit + '/'
         self.alignment_score_deposit = alignment_score_deposit
@@ -641,7 +656,8 @@ class AlignmentClusterFutures:
         # otherwise load the metadata
         else:
             self.metadata=pd.read_csv(alignment_score_deposit+'completion_state.metadat', index_col=0)
-            completed = self.metadata['pair'].values
+            # get all pairs what we successfully got a hit for
+            completed = self.metadata[self.metadata['hits'] > 0]['pair'].values
             logger.info(f"Completed pairs: {completed}")
 
             # check existing files and clean the ones that were not completed
@@ -675,15 +691,16 @@ class AlignmentClusterFutures:
         self.client = client
         
         # these futures will record metadata as they complete, as well as terminated
-        # workers that just completed it
+        # workers that just completed it if that option is specified
         def futures_modified(futures):
             for future in futures:
                 result = future.result()
                 logger.info(f"Completed pair: {result}")
-                who_has = client.who_has(future)
-                closing = list(list(who_has.values())[0])
-                client.retire_workers(closing)
-                logger.debug(f"Retiring worker at {closing} that completed a task.")
+                if self.killer_workers:
+                    who_has = client.who_has(future)
+                    closing = list(list(who_has.values())[0])
+                    client.retire_workers(closing)
+                    logger.info(f"Retiring worker at {closing} that completed a task.")
                 
                 # record that we completed one
                 if self.metadata is None:

@@ -117,6 +117,7 @@ stages:
     - get_protein_blast_scores.restart
     - get_protein_blast_scores.n_jobs
     - get_protein_blast_scores.checkpoint
+    - get_protein_blast_scores.primary_sweep
     metrics:
     - ./data/metrics/s1.4_metrics.yaml:
         cache: false
