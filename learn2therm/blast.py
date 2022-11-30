@@ -18,6 +18,7 @@ import pandas as pd
 from Bio.Blast.Applications import NcbimakeblastdbCommandline, NcbiblastpCommandline
 from Bio.Blast import NCBIXML
 
+from codecarbon import OfflineEmissionsTracker
 import dask_jobqueue
 from distributed import Client
 import distributed
@@ -394,6 +395,15 @@ class AlignmentHandler:
     def run(self):
         """Run the whole alignment workflow for this taxa pair."""
         time0 = time.time()
+        # start carbon tracking
+        tracker = OfflineEmissionsTracker( 
+            project_name=f"align_{self.pair_indexes}",
+            output_dir=self.alignment_score_deposit,
+            country_iso_code='USA',
+            region='Washington'
+        )
+        tracker.start()
+        
         # check and prepare the state
         logger.debug(f"Checking and preparing file state for {self.pair_indexes}")
         self._prepare_input_output_state()
@@ -423,7 +433,8 @@ class AlignmentHandler:
                 # if we start again we will also time out, so instead
                 # cut our losses for that pair
                 hits = 0
-            return {'pair': self.pair_indexes, 'pw_space': pairwise_space, 'hits':hits}
+            emissions = tracker.stop()
+            return {'pair': self.pair_indexes, 'pw_space': pairwise_space, 'hits':hits, 'emissions': emissions}
 
         # create the iterators over the actual protein sequences
         # these only exist so that we can load a small chunk of sequences into memory
@@ -477,8 +488,8 @@ class AlignmentHandler:
             to_deposit.to_csv(self.output_path)
             time2 = time.time()
             logger.debug(f"Computing metrics for {self.pair_indexes} took {(time2-time1)/60}m")  
-      
-        return {'pair': self.pair_indexes, 'pw_space': pairwise_space, 'hits': hits, 'execution_time': (time2-time0)/60}
+        emissions = tracker.stop()
+        return {'pair': self.pair_indexes, 'pw_space': pairwise_space, 'hits': hits, 'execution_time': (time2-time0)/60, 'emissions': emissions}
 
 class BlastAlignmentHandler(AlignmentHandler):
     """Alignment using blastp

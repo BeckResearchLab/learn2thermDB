@@ -62,13 +62,7 @@ def worker_function(alignment_handler, wakeup=None):
 
     logger.info(f"recieved pair {alignment_handler.pair_indexes}")
     
-    with OfflineEmissionsTracker(
-        project_name=f"s1.4_{alignment_handler.pair_indexes}",
-        output_dir=OUTPUT_DIR,
-        country_iso_code='USA',
-        region='Washington'
-    ) as tracker:
-        out_dic = alignment_handler.run()
+    out_dic = alignment_handler.run()
     t1=time.time()
     logger.info(f"Completed pair {alignment_handler.pair_indexes}. Took {(t1-t0)/60}m")
     return out_dic
@@ -95,7 +89,7 @@ if __name__ == '__main__':
     pairs = pair_indexes[pairs]
     
     # list out the indexes to run on
-    pairs = [(row['thermo_index'], row['meso_index']) for _, row in pairs.iterrows()]
+    pairs = [(row['thermo_index'], row['meso_index']) for _, row in pairs.iterrows()][:100]
 
     # create aligners
     alignment_method = params['method']
@@ -148,16 +142,7 @@ if __name__ == '__main__':
                 killer_workers=False
             ) as futures:
                 for i, future in enumerate(futures):
-                    if params['checkpoint'] and (i+1) % params['checkpoint'] == 0:
-                        # compute metrics
-                        results = try_again_read_csv(OUTPUT_DIR+'/completion_state.metadat', index_col=0)
-                        metrics = {}
-                        metrics['perc_protein_pairwise'] = float((results['hits']/results['pw_space']).mean())
-                        metrics['hits'] = float(results['hits'].sum())
-
-                        with open('./data/metrics/s1.4_metrics.yaml', "w") as stream:
-                            yaml_dump(metrics, stream)
-                        make_checkpoint()
+                    pass
 
         # now run one with killer workers
         logger.info(f"Running safe sweep")
@@ -175,23 +160,17 @@ if __name__ == '__main__':
             killer_workers=True
         ) as futures:
             for i, future in enumerate(futures):
-                if params['checkpoint'] and (i+1) % params['checkpoint'] == 0:
-                    # compute metrics
-                    results = try_again_read_csv(OUTPUT_DIR+'/completion_state.metadat', index_col=0)
-                    metrics = {}
-                    metrics['perc_protein_pairwise'] = float((results['hits']/results['pw_space']).mean())
-                    metrics['hits'] = float(results['hits'].sum())
-                    
-                    with open('./data/metrics/s1.4_metrics.yaml', "w") as stream:
-                        yaml_dump(metrics, stream)
-                    make_checkpoint()
+                pass
             
     t1 = time.time()
     logger.info(f'Completed all tasks, took {(t1-t0)/60} min')
     
     # compute metrics
     results = try_again_read_csv(OUTPUT_DIR+'/completion_state.metadat', index_col=0)
+    emissions = float(results['emissions'].sum())
+    results = results[results['hits'] > 0]
     metrics = {}
+    metrics['protein_align_emissions'] = emissions
     metrics['perc_protein_pairwise'] = float((results['hits']/results['pw_space']).mean())
     metrics['hits'] = float(results['hits'].sum())
     with open('./data/metrics/s1.4_metrics.yaml', "w") as stream:
