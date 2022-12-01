@@ -89,7 +89,7 @@ if __name__ == '__main__':
     pairs = pair_indexes[pairs]
     
     # list out the indexes to run on
-    pairs = [(row['thermo_index'], row['meso_index']) for _, row in pairs.iterrows()][:100]
+    pairs = [(row['thermo_index'], row['meso_index']) for _, row in pairs.iterrows()]
 
     # create aligners
     alignment_method = params['method']
