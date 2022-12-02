@@ -63,6 +63,4 @@ get_protein_blast_scores:
     matrix: 'BLOSUM62'
   blast_metrics:
     - local_E_value
-    - scaled_local_query_percent_id
-    - scaled_local_symmetric_percent_id
-    - local_gap_compressed_percent_id
+    - local_average_coverage
