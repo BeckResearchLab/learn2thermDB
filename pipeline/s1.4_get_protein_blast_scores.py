@@ -35,22 +35,24 @@ LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 PROTEIN_SEQ_DIR = './data/taxa/proteins/'
 OUTPUT_DIR = './data/taxa_pairs/protein_alignment/'
 WORKER_WAKE_UP_TIME = 25 # this is to ensure that if a worker that is about to be shut down due to previous task completetion doesn't actually start running
-CHECKPOINT_EVERY = 20
 
 def try_again_read_csv(filepath: str, retries: int = 5, **kwargs):
+    """Meant to circumvent weird error where pandas interacts with code_carbon"""
     i = 0
     while i < retries:
         try:
             return pd.read_csv(filepath, **kwargs)
         except pd.error.EmptyDataError:
-            pass
+            time.sleep(1)
+            i += 1
     raise pd.error.EmptyDataError(f"Tried {retries} times to read file {filepath}")
 
-def worker_function(alignment_handler):
+def worker_function(alignment_handler, wakeup=None):
     """Run one taxa pair on a worker."""
     # we want to wait for execution to see if this worker is actually being used
     # or if it is in the process of being killed
-    time.sleep(WORKER_WAKE_UP_TIME)
+    if wakeup is not None:
+        time.sleep(wakeup)
     # begin execution
     t0=time.time()
     worker_logfile = f'./logs/s1.4_get_protein_blast_scores_workers/pair_{alignment_handler.pair_indexes}.log'
@@ -60,20 +62,12 @@ def worker_function(alignment_handler):
 
     logger.info(f"recieved pair {alignment_handler.pair_indexes}")
     
-    with OfflineEmissionsTracker(
-        project_name=f"s1.4_{alignment_handler.pair_indexes}",
-        output_dir='./data/taxa_pairs/protein_alignment/',
-        country_iso_code='USA',
-        region='Washington'
-    ) as tracker:
-        out_dic = alignment_handler.run()
+    out_dic = alignment_handler.run()
     t1=time.time()
     logger.info(f"Completed pair {alignment_handler.pair_indexes}. Took {(t1-t0)/60}m")
     return out_dic
 
 if __name__ == '__main__':
-    # clear logs
-    
     # load params
     with open("./params.yaml", "r") as stream:
         params = yaml_load(stream)['get_protein_blast_scores']
@@ -121,7 +115,7 @@ if __name__ == '__main__':
     # this option is to save compute when a task would normally start on a worker that just
     # finished a job
     if params['n_jobs'] > 3:
-        minimum_jobs = 2
+        minimum_jobs = params['n_jobs'] - 1
     else:
         minimum_jobs = 1
     cluster.adapt(minimum=minimum_jobs, maximum=params['n_jobs'], target_duration='5s')
@@ -130,47 +124,55 @@ if __name__ == '__main__':
     
     # create plugin to use for worker killing and start the client
     with distributed.Client(cluster) as client:
-        # run the job
-        results = []
-        with learn2therm.blast.AlignmentClusterFutures(
+        if params['primary_sweep']:
+            # run one without killer workers, faster option for 
+            # fast tasks
+            logger.info(f"Running primary fast sweep")
+            with learn2therm.blast.AlignmentClusterState(
+                pairs=pairs,
+                client=client,
+                worker_function=lambda a: worker_function(a, None),
+                max_seq_len=params['max_protein_length'],
+                protein_deposit=PROTEIN_SEQ_DIR,
+                aligner_class=Aligner,
+                alignment_score_deposit=OUTPUT_DIR,
+                metrics=params['blast_metrics'],
+                alignment_params=aligner_params,
+                restart=params['restart'],
+                killer_workers=False
+            ) as futures:
+                for i, future in enumerate(futures):
+                    pass
+
+        # now run one with killer workers
+        logger.info(f"Running safe sweep")
+        with learn2therm.blast.AlignmentClusterState(
             pairs=pairs,
             client=client,
-            worker_function=worker_function,
+            worker_function=lambda a: worker_function(a, WORKER_WAKE_UP_TIME),
             max_seq_len=params['max_protein_length'],
             protein_deposit=PROTEIN_SEQ_DIR,
             aligner_class=Aligner,
             alignment_score_deposit=OUTPUT_DIR,
             metrics=params['blast_metrics'],
             alignment_params=aligner_params,
-            restart=params['restart']
+            restart=params['restart'] and not params['primary_sweep'],
+            killer_workers=True
         ) as futures:
             for i, future in enumerate(futures):
-                if (i+1) % CHECKPOINT_EVERY == 0:
-                    # compute metrics
-                    results = try_again_read_csv(OUTPUT_DIR+'/completion_state.metadat', index_col=0)
-                    metrics = {}
-                    metrics['perc_protein_pairwise'] = float((results['hits']/results['pw_space']).mean())
-                    metrics['hits'] = float(results['hits'].sum())
-
-                    # get the carbon cost
-                    co2 = try_again_read_csv('./data/taxa_pairs/protein_alignment/emissions.csv')['emissions']
-                    metrics['co2'] = float(co2.sum())
-                    with open('./data/metrics/s1.4_metrics.yaml', "w") as stream:
-                        yaml_dump(metrics, stream)
-                    make_checkpoint()
+                pass
             
     t1 = time.time()
     logger.info(f'Completed all tasks, took {(t1-t0)/60} min')
     
     # compute metrics
     results = try_again_read_csv(OUTPUT_DIR+'/completion_state.metadat', index_col=0)
+    emissions = float(results['emissions'].sum())
+    results = results[results['hits'] > 0]
     metrics = {}
+    metrics['protein_align_emissions'] = emissions
     metrics['perc_protein_pairwise'] = float((results['hits']/results['pw_space']).mean())
     metrics['hits'] = float(results['hits'].sum())
-            
-    # get the carbon cost
-    co2 = try_again_read_csv('./logs/s1.4_get_protein_blast_scores_workers/emissions.csv')['emissions']
-    metrics['co2'] = float(co2.sum())
     with open('./data/metrics/s1.4_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)
 

@@ -18,6 +18,7 @@ import pandas as pd
 from Bio.Blast.Applications import NcbimakeblastdbCommandline, NcbiblastpCommandline
 from Bio.Blast import NCBIXML
 
+from codecarbon import OfflineEmissionsTracker
 import dask_jobqueue
 from distributed import Client
 import distributed
@@ -394,6 +395,15 @@ class AlignmentHandler:
     def run(self):
         """Run the whole alignment workflow for this taxa pair."""
         time0 = time.time()
+        # start carbon tracking
+        tracker = OfflineEmissionsTracker( 
+            project_name=f"align_{self.pair_indexes}",
+            output_dir=self.alignment_score_deposit,
+            country_iso_code='USA',
+            region='Washington'
+        )
+        tracker.start()
+        
         # check and prepare the state
         logger.debug(f"Checking and preparing file state for {self.pair_indexes}")
         self._prepare_input_output_state()
@@ -423,7 +433,8 @@ class AlignmentHandler:
                 # if we start again we will also time out, so instead
                 # cut our losses for that pair
                 hits = 0
-            return {'pair': self.pair_indexes, 'pw_space': pairwise_space, 'hits':hits}
+            emissions = tracker.stop()
+            return {'pair': self.pair_indexes, 'pw_space': pairwise_space, 'hits':hits, 'emissions': emissions}
 
         # create the iterators over the actual protein sequences
         # these only exist so that we can load a small chunk of sequences into memory
@@ -477,8 +488,8 @@ class AlignmentHandler:
             to_deposit.to_csv(self.output_path)
             time2 = time.time()
             logger.debug(f"Computing metrics for {self.pair_indexes} took {(time2-time1)/60}m")  
-      
-        return {'pair': self.pair_indexes, 'pw_space': pairwise_space, 'hits': hits, 'execution_time': (time2-time0)/60}
+        emissions = tracker.stop()
+        return {'pair': self.pair_indexes, 'pw_space': pairwise_space, 'hits': hits, 'execution_time': (time2-time0)/60, 'emissions': emissions}
 
 class BlastAlignmentHandler(AlignmentHandler):
     """Alignment using blastp
@@ -576,7 +587,7 @@ class DiamondAlignmentHandler(AlignmentHandler):
             raise ValueError(f"Diamond alignment failed, check logs.")
         return
 
-class AlignmentClusterFutures:
+class AlignmentClusterState:
     """Prepares and tracks the state of execution for a set of taxa pair alignments.
     
     This class exists to ensure that the correct work is skipped in the case that 
@@ -588,8 +599,18 @@ class AlignmentClusterFutures:
     completed in worker time.
     
     Additionally, compute is wasted if a taxa pair starts on a worker that does not have enough
-    time left to complete the job. This class ensures each task gets its own worker, which shuts
+    time left to complete the job. This class can ensure each task gets its own worker, which shuts
     down after completion.
+    
+    Two primary modes should be used:
+    killer_workers = False
+        - use when tasks are fast. In this case, workers are not closed after each task
+        - some percentage of tasks will get cutoff even if they are quick, and subsequent
+          handlers will skip them
+    killer_workers = True
+        - always use when tasks are long
+        - when tasks are short, this adds non negligable overhead, so instead should be used
+          as final sweep
     
     Parameters
     ----------
@@ -610,8 +631,10 @@ class AlignmentClusterFutures:
         parameters to pass to alignment method
     metrics: dict
         metric names to compute
-    restart: bool
+    restart: bool, default True
         whether to completely restart all work regardless of execution state
+    killer_workers: bool, default True
+        Whether or not to kill worker after each task
     """
     def __init__(
         self,
@@ -624,8 +647,11 @@ class AlignmentClusterFutures:
         worker_function: callable = lambda handler: handler.run(),
         alignment_params: dict = {},
         metrics: list = ['scaled_local_symmetric_percent_id'],
-        restart: bool = True
+        restart: bool = True,
+        killer_workers: bool = True
     ):
+        self.killer_workers = killer_workers
+
         if not alignment_score_deposit.endswith('/'):
             alignment_score_deposit = alignment_score_deposit + '/'
         self.alignment_score_deposit = alignment_score_deposit
@@ -641,7 +667,8 @@ class AlignmentClusterFutures:
         # otherwise load the metadata
         else:
             self.metadata=pd.read_csv(alignment_score_deposit+'completion_state.metadat', index_col=0)
-            completed = self.metadata['pair'].values
+            # get all pairs what we successfully got a hit for
+            completed = self.metadata[self.metadata['hits'] > 0]['pair'].values
             logger.info(f"Completed pairs: {completed}")
 
             # check existing files and clean the ones that were not completed
@@ -649,6 +676,7 @@ class AlignmentClusterFutures:
             existing_files = os.listdir(alignment_score_deposit)
             existing_files = [f for f in existing_files if f.startswith('taxa')]
             cleanup_counter = 0
+            
             for filename in existing_files:
                 pair = filename.split('_')[-1].split('.')[0]
                 if pair in completed:
@@ -660,6 +688,17 @@ class AlignmentClusterFutures:
                     cleanup_counter += 1
 
             logger.info(f"Found {len(completed)} pairs already complete. Cleaned up {cleanup_counter} erroneous files.")
+            
+            # now cleanup the incoming pairs to only the ones that are not done
+            new_pairs = []
+            for pair in pairs:
+                if '-'.join([str(pair[0]), str(pair[1])]) in completed:
+                    pass
+                else:
+                    new_pairs.append(pair)
+
+            logger.info(f"Trying again for {len(new_pairs)} pairs.")
+            pairs = new_pairs
             
         # create aligners and send out the job 
         aligners = [aligner_class(
@@ -675,15 +714,16 @@ class AlignmentClusterFutures:
         self.client = client
         
         # these futures will record metadata as they complete, as well as terminated
-        # workers that just completed it
+        # workers that just completed it if that option is specified
         def futures_modified(futures):
             for future in futures:
                 result = future.result()
                 logger.info(f"Completed pair: {result}")
-                who_has = client.who_has(future)
-                closing = list(list(who_has.values())[0])
-                client.retire_workers(closing)
-                logger.debug(f"Retiring worker at {closing} that completed a task.")
+                if self.killer_workers:
+                    who_has = client.who_has(future)
+                    closing = list(list(who_has.values())[0])
+                    client.retire_workers(closing)
+                    logger.info(f"Retiring worker at {closing} that completed a task.")
                 
                 # record that we completed one
                 if self.metadata is None:

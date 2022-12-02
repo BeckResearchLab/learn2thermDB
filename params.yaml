@@ -9,13 +9,13 @@ get_bacdive_ogt:
 
 # S1 data preparation params
 get_protein_sequences:
-  n_jobs: 6                    # number of cores for parallel execution
+  n_jobs: 40                    # number of cores for parallel execution
   n_sample: null                 # number of "data" to sample down to for testing
 label_taxa:
   ogt_threshold: 40.0          # binary threshold to consider something as thermophilic
   ogt_determination_method: 'true ogt only'     # method of parsing raw bacdive outputs saved to csv
 get_16s_blast_scores:
-  num_threads: 6                        # number of cpus to run in parallel
+  num_threads: 40                        # number of cpus to run in parallel
   word_size: 28                    # size of words for initial exact matching of nucleotides
   gapopen_penalty: 2               # cost to open a gap
   gapextend_penalty: 1             # cost to extend gap
@@ -39,10 +39,12 @@ label_all_pairs:
       greater: true
 get_protein_blast_scores:
   dask_cluster_class: 'SLURMCluster'
-  max_protein_length: 250            # only consider proteins with length less than number
+  max_protein_length: 400            # only consider proteins with length less than number
   method: 'diamond'
-  n_jobs: 16
+  n_jobs: 48
   restart: true
+  checkpoint: null                   # if int, dvc will checkpoint every N, currently is broken because dask continues to run workers while checkpointing
+  primary_sweep: true               # run without worker closing to start, do this for fast aligner methods like diamond
   method_blast_params:
     num_threads: 6                        # number of cpus to run in parallel         
     word_size: 3                    # size of words for initial exact matching of nucleotides

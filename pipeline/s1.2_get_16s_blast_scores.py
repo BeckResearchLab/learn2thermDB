@@ -10,6 +10,7 @@ from Bio.Blast import NCBIXML
 import pandas as pd
 from yaml import dump as yaml_dump
 from yaml import safe_load as yaml_load
+from codecarbon import OfflineEmissionsTracker
 
 import learn2therm.blast
 import learn2therm.io
@@ -86,57 +87,65 @@ if __name__ == '__main__':
         thermophile_iterator = [next(thermophile_iterator) for i in range(params['n_sample'])]
         mesophile_iterator = [next(mesophile_iterator) for i in range(params['n_sample'])]
         logger.info(f"Downsample to each of {params['n_sample']} thermo and meso")
+    
+    with OfflineEmissionsTracker(
+        project_name=f"s1.2",
+        output_dir='./data/taxa_pairs/',
+        output_file='16s_align_emissions.csv',
+        country_iso_code='USA',
+        region='Washington'
+    ) as tracker:
+    
+        # this context manager creates temporary files for BLAST inputs and outputs, again to avoid OOM
+        with learn2therm.blast.BlastFiles(thermophile_iterator, mesophile_iterator, dbtype='nucl') as (query_fname, subject_fname, out_fname):
+            logger.info('Running blast...')
+            NcbiblastnCommandline(
+                query=query_fname,
+                db=subject_fname,
+                outfmt=5,
+                out=out_fname,
+                max_target_seqs=10000000, # very large so we do not throw out any pairs. will have to increase if there is more than this num of mesos
+                perc_identity=0.0, # no cutoff to lose data
+                evalue=10000000, # very large so we do not lose any hits
+                # the rest are tunable params
+                word_size=params['word_size'],
+                gapopen=params['gapopen_penalty'],
+                gapextend=params['gapextend_penalty'],
+                reward=params['reward'],
+                penalty=params['penalty'],
+                ungapped=params['ungapped'],
+                num_threads=params['num_threads']
+            )()
+            logger.info('Blast complete. Parsing and saving metrics.')
 
-    # this context manager creates temporary files for BLAST inputs and outputs, again to avoid OOM
-    with learn2therm.blast.BlastFiles(thermophile_iterator, mesophile_iterator, dbtype='nucl') as (query_fname, subject_fname, out_fname):
-        logger.info('Running blast...')
-        NcbiblastnCommandline(
-            query=query_fname,
-            db=subject_fname,
-            outfmt=5,
-            out=out_fname,
-            max_target_seqs=10000000, # very large so we do not throw out any pairs. will have to increase if there is more than this num of mesos
-            perc_identity=0.0, # no cutoff to lose data
-            evalue=10000000, # very large so we do not lose any hits
-            # the rest are tunable params
-            word_size=params['word_size'],
-            gapopen=params['gapopen_penalty'],
-            gapextend=params['gapextend_penalty'],
-            reward=params['reward'],
-            penalty=params['penalty'],
-            ungapped=params['ungapped'],
-            num_threads=params['num_threads']
-        )()
-        logger.info('Blast complete. Parsing and saving metrics.')
+            # create empty file
+            file = open(OUTFILENAME, 'w')
+            file.write(f"thermo_index,meso_index,{','.join(params['blast_metrics'])}\n")
+            file.close()
 
-        # create empty file
-        file = open(OUTFILENAME, 'w')
-        file.write(f"thermo_index,meso_index,{','.join(params['blast_metrics'])}\n")
-        file.close()
+            # blast record io
+            xml_f = open(out_fname, 'r')
+            blast_result_records = NCBIXML.parse(xml_f)
 
-        # blast record io
-        xml_f = open(out_fname, 'r')
-        blast_result_records = NCBIXML.parse(xml_f)
-
-        # compute and save
-        for record in blast_result_records:
-            apply_blast_metric_and_append_pairwise(record, params['blast_metrics'])
+            # compute and save
+            for record in blast_result_records:
+                apply_blast_metric_and_append_pairwise(record, params['blast_metrics'])
 
 
-        # save some plots
-        import matplotlib.pyplot as plt
-        for i, m in enumerate(params['blast_metrics']):
-            scores = pd.read_csv(OUTFILENAME, usecols=[i+2])
-            scores = scores[m]
+            # save some plots
+            import matplotlib.pyplot as plt
+            for i, m in enumerate(params['blast_metrics']):
+                scores = pd.read_csv(OUTFILENAME, usecols=[i+2])
+                scores = scores[m]
 
-            fig, ax = plt.subplots(figsize=(5,5))
-            ax.set_xlabel(m)
-            scores.plot.hist(bins=50, ax=ax)
-            plt.savefig(f'./data/plots/blast/blast_hist_{m}.png', bbox_inches='tight', dpi=250)
-        
-        # save metrics
-        metrics = {'percent_full_pairwise_16s_blast': float(len(pd.read_csv(OUTFILENAME, usecols=[0]))/(len(thermo_indexes)*len(meso_indexes)))}
-        with open('./data/metrics/s1.2_metrics.yaml', "w") as stream:
-            yaml_dump(metrics, stream)
+                fig, ax = plt.subplots(figsize=(5,5))
+                ax.set_xlabel(m)
+                scores.plot.hist(bins=50, ax=ax)
+                plt.savefig(f'./data/plots/blast/blast_hist_{m}.png', bbox_inches='tight', dpi=250)
+
+            # save metrics
+            metrics = {'percent_full_pairwise_16s_blast': float(len(pd.read_csv(OUTFILENAME, usecols=[0]))/(len(thermo_indexes)*len(meso_indexes)))}
+            with open('./data/metrics/s1.2_metrics.yaml', "w") as stream:
+                yaml_dump(metrics, stream)
     
     

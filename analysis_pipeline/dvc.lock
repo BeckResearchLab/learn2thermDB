@@ -7,12 +7,21 @@ stages:
       md5: a0ed6a56ee3a6f7a25e885e705d12be6
       size: 6657
     - path: ./data/taxa/proteins/
-      md5: 8031a8d052ce815c5fabbc10ba7d7f74.dir
-      size: 24264372254
-      nfiles: 16666
+      md5: d1c8cfa94113ff9ac352fd400f543432.dir
+      size: 24260213045
+      nfiles: 16665
     - path: ./data/taxa_pairs/pair_labels.csv
-      md5: f2136cb3b6d8d5b17afb41d6d8e857b6
+      md5: 93559135b6d41a9a510a775e0236ecfc
       size: 9633344
+    - path: ./data/taxa_pairs/pairwise_16s_blast.csv
+      md5: 782b4a16d32e710fb2caa5a15dfa87d3
+      size: 69641581
+    - path: ./learn2therm/blast.py
+      md5: 42ff2fac013630c5dba1fb45d726463e
+      size: 31552
+    - path: ./learn2therm/utils.py
+      md5: 4845b20446345d469e7eae2a6968e962
+      size: 1766
     params:
       params.yaml:
         get_protein_blast_scores.blast_metrics:
@@ -21,7 +30,7 @@ stages:
         - scaled_local_symmetric_percent_id
         - local_gap_compressed_percent_id
         get_protein_blast_scores.dask_cluster_class: SLURMCluster
-        get_protein_blast_scores.max_protein_length: 100
+        get_protein_blast_scores.max_protein_length: 400
         get_protein_blast_scores.method: diamond
         get_protein_blast_scores.method_blast_params:
           num_threads: 6
@@ -39,7 +48,7 @@ stages:
           gapopen: 11
           gapextend: 1
           matrix: BLOSUM62
-        get_protein_blast_scores.n_jobs: 8
+        get_protein_blast_scores.n_jobs: 48
     outs:
     - path: ./data/metrics/t1.4_metrics.yaml
       md5: 5d58a021d135f813cfbe2e3a06927094
@@ -51,18 +60,18 @@ stages:
       md5: 9dc7565d25bcb6050c4222978fc3cdd5
       size: 8210
     - path: ./data/taxa/proteins/
-      md5: 905941f50af6d9eb35e960dcb3bcee85.dir
-      size: 24260212365
-      nfiles: 16664
+      md5: d1c8cfa94113ff9ac352fd400f543432.dir
+      size: 24260213045
+      nfiles: 16665
     - path: ./data/taxa_pairs/pair_labels.csv
-      md5: e315bd05d1f5aa47e198e42e49046f42
+      md5: 93559135b6d41a9a510a775e0236ecfc
       size: 9633344
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: 425198fcaf0709a9a4959f84e5194d6d
-      size: 69641584
+      md5: 782b4a16d32e710fb2caa5a15dfa87d3
+      size: 69641581
     - path: ./learn2therm/blast.py
-      md5: 414afa5abb1506c63ace90ff598ccd0a
-      size: 29838
+      md5: 42ff2fac013630c5dba1fb45d726463e
+      size: 31552
     - path: ./learn2therm/utils.py
       md5: 4845b20446345d469e7eae2a6968e962
       size: 1766
@@ -74,7 +83,7 @@ stages:
         - scaled_local_symmetric_percent_id
         - local_gap_compressed_percent_id
         get_protein_blast_scores.dask_cluster_class: SLURMCluster
-        get_protein_blast_scores.max_protein_length: 250
+        get_protein_blast_scores.max_protein_length: 400
         get_protein_blast_scores.method_blast_params:
           num_threads: 6
           word_size: 3
@@ -91,7 +100,7 @@ stages:
           gapopen: 11
           gapextend: 1
           matrix: BLOSUM62
-        get_protein_blast_scores.n_jobs: 16
+        get_protein_blast_scores.n_jobs: 48
     outs:
     - path: ./data/analysis/blast_vs_diamond_hits.csv
       md5: c02dd449559e2bdbb1c7a3891a48ad85

@@ -69,6 +69,7 @@ stages:
     - ./data/taxa/16s_rRNA.csv
     outs:
     - ./data/taxa_pairs/pairwise_16s_blast.csv
+    - ./data/taxa_pairs/16s_align_emissions.csv
     params:
     - get_16s_blast_scores.num_threads
     - get_16s_blast_scores.word_size
@@ -116,6 +117,8 @@ stages:
     - get_protein_blast_scores.blast_metrics
     - get_protein_blast_scores.restart
     - get_protein_blast_scores.n_jobs
+    - get_protein_blast_scores.checkpoint
+    - get_protein_blast_scores.primary_sweep
     metrics:
     - ./data/metrics/s1.4_metrics.yaml:
         cache: false
