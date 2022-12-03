@@ -114,17 +114,6 @@ class BlastMetrics:
     Parameters
     ----------
     blast_record : the record containing all hits for a query
-
-    Notes
-    -----
-    metric names:
-        local_X - metric uses only information from a single HSP
-        scaled_local_X - metric uses single HSP information normalized by global sequence length. 
-            This is an attempt to filter out small but accurate chunks without needing the global alignment/qcoverage.
-            Eg if match is |, mismatch is X and gap is -
-                |||||||||||||||X|||||||||-------------------------------------------------------------------------------------------------
-            Could score very well using local alignment score even though there is a huge gap tail.
-        global_X - metric uses global alignment, currently cannot do without HSP tiling
     """
     def __init__(self, blast_record):
         self.record = blast_record
@@ -142,7 +131,7 @@ class BlastMetrics:
         scores = []
         for hsp in alignment.hsps:
             scores.append(
-                ((hsp.query_end - hsp.query_start)/self.record.query_length + (hsp.sbjct_end - hsp.sbjct_start)/alignment.length)/2)
+                ((hsp.query_end +1 - hsp.query_start)/self.record.query_length + (hsp.sbjct_end +1 - hsp.sbjct_start)/alignment.length)/2)
         return np.argmax(scores), max(scores)
 
     def compute_metric(self, metric_name: str):
@@ -156,7 +145,9 @@ class BlastMetrics:
 
         outputs = []
         for alignment in self.record.alignments:
-            outputs.append((self.qid, alignment.hit_id.split('|')[-1], metric(alignment)))
+            hsp_id, _ = self.id_hsp_best_cov(alignment)
+            hsp = alignment.hsps[hsp_id]
+            outputs.append((self.qid, alignment.hit_id.split('|')[-1], metric(alignment, hsp)))
         return pd.DataFrame(data=outputs, columns=['query_id', 'subject_id', metric_name])
 
     @staticmethod
@@ -195,42 +186,63 @@ class BlastMetrics:
         """
         return n_matches / (n_columns - n_gaps + n_compressed_gaps)
 
-    def local_gap_compressed_percent_id(self, alignment):
+    def local_gap_compressed_percent_id(self, alignment, hsp):
         """Percent matches in match sequence, including but compressing gaps.
         
         The largest local HSP score is used
         """
-        best_hsp_idx, _ = self.id_hsp_best_cov(alignment)
-        hsp = alignment.hsps[best_hsp_idx]
-
         n_matches = hsp.identities
         n_gaps = hsp.gaps
         n_columns = len(hsp.query)
         n_compressed_gaps = len(re.findall('-+', hsp.query))+len(re.findall('-+', hsp.sbjct))
         return self.raw_gap_compressed_percent_id(n_matches, n_gaps, n_columns, n_compressed_gaps)
 
-    def scaled_local_query_percent_id(self, alignment):
+    def scaled_local_query_percent_id(self, alignment, hsp):
         """Percent matches in query sequence based on best HSP."""
-        best_hsp_idx, _ = self.id_hsp_best_cov(alignment)
-        hsp = alignment.hsps[best_hsp_idx]
         return hsp.identities/self.record.query_length
 
-    def scaled_local_symmetric_percent_id(self, alignment):
+    def scaled_local_symmetric_percent_id(self, alignment, hsp):
         """Percent matches compared to average seq length of query and subject based on best HSP"""
-        best_hsp_idx, _ = self.id_hsp_best_cov(alignment)
-        hsp = alignment.hsps[best_hsp_idx]
         return 2*hsp.identities/(self.record.query_length + alignment.length)
 
-    def local_E_value(self, alignment):
+    def local_E_value(self, alignment, hsp):
         """E value of HSP with most identities."""
-        best_hsp_idx, _ = self.id_hsp_best_cov(alignment)
-        hsp = alignment.hsps[best_hsp_idx]
         return hsp.expect
 
-    def local_average_coverage(self, alignment):
-        """The coverage of the HSP averaged for query and subject"""
-        return self.id_hsp_best_cov(alignment)[1]
+    def query_align_start(self, alignment, hsp):
+        """Start index of alignment in query."""
+        return hsp.query_start
 
+    def query_align_end(self, alignment, hsp):
+        """End index of alignment in query."""
+        return hsp.query_end
+    
+    def subject_align_end(self, alignment, hsp):
+        """End index of alignment in subject."""
+        return hsp.sbjct_end
+
+    def subject_align_start(self, alignment, hsp):
+        """Start index of alignment in subject."""
+        return hsp.sbjct_start
+
+    def query_align_len(self, alignment, hsp):
+        """Length of AA on query string taken up by alignment"""
+        return int(hsp.query_end +1 - hsp.query_start)
+
+    def query_align_cov(self, alignment, hsp):
+        """Fraction of AA on query string taken up by alignment"""
+        return (hsp.query_end +1 - hsp.query_start)/self.record.query_length
+    
+    def subject_align_len(self, alignment, hsp):
+        """Length of AA on query string taken up by alignment"""
+        return int(hsp.sbjct_end +1 - hsp.sbjct_start)
+
+    def subject_align_cov(self, alignment, hsp):
+        """Fraction of AA on query string taken up by alignment"""
+        return (hsp.sbjct_end +1 - hsp.sbjct_start)/alignment.length
+    
+    def bit_score(self, alignment, hsp):
+        return hsp.score
 
 class AlignmentHandler:
     """Handles preparing, parallel processing, and post evaluation of alignments.
