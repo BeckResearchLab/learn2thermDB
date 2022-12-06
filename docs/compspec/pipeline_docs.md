@@ -1,30 +1,14 @@
 # Pipeline Documentation
 
-This documentation will offer a comprehensive exposition on each script in the pipeline. For a high-level overview instead, see the script [compspecs]('learn2therm/docs/compspec/pipeline_components.md'). The purpose, inputs, steps, outputs, metrics, are all described for each pipeline script in this document.
+This documentation will offer a comprehensive exposition on each script in the pipeline. For a high-level overview instead, see the script [compspecs](../compspec/pipeline_components.md). The purpose, inputs, steps, outputs, metrics, are all described for each pipeline script in this document.
 
 1. `s0.0_get_ncbi_refseq.sh`
-   _Objective_:
-
-   Extract refseq genome data for all bacteria and archaea
-
-   _Inputs_:
-
-   There are no parameter inputs in this script as it is used purely for data extraction purposes
-
-   _Steps in the script_:
-
-   a. The user will input their enviromental account credentials for NCBI
-   b. The refseq genome data for both bateria and archaea will be downloaded from NCBI creating subdirectories for each species if necessary
-
-   _Metrics_:
-
-   There are no metrics being stored in this script
-
-   _Outputs_:
-
-   The script will generate complete genomic data for all bactera and achaea as an `gbff.gz` file type
+   | _Objective_: | _Inputs_: | _Steps in the script_: | _Metrics_: | _Outputs_: |
+   |--------------| -----------| ---------------------- | ---------- | ----------|
+   | Extract refseq genome data for all bacteria and archaea | There are no parameter inputs in this script as it is used purely for data extraction purposes | <ul><li>The user will input their enviromental account credentials for NCBI.</li> <li>The refseq genome data for both bateria and archaea will be downloaded from NCBI creating subdirectories for each species if necessary.</li></ul> | There are no metrics being stored in this script | The script will generate complete genomic data for all bactera and achaea as an `gbff.gz` file type |
 
 2. `s0.1_get_bacdive_ogt.py`
+
    _Objective_:
 
    - Find Optimal Growth Temperature (OGT) associated with each TAXA (organism population) from BacDive
@@ -36,13 +20,13 @@ This documentation will offer a comprehensive exposition on each script in the p
 
    _Step in the script_:
 
-   a. The user will input thier enviromental account credentials for BacDive
+   a. The user will input their enviromental account credentials for BacDive
    b. Using BacDive, the TAXID (organism) will be used to retrieve an OGT and list of temperatures
-   Notes:
+   Note:
+   In BacDive, an organism can have many growth temperatures as there are many experiments to measure that. As such, the retriving function has many conditionals to parse out what would be the OGT, the optimum growth temperature range, etc.
 
-   - In BacDive, an organism can have many growth temperatures as there are many experiments to measure diffrent growth temperatures. As such, the retriving function has many conditional to parse out what would be the OGT, the optimum growth temperature range, etc.
-
-   c. Ask Evan ins and outs of the `process_one_gbff_zip_file` function for my sanity #ToDo
+   c. After that, BacDive will quere the NCBI Taxa to get the OGT, and output a file with the taxID, record, filepath, taxomony, organism as well as the BacDiveID and associated OGT.
+   d. Ask evan about filepaths again. #ToDo
 
    _Metrics_:
 
@@ -59,7 +43,7 @@ This documentation will offer a comprehensive exposition on each script in the p
 3. `s1.0_label_taxa.py`
    _Objective_:
 
-   Takes all the generated TAXA from the previous script and assigns a thermophilic or mesophilic label to them
+   Takes all the generated TAXA from the previous script and assign a thermophilic or mesophilic label to them
 
    _Inputs_:
 
@@ -69,7 +53,7 @@ This documentation will offer a comprehensive exposition on each script in the p
 
    a. The user will log in to their virtual enviroment from the two previous scripts
    b. The temperatures obtained from the previous script were strings and will be converted to floats. For min-max ranges, the center will be taken
-   c. Ask Evan about the dunder name function #ToDo (shell stuff for threading execution)
+   c. After that, reading from the `params.yaml`
    d.
 
    _Metrics_:
