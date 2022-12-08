@@ -24,17 +24,28 @@ get_16s_blast_scores:
   ungapped: false                  # whether to do ungapped alignment
   n_sample: null                     # number of thermophiles and mesophiles to sample for testing
   blast_metrics:
-    - local_E_value
+    - local_gap_compressed_percent_id
     - scaled_local_query_percent_id
     - scaled_local_symmetric_percent_id
-    - local_gap_compressed_percent_id
-    - local_average_coverage
+    - local_E_value
+    - query_align_start
+    - query_align_end
+    - subject_align_end
+    - subject_align_start
+    - query_align_len
+    - query_align_cov
+    - subject_align_len
+    - subject_align_cov
+    - bit_score
 label_all_pairs:
   blast_metric_thresholds:                  # define which metrics to use to label a taxa pair 
     scaled_local_symmetric_percent_id:    # metric name
       thresh: 0.88                            # float threshold
       greater: true                         # greater than threshold is good
-    local_average_coverage:
+    query_align_cov:
+      thresh: 0.75
+      greater: true
+    subject_align_cov:
       thresh: 0.75
       greater: true
 get_protein_blast_scores:
@@ -62,5 +73,16 @@ get_protein_blast_scores:
     gapextend: 1
     matrix: 'BLOSUM62'
   blast_metrics:
+    - local_gap_compressed_percent_id
+    - scaled_local_query_percent_id
+    - scaled_local_symmetric_percent_id
     - local_E_value
-    - local_average_coverage
+    - query_align_start
+    - query_align_end
+    - subject_align_end
+    - subject_align_start
+    - query_align_len
+    - query_align_cov
+    - subject_align_len
+    - subject_align_cov
+    - bit_score
