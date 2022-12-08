@@ -114,8 +114,8 @@ stages:
       md5: 22b516c22355a1697527f0099c5b8075
       size: 161752
     - path: ./learn2therm/blast.py
-      md5: 42ff2fac013630c5dba1fb45d726463e
-      size: 31552
+      md5: 7f4d51305e50d50909c49c7e3e5fc12a
+      size: 31710
     - path: ./learn2therm/io.py
       md5: 3be212c4a87b76fc4f9ef298524bf33d
       size: 3818
@@ -128,11 +128,19 @@ stages:
     params:
       params.yaml:
         get_16s_blast_scores.blast_metrics:
-        - local_E_value
+        - local_gap_compressed_percent_id
         - scaled_local_query_percent_id
         - scaled_local_symmetric_percent_id
-        - local_gap_compressed_percent_id
-        - local_average_coverage
+        - local_E_value
+        - query_align_start
+        - query_align_end
+        - subject_align_end
+        - subject_align_start
+        - query_align_len
+        - query_align_cov
+        - subject_align_len
+        - subject_align_cov
+        - bit_score
         get_16s_blast_scores.gapextend_penalty: 1
         get_16s_blast_scores.gapopen_penalty: 2
         get_16s_blast_scores.n_sample:
@@ -146,17 +154,17 @@ stages:
       md5: d8037d675c3ac5efbe7fd85ca5316cfd
       size: 51
     - path: ./data/taxa_pairs/16s_align_emissions.csv
-      md5: 75103c5a9063dfd0b7e91bf78f865953
-      size: 680
+      md5: 05d51fc6f8ce7aa2aafb3c734b45126e
+      size: 681
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: 782b4a16d32e710fb2caa5a15dfa87d3
-      size: 69641581
+      md5: aa98b55fec7d0b5a937376b14e094864
+      size: 105641139
   label_all_pairs:
     cmd: python pipeline/s1.3_label_all_pairs.py
     deps:
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: 782b4a16d32e710fb2caa5a15dfa87d3
-      size: 69641581
+      md5: aa98b55fec7d0b5a937376b14e094864
+      size: 105641139
     - path: ./learn2therm/utils.py
       md5: 4845b20446345d469e7eae2a6968e962
       size: 1766
@@ -169,7 +177,10 @@ stages:
           scaled_local_symmetric_percent_id:
             thresh: 0.88
             greater: true
-          local_average_coverage:
+          query_align_cov:
+            thresh: 0.75
+            greater: true
+          subject_align_cov:
             thresh: 0.75
             greater: true
     outs:
@@ -190,11 +201,11 @@ stages:
       md5: 93559135b6d41a9a510a775e0236ecfc
       size: 9633344
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: 782b4a16d32e710fb2caa5a15dfa87d3
-      size: 69641581
+      md5: aa98b55fec7d0b5a937376b14e094864
+      size: 105641139
     - path: ./learn2therm/blast.py
-      md5: 42ff2fac013630c5dba1fb45d726463e
-      size: 31552
+      md5: 7f4d51305e50d50909c49c7e3e5fc12a
+      size: 31710
     - path: ./learn2therm/utils.py
       md5: 4845b20446345d469e7eae2a6968e962
       size: 1766
@@ -204,10 +215,19 @@ stages:
     params:
       params.yaml:
         get_protein_blast_scores.blast_metrics:
-        - local_E_value
+        - local_gap_compressed_percent_id
         - scaled_local_query_percent_id
         - scaled_local_symmetric_percent_id
-        - local_gap_compressed_percent_id
+        - local_E_value
+        - query_align_start
+        - query_align_end
+        - subject_align_end
+        - subject_align_start
+        - query_align_len
+        - query_align_cov
+        - subject_align_len
+        - subject_align_cov
+        - bit_score
         get_protein_blast_scores.checkpoint:
         get_protein_blast_scores.dask_cluster_class: SLURMCluster
         get_protein_blast_scores.max_protein_length: 400
@@ -233,9 +253,9 @@ stages:
         get_protein_blast_scores.restart: true
     outs:
     - path: ./data/metrics/s1.4_metrics.yaml
-      md5: e5daa1f31f7618e570139de9e38c599a
-      size: 105
+      md5: ef4bb014b8361bc35a5800cb4dae57ee
+      size: 106
     - path: ./data/taxa_pairs/protein_alignment/
-      md5: 08fc78d3987434f3fae10a14719556fd.dir
-      size: 16456132350
-      nfiles: 13788
+      md5: 4ed01b2ae1248d722a86353e0534d16f.dir
+      size: 27915017520
+      nfiles: 13796
