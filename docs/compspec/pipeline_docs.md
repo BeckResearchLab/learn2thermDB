@@ -21,7 +21,7 @@ This documentation will offer a comprehensive exposition on each script in the p
    _Step in the script_:
 
    a. The user will input their enviromental account credentials for BacDive
-   b. Using BacDive, the TAXID (organism) will be used to retrieve an OGT and list of temperatures
+   b. Using BacDive, the TAXAID (organism) will be used to retrieve an OGT and list of temperatures
    Note:
    In BacDive, an organism can have many growth temperatures as there are many experiments to measure that. As such, the retriving function has many conditionals to parse out what would be the OGT, the optimum growth temperature range, etc.
 
