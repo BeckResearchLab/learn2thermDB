@@ -259,3 +259,39 @@ stages:
       md5: 4ed01b2ae1248d722a86353e0534d16f.dir
       size: 27915017520
       nfiles: 13796
+  make_database:
+    cmd: python pipeline/s1.5_make_database.py
+    deps:
+    - path: ./data/taxa/16s_rRNA.csv
+      md5: 1b0a6d0685ebb0e678b72cb3b57ae8a4
+      size: 21316764
+    - path: ./data/taxa/labels.csv
+      md5: 22b516c22355a1697527f0099c5b8075
+      size: 161752
+    - path: ./data/taxa/proteins
+      md5: d1c8cfa94113ff9ac352fd400f543432.dir
+      size: 24260213045
+      nfiles: 16665
+    - path: ./data/taxa/taxa_info_and_ogt.csv
+      md5: a5bb1873b2aeac4026516a91dd94c3e1
+      size: 3826414
+    - path: ./data/taxa_pairs/pair_labels.csv
+      md5: 93559135b6d41a9a510a775e0236ecfc
+      size: 9633344
+    - path: ./data/taxa_pairs/pairwise_16s_blast.csv
+      md5: aa98b55fec7d0b5a937376b14e094864
+      size: 105641139
+    - path: ./data/taxa_pairs/protein_alignment/
+      md5: 4ed01b2ae1248d722a86353e0534d16f.dir
+      size: 27915017520
+      nfiles: 13796
+    - path: ./learn2therm/database.py
+      md5: 074607263d06e454f1c8477a187942f6
+      size: 14022
+    - path: ./pipeline/s1.5_make_database.py
+      md5: 9c1b0c6a2ec7453968d84d8a22b7078d
+      size: 671
+    outs:
+    - path: ./data/database
+      md5: 440e541158570afc307a03ac3251fb19
+      size: 35394695168

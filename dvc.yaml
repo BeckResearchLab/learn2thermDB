@@ -121,3 +121,17 @@ stages:
     metrics:
     - ./data/metrics/s1.4_metrics.yaml:
         cache: false
+  make_database:
+    cmd: python pipeline/s1.5_make_database.py
+    deps:
+    - ./pipeline/s1.5_make_database.py
+    - ./learn2therm/database.py
+    - ./data/taxa_pairs/protein_alignment/
+    - ./data/taxa_pairs/pair_labels.csv
+    - ./data/taxa_pairs/pairwise_16s_blast.csv
+    - ./data/taxa/proteins
+    - ./data/taxa/16s_rRNA.csv
+    - ./data/taxa/labels.csv
+    - ./data/taxa/taxa_info_and_ogt.csv
+    outs:
+    - ./data/database
