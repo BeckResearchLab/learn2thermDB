@@ -106,8 +106,7 @@ stages:
     - ./data/taxa/proteins
     - ./data/taxa_pairs/pairwise_16s_blast.csv
     outs:
-    - ./data/taxa_pairs/protein_alignment/:
-        checkpoint: true
+    - ./data/taxa_pairs/protein_alignment/
     params:
     - get_protein_blast_scores.dask_cluster_class
     - get_protein_blast_scores.max_protein_length
@@ -122,4 +121,3 @@ stages:
     metrics:
     - ./data/metrics/s1.4_metrics.yaml:
         cache: false
-        persist: true
