@@ -14,21 +14,30 @@ stages:
       md5: 93559135b6d41a9a510a775e0236ecfc
       size: 9633344
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: 782b4a16d32e710fb2caa5a15dfa87d3
-      size: 69641581
+      md5: aa98b55fec7d0b5a937376b14e094864
+      size: 105641139
     - path: ./learn2therm/blast.py
-      md5: 42ff2fac013630c5dba1fb45d726463e
-      size: 31552
+      md5: 7f4d51305e50d50909c49c7e3e5fc12a
+      size: 31710
     - path: ./learn2therm/utils.py
       md5: 4845b20446345d469e7eae2a6968e962
       size: 1766
     params:
       params.yaml:
         get_protein_blast_scores.blast_metrics:
-        - local_E_value
+        - local_gap_compressed_percent_id
         - scaled_local_query_percent_id
         - scaled_local_symmetric_percent_id
-        - local_gap_compressed_percent_id
+        - local_E_value
+        - query_align_start
+        - query_align_end
+        - subject_align_end
+        - subject_align_start
+        - query_align_len
+        - query_align_cov
+        - subject_align_len
+        - subject_align_cov
+        - bit_score
         get_protein_blast_scores.dask_cluster_class: SLURMCluster
         get_protein_blast_scores.max_protein_length: 400
         get_protein_blast_scores.method: diamond
@@ -67,21 +76,30 @@ stages:
       md5: 93559135b6d41a9a510a775e0236ecfc
       size: 9633344
     - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: 782b4a16d32e710fb2caa5a15dfa87d3
-      size: 69641581
+      md5: aa98b55fec7d0b5a937376b14e094864
+      size: 105641139
     - path: ./learn2therm/blast.py
-      md5: 42ff2fac013630c5dba1fb45d726463e
-      size: 31552
+      md5: 7f4d51305e50d50909c49c7e3e5fc12a
+      size: 31710
     - path: ./learn2therm/utils.py
       md5: 4845b20446345d469e7eae2a6968e962
       size: 1766
     params:
       params.yaml:
         get_protein_blast_scores.blast_metrics:
-        - local_E_value
+        - local_gap_compressed_percent_id
         - scaled_local_query_percent_id
         - scaled_local_symmetric_percent_id
-        - local_gap_compressed_percent_id
+        - local_E_value
+        - query_align_start
+        - query_align_end
+        - subject_align_end
+        - subject_align_start
+        - query_align_len
+        - query_align_cov
+        - subject_align_len
+        - subject_align_cov
+        - bit_score
         get_protein_blast_scores.dask_cluster_class: SLURMCluster
         get_protein_blast_scores.max_protein_length: 400
         get_protein_blast_scores.method_blast_params:
