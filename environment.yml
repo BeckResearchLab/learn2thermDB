@@ -1,4 +1,4 @@
-name: learn2therm
+name: learn2thermDB
 channels:
   - conda-forge
   - defaults
@@ -17,11 +17,11 @@ dependencies:
   - dvc-render=0.0.11
   - dvc-ssh=2.19.0
   - dvc-task=0.1.2
+  - duckdb
   - filelock=3.8.0
   - matplotlib=3.6.0
   - pandas=1.5.0
   - python=3.10.6
-  - pytorch=1.12.1
   - pyyaml=6.0
   - seaborn-base=0.12.0
   - blast
@@ -31,5 +31,4 @@ dependencies:
     - bacdive==0.2
     - codecarbon==2.1.4
     - dvclive==0.11.0
-    - transformers==4.22.2
-prefix: /mmfs1/gscratch/cheme/usr/evankomp/miniconda3/envs/learn2therm
+

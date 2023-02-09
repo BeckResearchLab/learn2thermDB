@@ -51,6 +51,8 @@ def csv_id_seq_iterator(csv_filepath: str, seq_col: str, index_col: str=None, id
         path to file containing data
     seq_col : str
         name of column containing sequences
+    index_col: str, default None
+        which column name is associated with the index, otherwise the 0th column will be used
     id_filter : Collection, Optional
         If given, only return sequences with the provided indexes
     chunksize : int, default 512

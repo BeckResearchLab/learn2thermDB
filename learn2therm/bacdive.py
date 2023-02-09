@@ -5,6 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class BacdiveClient(bacdive.BacdiveClient):
+    """Subclass of bacdive client to get bacdive record by ncbi id."""
 
     def getIDByNCBITaxID(self, tid):
         """Bacdive search via NCBI taxid.

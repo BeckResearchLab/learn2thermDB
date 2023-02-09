@@ -245,7 +245,7 @@ class BlastMetrics:
         return hsp.score
 
 class AlignmentHandler:
-    """Handles preparing, parallel processing, and post evaluation of alignments.
+    """Abstract parent. Handles preparing, alignment, and post evaluation for a taxa pair
     
     High level steps:
     - find the proteins from meso and thermo taxa
@@ -260,15 +260,17 @@ class AlignmentHandler:
     - file name of the form `taxa_index_X.csv`
     - file contains columns, in order: seq_id, protein_seq, protein_desc, protein_len
     - column seperator is semicolon ;
-    
+
+    Children must define `_call_alignment`
+
     Notes
     -----
     Class will create an empty file for the output. Alternatively, if the file already exists,
     execution is skipped. This is to ensure that if a pair takes too long for a job, the pair
     is not repeatedly ran and failed over and over. This leaves the vulnerability of the cluster
-    ending mid computation and future jobs skipping the pair. AlignmentClusterFutures handles this
+    ending mid computation and future jobs skipping the pair. AlignmentClusterState handles this
     issue.
-    
+
     Parameters
     ----------
     meso_index : str
@@ -287,6 +289,7 @@ class AlignmentHandler:
         parameters to pass to alignment method
     metrics: dict
         metric names to compute
+
     """
     def __init__(
         self,
@@ -624,6 +627,8 @@ class AlignmentClusterState:
         - when tasks are short, this adds non negligable overhead, so instead should be used
           as final sweep
     
+    The state is tracked as jobs are run in a csv file located in the alignment deposit called `completion_state.metadat`
+
     Parameters
     ----------
     pairs : list of tuple of str

@@ -1,4 +1,4 @@
-# Machine translation of mesophic protein to same-function thermophilic protein
+# Pipeline to produce dataset of pairs low and high temperature proteins
 
 ## Getting started
 
@@ -8,7 +8,7 @@ Create and activate the environment specified in `environment.yml`
 
 ```
 conda env create --file environment.yml
-conda activate learn2therm
+conda activate learn2thermDB
 pip install .
 ```
 
