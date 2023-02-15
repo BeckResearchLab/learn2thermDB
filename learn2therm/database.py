@@ -36,6 +36,12 @@ class L2TDatabase:
         self.path = db_path
         self.conn = conn
         self.read_only = read_only
+
+        # create indexes
+        t1 = time.time()
+        self._create_indexes(conn)
+        t2 = time.time()
+        logger.info(f"Took {(t2-t1)/60}m to create speed indexes")
         
     @classmethod
     def from_files(
@@ -80,10 +86,7 @@ class L2TDatabase:
         t2 = time.time()
         logger.info(f"Took {(t2-t1)/60}m to create protein pair table")
 
-        t1 = time.time()
-        cls._create_indexes(conn)
-        t2 = time.time()
-        logger.info(f"Took {(t2-t1)/60}m to create speed indexes")
+        
 
         conn.close()        
         return cls(db_path, read_only=read_only)
