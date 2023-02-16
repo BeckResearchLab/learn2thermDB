@@ -86,8 +86,12 @@ class L2TDatabase:
         t2 = time.time()
         logger.info(f"Took {(t2-t1)/60}m to create protein pair table")
 
-        
+        t1 = time.time()
+        cls._create_indexes(conn, files_path)
+        t2 = time.time()
+        logger.info(f"Took {(t2-t1)/60}m to create indexes")
 
+    
         conn.close()        
         return cls(db_path, read_only=read_only)
 
@@ -277,6 +281,7 @@ class L2TDatabase:
         conn.execute("CREATE INDEX prot_pair_to_thermo_prot ON protein_pairs (thermo_protein_int_index)")
         conn.execute("CREATE INDEX prot_pair_both_prot ON protein_pairs (meso_protein_int_index, thermo_protein_int_index)")
         conn.execute("CREATE INDEX prot_pair_to_taxa_pair ON protein_pairs (taxa_pair_index)")
+        conn.execute("CHECKPOINT")
 
     def execute(self, sql_statement: str):
         """Execute a sql statement on the database.
