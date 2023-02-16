@@ -17,7 +17,6 @@ dependencies:
   - dvc-render=0.0.11
   - dvc-ssh=2.19.0
   - dvc-task=0.1.2
-  - duckdb
   - filelock=3.8.0
   - matplotlib=3.6.0
   - pandas=1.5.0
@@ -29,6 +28,7 @@ dependencies:
   - pip
   - pip:
     - bacdive==0.2
+    - duckdb==0.7.0
     - codecarbon==2.1.4
     - dvclive==0.11.0
 
