@@ -25,4 +25,5 @@ dependencies:
     - bacdive==0.2
     - duckdb==0.7.0
     - codecarbon==2.1.4
-
+    - datasketch
+    - nltk
