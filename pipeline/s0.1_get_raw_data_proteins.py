@@ -134,7 +134,7 @@ if __name__ == "__main__":
             source_directory=tmpdir,
             endpoint_directory='./data/proteins',
             ncbi_id_filter=ncbi_id_filter,
-            max_filesize=100000)
+            max_filesize=params['max_prot_per_file'])
     logger.info(f"Finished extracting data from uniprot.")
     
     # get some metrics from the files using duckdb

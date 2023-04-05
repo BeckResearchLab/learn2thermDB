@@ -1,20 +1,25 @@
 stages:
   get_raw_data_taxa:
-    cmd: bash pipeline/s0.0_get_raw_data_taxa.py
+    cmd: python pipeline/s0.0_get_raw_data_taxa.py
     deps:
     - pipeline/s0.0_get_raw_data_taxa.py
     outs:
     - ./data/taxa.parquet
+    params:
+    - get_raw_data_taxa.min_16s_len
+    - get_raw_data_taxa.max_16s_len
     metrics:
     - ./data/metrics/s0.0_metrics.yaml
   get_raw_data_proteins:
-    cmd: bash pipeline/s0.1_get_raw_data_proteins.py
+    cmd: python pipeline/s0.1_get_raw_data_proteins.py
     deps:
     - ./pipeline/s0.1_get_raw_data_proteins.py
     - ./learn2therm/io.py
     outs:
     - ./data/proteins/
     - ./data/metrics/s0.1_protein_per_data_distr.csv
+    params:
+    - get_raw_data_proteins.max_prot_per_file
     metrics:
     - ./data/metrics/s0.1_metrics.yaml
 
