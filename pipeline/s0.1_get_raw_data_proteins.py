@@ -108,6 +108,8 @@ if __name__ == "__main__":
     else:
         shutil.rmtree('./data/proteins')
         os.mkdir('./data/proteins')
+    if not os.path.exists('./tmp'):
+        os.mkdir('./tmp')
 
     # get the ncbi ids we have taxa data for
     ncbi_id_filter = list(pd.read_parquet('./data/taxa.parquet', columns=['taxid'])['taxid'])

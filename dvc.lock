@@ -295,3 +295,20 @@ stages:
     - path: ./data/database
       md5: a893878e4fb7d693f3cdb8f889d0ecbb
       size: 34233659392
+  get_raw_data_taxa:
+    cmd: python pipeline/s0.0_get_raw_data_taxa.py
+    deps:
+    - path: pipeline/s0.0_get_raw_data_taxa.py
+      md5: 70be4fd1a678b2be181125c79af47bdf
+      size: 5882
+    params:
+      params.yaml:
+        get_raw_data_taxa.max_16s_len: 1600
+        get_raw_data_taxa.min_16s_len: 1300
+    outs:
+    - path: ./data/metrics/s0.0_metrics.yaml
+      md5: 6f6f16ebd5cc7a07a5c29acee7f02084
+      size: 42
+    - path: ./data/taxa.parquet
+      md5: e62b6a3fbb8232e4dfeca04c863ba761
+      size: 6487331
