@@ -137,7 +137,7 @@ if __name__ == "__main__":
     # download each file from uniprot
     for i, address in enumerate(addresses):
         with open(tmpdir+f'/{address}', 'wb') as file:
-            ftp.retrbinary(f"RETR {address}", file.write)
+            ftp.retrbinary(f"RETR {address}", file.write, blocksize=262144)
         logger.info(f"Completed download of {address}")
     ftp.close()
     # extract information downloaded into only needed information
