@@ -152,7 +152,7 @@ if __name__ == "__main__":
     # save metrics
     metrics = {}
     metrics['n_taxa'] = len(taxa_df)
-    metrics['taxa_pulled_date'] = str(datetime.now().strftime("%m/%d/%Y"))
+    metrics['taxa_pulled_date'] = str(datetime.datetime.now().strftime("%m/%d/%Y"))
     with open('./data/metrics/s0.0_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)
 
