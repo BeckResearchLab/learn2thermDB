@@ -24,6 +24,7 @@ stages:
     - get_raw_data_proteins.dev_only_one_uniprot_file
     metrics:
     - ./data/metrics/s0.1_metrics.yaml
+        cache: false
   label_taxa:
       cmd: python pipeline/s1.0_label_taxa.py
       deps:
