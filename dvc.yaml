@@ -15,16 +15,25 @@ stages:
     cmd: python pipeline/s0.1_get_raw_data_proteins.py
     deps:
     - ./pipeline/s0.1_get_raw_data_proteins.py
-    - ./learn2therm/io.py
     outs:
-    - ./data/proteins/
-    - ./data/metrics/s0.1_protein_per_data_distr.csv
+    - ./data/uniprot/uniprot_pulled_timestamp
     params:
-    - get_raw_data_proteins.max_prot_per_file
-    - get_raw_data_proteins.dev_no_delete_raw_files
     - get_raw_data_proteins.dev_only_one_uniprot_file
     metrics:
     - ./data/metrics/s0.1_metrics.yaml:
+        cache: false
+  parse_proteins:
+    cmd: python pipeline/s0.2_parse_proteins.py
+    deps: 
+    - ./pipeline/s0.2_parse_proteins.py
+    - ./learn2therm/io.py
+    - ./data/uniprot/uniprot_pulled_timestamp
+    - ./data/taxa.parquet
+    outs:
+    - ./data/metrics/s0.2_protein_per_data_distr.csv
+    - ./data/proteins/
+    metrics:
+    - ./data/metrics/s0.2_metrics.yaml:
         cache: false
   label_taxa:
       cmd: python pipeline/s1.0_label_taxa.py
