@@ -14,6 +14,7 @@ import learn2therm.utils
 
 import datetime
 from ftplib import FTP
+from tqdm import tqdm
 import logging
 import os
 
@@ -31,6 +32,25 @@ LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 # get the logger in subprocesses
 logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
 
+# set up ftp
+FTP_ADDRESS = 'ftp.uniprot.org'
+FTP_DIR = '/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/'
+
+def ftp_get_file_progress_bar(filename, endpoint_dir):
+    ftp = FTP(FTP_ADDRESS)
+    ftp.login(user="anonymous", passwd=EMAIL)
+    ftp.cwd(FTP_DIR) 
+
+    file_size = ftp.size(filename)
+    with open(endpoint_dir+f'{filename}', 'wb') as file:
+        pbar = tqdm(range(file_size))
+        def write_file(data):
+            file.write(data)
+            pbar.n += len(data)
+            pbar.refresh()
+
+        ftp.retrbinary(f"RETR {filename}", write_file, blocksize=262144)
+    ftp.close()
 
 if __name__ == "__main__":
     # DVC tracked parameters
@@ -43,10 +63,6 @@ if __name__ == "__main__":
 
     # download the raw data into temporary files
     dir = './data/uniprot'
-
-    ftp = FTP('ftp.uniprot.org')
-    ftp.login(user="anonymous", passwd=EMAIL)
-    ftp.cwd('/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/') 
     addresses = [
         'uniprot_sprot_archaea.xml.gz',
         'uniprot_sprot_bacteria.xml.gz',
@@ -62,10 +78,8 @@ if __name__ == "__main__":
         if address in os.listdir(dir):
             logger.info(f"Address exists, skipping: {address}")
             continue
-        with open(dir+f'/{address}', 'wb') as file:
-            ftp.retrbinary(f"RETR {address}", file.write, blocksize=262144)
+        ftp_get_file_progress_bar(address, endpoint_dir='./data/uniprot')
         logger.info(f"Completed download of {address}")
-    ftp.close()
 
     # save metrics
     date_pulled = str(datetime.datetime.now().strftime("%m/%d/%Y"))
