@@ -14,6 +14,7 @@ Optimal Growth Temperature:
     Projects 33175[BioProject] OR 33317[BioProject]
 
 """
+import time
 import datetime
 import pandas as pd
 import numpy as np
@@ -31,6 +32,11 @@ try:
     EMAIL = os.environ['ENV_EMAIL']
 except KeyError:
     raise KeyError('Must set environmental variables `ENV_EMAIL`')
+try:
+    NCBI_API_KEY = os.environ['NCBI_API_KEY']
+except KeyError:
+    raise KeyError('Must set environmental variables `NCBI_API_KEY`')
+
 if 'LOGLEVEL' in os.environ:
     LOGLEVEL = os.environ['LOGLEVEL']
     LOGLEVEL = getattr(logging, LOGLEVEL)
@@ -43,8 +49,15 @@ def nucleotide_entrez_iterator(ids: list, chunksize: int=500):
     """Creates an iterator of Entrez posts in chunks."""
     n_chunks = int(len(ids)/chunksize)+1
     id_chunks = np.array_split(ids, n_chunks)
+    times = [] 
     for chunk in id_chunks:
         ids_ = list(chunk)
+        times.append(time.time())
+        if len(times) > 1:
+            diff = times[-1] - times[-2]
+            if diff < 1.0:
+                time.sleep(1)
+                times.append(time.time())
         handle = Entrez.efetch(db="nucleotide", rettype="gb", retmode="text",
             id=ids_, retmax=10000)
         records = SeqIO.parse(handle, 'genbank')
@@ -85,13 +98,14 @@ if __name__ == "__main__":
     # 16s information via entrez
     Entrez.email = EMAIL
     Entrez.tool = "learn2therm"
+    Entrez.api_key = NCBI_API_KEY
     # retrieve ids for the project
     count_16s = Entrez.read(Entrez.esearch(db="nucleotide", term="33175[BioProject] OR 33317[BioProject]"))['Count']
     ids_16s = Entrez.read(Entrez.esearch(db="nucleotide", term="33175[BioProject] OR 33317[BioProject]", retmax=count_16s))['IdList']
     logger.info(f"Found {len(ids_16s)} 16s sequences from NCBI")
 
     # post the request for the sequences
-    records = nucleotide_entrez_iterator(ids_16s, chunksize=500)
+    records = nucleotide_entrez_iterator(ids_16s, chunksize=5000)
 
     # parse the records for taxid and 16s
     data_16s = []
