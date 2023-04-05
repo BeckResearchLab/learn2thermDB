@@ -315,25 +315,16 @@ stages:
   get_raw_data_proteins:
     cmd: python pipeline/s0.1_get_raw_data_proteins.py
     deps:
-    - path: ./learn2therm/io.py
-      md5: 45b9e9b5d0c2d648ab2067fe394ccf40
-      size: 4039
     - path: ./pipeline/s0.1_get_raw_data_proteins.py
-      md5: 8837aa3303396ba1e2b7fd1dff923ddb
-      size: 6248
+      md5: 35f8f12d0b65e2fc6d95011631fe94d2
+      size: 2980
     params:
       params.yaml:
-        get_raw_data_proteins.dev_no_delete_raw_files: true
         get_raw_data_proteins.dev_only_one_uniprot_file: true
-        get_raw_data_proteins.max_prot_per_file: 100000
     outs:
     - path: ./data/metrics/s0.1_metrics.yaml
-      md5: 697a59097ea4d8a79e11fbd3d467c3e2
-      size: 48
-    - path: ./data/metrics/s0.1_protein_per_data_distr.csv
-      md5: 4a9c42f7fda2c9f100e95b749386879b
-      size: 522
-    - path: ./data/proteins/
-      md5: f4a3fd6326224e7ac0d689df2c016267.dir
-      size: 87985
-      nfiles: 1
+      md5: 84a693dacf4019c50a3d277a4afbd8d0
+      size: 32
+    - path: ./data/uniprot/uniprot_pulled_timestamp
+      md5: efdf302794bd03835d410be119d6c048
+      size: 10

@@ -7,7 +7,7 @@ get_raw_data_taxa:
   min_16s_len: 1300                  # min number of nucleotides in 16s to keep
   max_16s_len: 1600                  # max number of nucleotides in 16s to keep
 get_raw_data_proteins:
-  dev_only_one_uniprot_file: true
+  dev_only_one_uniprot_file: false
 parse_proteins:
   max_prot_per_file: 100000          # size of parquet files containing proteins
 label_taxa:

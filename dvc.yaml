@@ -44,7 +44,7 @@ stages:
       params:
       - label_taxa.ogt_threshold
       outs:
-      - ./data/taxa_thermophile_labels.parquet'
+      - ./data/taxa_thermophile_labels.parquet
       metrics:
       - ./data/metrics/s1.0_metrics.yaml:
           cache: false

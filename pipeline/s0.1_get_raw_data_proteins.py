@@ -78,7 +78,7 @@ if __name__ == "__main__":
         if address in os.listdir(dir):
             logger.info(f"Address exists, skipping: {address}")
             continue
-        ftp_get_file_progress_bar(address, endpoint_dir='./data/uniprot')
+        ftp_get_file_progress_bar(address, endpoint_dir='./data/uniprot/')
         logger.info(f"Completed download of {address}")
 
     # save metrics
