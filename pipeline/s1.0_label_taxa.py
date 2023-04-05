@@ -34,7 +34,7 @@ if __name__ == '__main__':
     logger.info(f"Loaded parameters: {params}")
 
     # load the OGT and taxa information
-    taxa = pd.read_parquet('./data/taxa.parquet', usecols=['taxid', 'ogt'])
+    taxa = pd.read_parquet('./data/taxa.parquet', columns=['taxid', 'ogt'])
     if taxa.isna().sum() > 0:
         raise ValueError("Found taxa with NaN values")
     else:
