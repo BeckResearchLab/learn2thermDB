@@ -36,11 +36,15 @@ def seq_io_gnuzipped(filepath: str, filetype: str):
             shutil.copyfileobj(f_in, f_out)
             f_out.close()
         with open(tmp.name, 'rt') as f_out:
-            seq = SeqIO.parse(f_out, filetype)
-            records = [r for r in seq]
-            f_out.close()
-        os.remove(tmp.name)
-    return records
+            records = SeqIO.parse(f_out, filetype)
+            try:
+                for r in records:
+                    yield r
+            except StopIteration:
+                f_out.close()
+                os.remove(tmp.name)
+                raise
+
 
 def csv_id_seq_iterator(csv_filepath: str, seq_col: str, index_col: str=None, id_filter: Collection = None, chunksize: int = 512, max_seq_length: int=None, **kwargs):
     """Returns a one by one iterator of seq ids and sequences to avoid OOM.

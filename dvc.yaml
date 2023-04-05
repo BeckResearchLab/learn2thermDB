@@ -1,137 +1,150 @@
 stages:
-  get_ncbi_refseq:
-    cmd: bash pipeline/s0.0_get_ncbi_refseq.sh
+  get_raw_data_taxa:
+    cmd: bash pipeline/s0.0_get_raw_data_taxa.py
     deps:
-    - pipeline/s0.0_get_ncbi_refseq.sh
+    - pipeline/s0.0_get_raw_data_taxa.py
     outs:
-    - ./data/refseq
-  get_bacdive_ogt:
-    cmd: python pipeline/s0.1_get_bacdive_ogt.py
+    - ./data/taxa.parquet
+    metrics:
+    - ./data/metrics/s0.0_metrics.yaml
+  get_raw_data_proteins:
+    cmd: bash pipeline/s0.1_get_raw_data_proteins.py
     deps:
-    - pipeline/s0.1_get_bacdive_ogt.py
-    - ./learn2therm/bacdive.py
+    - ./pipeline/s0.1_get_raw_data_proteins.py
     - ./learn2therm/io.py
-    - ./learn2therm/utils.py
-    - ./data/refseq
     outs:
-    - ./data/taxa/taxa_info_and_ogt.csv
-    params:
-    - get_bacdive_ogt.n_jobs
-    - get_bacdive_ogt.n_sample
+    - ./data/proteins/
+    - ./data/metrics/s0.1_protein_per_data_distr.csv
     metrics:
-    - ./data/metrics/s0.1_metrics.yaml:
-        cache: false
-  label_taxa:
-    cmd: python pipeline/s1.0_label_taxa.py
-    deps:
-    - pipeline/s1.0_label_taxa.py
-    - ./learn2therm/utils.py
-    - ./data/taxa/taxa_info_and_ogt.csv
-    params:
-    - label_taxa.ogt_threshold
-    - label_taxa.ogt_determination_method
-    outs:
-    - ./data/taxa/labels.csv
-    metrics:
-    - ./data/metrics/s1.0_metrics.yaml:
-        cache: false
-    plots:
-    - ./data/plots/ogt_hist.png:
-        cache: false
-  get_proteins:
-    cmd: python pipeline/s1.1_get_protein_sequences.py
-    deps:
-    - pipeline/s1.1_get_protein_sequences.py
-    - ./learn2therm/io.py
-    - ./learn2therm/utils.py
-    - ./data/refseq
-    - ./data/taxa/taxa_info_and_ogt.csv
-    outs:
-    - ./data/taxa/16s_rRNA.csv
-    - ./data/taxa/proteins
-    params:
-    - get_protein_sequences.n_jobs
-    - get_protein_sequences.n_sample
-    metrics:
-    - ./data/metrics/s1.1_metrics.yaml:
-        cache: false
-    plots:
-    - ./data/plots/protein_length_hist.png:
-        cache: false
-  get_16s_blast_scores:
-    cmd: python pipeline/s1.2_get_16s_blast_scores.py
-    deps:
-    - ./pipeline/s1.2_get_16s_blast_scores.py
-    - ./learn2therm/io.py
-    - ./learn2therm/utils.py
-    - ./learn2therm/blast.py
-    - ./data/taxa/labels.csv
-    - ./data/taxa/16s_rRNA.csv
-    outs:
-    - ./data/taxa_pairs/pairwise_16s_blast.csv
-    - ./data/taxa_pairs/16s_align_emissions.csv
-    params:
-    - get_16s_blast_scores.num_threads
-    - get_16s_blast_scores.word_size
-    - get_16s_blast_scores.gapopen_penalty
-    - get_16s_blast_scores.gapextend_penalty
-    - get_16s_blast_scores.reward
-    - get_16s_blast_scores.penalty
-    - get_16s_blast_scores.ungapped
-    - get_16s_blast_scores.n_sample
-    - get_16s_blast_scores.blast_metrics
-    metrics:
-    - ./data/metrics/s1.2_metrics.yaml:
-        cache: false
-  label_all_pairs:
-    cmd: python pipeline/s1.3_label_all_pairs.py
-    deps:
-    - ./pipeline/s1.3_label_all_pairs.py
-    - ./learn2therm/utils.py
-    - ./data/taxa_pairs/pairwise_16s_blast.csv
-    outs:
-    - ./data/taxa_pairs/pair_labels.csv
-    params:
-    - label_all_pairs.blast_metric_thresholds
-    metrics:
-    - ./data/metrics/s1.3_metrics.yaml:
-        cache: false
-  get_protein_blast_scores:
-    cmd: python pipeline/s1.4_get_protein_blast_scores.py
-    deps:
-    - ./pipeline/s1.4_get_protein_blast_scores.py
-    - ./learn2therm/blast.py
-    - ./learn2therm/utils.py
-    - ./data/taxa_pairs/pair_labels.csv
-    - ./data/taxa/proteins
-    - ./data/taxa_pairs/pairwise_16s_blast.csv
-    outs:
-    - ./data/taxa_pairs/protein_alignment/
-    params:
-    - get_protein_blast_scores.dask_cluster_class
-    - get_protein_blast_scores.max_protein_length
-    - get_protein_blast_scores.method
-    - get_protein_blast_scores.method_blast_params
-    - get_protein_blast_scores.method_diamond_params
-    - get_protein_blast_scores.blast_metrics
-    - get_protein_blast_scores.restart
-    - get_protein_blast_scores.n_jobs
-    - get_protein_blast_scores.checkpoint
-    - get_protein_blast_scores.primary_sweep
-    metrics:
-    - ./data/metrics/s1.4_metrics.yaml:
-        cache: false
-  make_database:
-    cmd: python pipeline/s1.5_make_database.py
-    deps:
-    - ./pipeline/s1.5_make_database.py
-    - ./learn2therm/database.py
-    - ./data/taxa_pairs/protein_alignment/
-    - ./data/taxa_pairs/pair_labels.csv
-    - ./data/taxa_pairs/pairwise_16s_blast.csv
-    - ./data/taxa/proteins
-    - ./data/taxa/16s_rRNA.csv
-    - ./data/taxa/labels.csv
-    - ./data/taxa/taxa_info_and_ogt.csv
-    outs:
-    - ./data/database
+    - ./data/metrics/s0.1_metrics.yaml
+
+  # get_bacdive_ogt:
+  #   cmd: python pipeline/s0.1_get_bacdive_ogt.py
+  #   deps:
+  #   - pipeline/s0.1_get_bacdive_ogt.py
+  #   - ./learn2therm/bacdive.py
+  #   - ./learn2therm/io.py
+  #   - ./learn2therm/utils.py
+  #   - ./data/refseq
+  #   outs:
+  #   - ./data/taxa/taxa_info_and_ogt.csv
+  #   params:
+  #   - get_bacdive_ogt.n_jobs
+  #   - get_bacdive_ogt.n_sample
+  #   metrics:
+  #   - ./data/metrics/s0.1_metrics.yaml:
+  #       cache: false
+  # label_taxa:
+  #   cmd: python pipeline/s1.0_label_taxa.py
+  #   deps:
+  #   - pipeline/s1.0_label_taxa.py
+  #   - ./learn2therm/utils.py
+  #   - ./data/taxa/taxa_info_and_ogt.csv
+  #   params:
+  #   - label_taxa.ogt_threshold
+  #   - label_taxa.ogt_determination_method
+  #   outs:
+  #   - ./data/taxa/labels.csv
+  #   metrics:
+  #   - ./data/metrics/s1.0_metrics.yaml:
+  #       cache: false
+  #   plots:
+  #   - ./data/plots/ogt_hist.png:
+  #       cache: false
+  # get_proteins:
+  #   cmd: python pipeline/s1.1_get_protein_sequences.py
+  #   deps:
+  #   - pipeline/s1.1_get_protein_sequences.py
+  #   - ./learn2therm/io.py
+  #   - ./learn2therm/utils.py
+  #   - ./data/refseq
+  #   - ./data/taxa/taxa_info_and_ogt.csv
+  #   outs:
+  #   - ./data/taxa/16s_rRNA.csv
+  #   - ./data/taxa/proteins
+  #   params:
+  #   - get_protein_sequences.n_jobs
+  #   - get_protein_sequences.n_sample
+  #   metrics:
+  #   - ./data/metrics/s1.1_metrics.yaml:
+  #       cache: false
+  #   plots:
+  #   - ./data/plots/protein_length_hist.png:
+  #       cache: false
+  # get_16s_blast_scores:
+  #   cmd: python pipeline/s1.2_get_16s_blast_scores.py
+  #   deps:
+  #   - ./pipeline/s1.2_get_16s_blast_scores.py
+  #   - ./learn2therm/io.py
+  #   - ./learn2therm/utils.py
+  #   - ./learn2therm/blast.py
+  #   - ./data/taxa/labels.csv
+  #   - ./data/taxa/16s_rRNA.csv
+  #   outs:
+  #   - ./data/taxa_pairs/pairwise_16s_blast.csv
+  #   - ./data/taxa_pairs/16s_align_emissions.csv
+  #   params:
+  #   - get_16s_blast_scores.num_threads
+  #   - get_16s_blast_scores.word_size
+  #   - get_16s_blast_scores.gapopen_penalty
+  #   - get_16s_blast_scores.gapextend_penalty
+  #   - get_16s_blast_scores.reward
+  #   - get_16s_blast_scores.penalty
+  #   - get_16s_blast_scores.ungapped
+  #   - get_16s_blast_scores.n_sample
+  #   - get_16s_blast_scores.blast_metrics
+  #   metrics:
+  #   - ./data/metrics/s1.2_metrics.yaml:
+  #       cache: false
+  # label_all_pairs:
+  #   cmd: python pipeline/s1.3_label_all_pairs.py
+  #   deps:
+  #   - ./pipeline/s1.3_label_all_pairs.py
+  #   - ./learn2therm/utils.py
+  #   - ./data/taxa_pairs/pairwise_16s_blast.csv
+  #   outs:
+  #   - ./data/taxa_pairs/pair_labels.csv
+  #   params:
+  #   - label_all_pairs.blast_metric_thresholds
+  #   metrics:
+  #   - ./data/metrics/s1.3_metrics.yaml:
+  #       cache: false
+  # get_protein_blast_scores:
+  #   cmd: python pipeline/s1.4_get_protein_blast_scores.py
+  #   deps:
+  #   - ./pipeline/s1.4_get_protein_blast_scores.py
+  #   - ./learn2therm/blast.py
+  #   - ./learn2therm/utils.py
+  #   - ./data/taxa_pairs/pair_labels.csv
+  #   - ./data/taxa/proteins
+  #   - ./data/taxa_pairs/pairwise_16s_blast.csv
+  #   outs:
+  #   - ./data/taxa_pairs/protein_alignment/
+  #   params:
+  #   - get_protein_blast_scores.dask_cluster_class
+  #   - get_protein_blast_scores.max_protein_length
+  #   - get_protein_blast_scores.method
+  #   - get_protein_blast_scores.method_blast_params
+  #   - get_protein_blast_scores.method_diamond_params
+  #   - get_protein_blast_scores.blast_metrics
+  #   - get_protein_blast_scores.restart
+  #   - get_protein_blast_scores.n_jobs
+  #   - get_protein_blast_scores.checkpoint
+  #   - get_protein_blast_scores.primary_sweep
+  #   metrics:
+  #   - ./data/metrics/s1.4_metrics.yaml:
+  #       cache: false
+  # make_database:
+  #   cmd: python pipeline/s1.5_make_database.py
+  #   deps:
+  #   - ./pipeline/s1.5_make_database.py
+  #   - ./learn2therm/database.py
+  #   - ./data/taxa_pairs/protein_alignment/
+  #   - ./data/taxa_pairs/pair_labels.csv
+  #   - ./data/taxa_pairs/pairwise_16s_blast.csv
+  #   - ./data/taxa/proteins
+  #   - ./data/taxa/16s_rRNA.csv
+  #   - ./data/taxa/labels.csv
+  #   - ./data/taxa/taxa_info_and_ogt.csv
+  #   outs:
+  #   - ./data/database
