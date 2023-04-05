@@ -45,24 +45,46 @@ else:
 LOGNAME = __file__
 LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 
-def nucleotide_entrez_iterator(ids: list, chunksize: int=500):
-    """Creates an iterator of Entrez posts in chunks."""
+def nucleotide_entrez_iterator(ids: list, chunksize: int=5000, batch_size: int=200):
+    """Creates an iterator of Entrez posts in chunks.
+    
+    Parameters
+    ----------
+    chunksize : int
+        number of ids to post at a time
+    batch_size : int
+        number of ids to retrieve at a time
+    """
     n_chunks = int(len(ids)/chunksize)+1
     id_chunks = np.array_split(ids, n_chunks)
-    times = [] 
+
     for chunk in id_chunks:
-        ids_ = list(chunk)
-        times.append(time.time())
-        if len(times) > 1:
-            diff = times[-1] - times[-2]
-            if diff < 1.0:
+        request = Entrez.epost(db="nucleotide", id=','.join(list(chunk)))
+        result = Entrez.read(request)
+        webEnv = result["WebEnv"]
+        queryKey = result["QueryKey"]
+        
+        # split further into batches for retrieval
+        n_batches = int(len(chunk)/batch_size)+1
+        id_batches = np.array_split(chunk, n_batches)
+        check_time = time.time()
+
+        for i, batch in enumerate(id_batches):
+            if i > 0 and (time.time() - check_time < 1.0):
                 time.sleep(1)
-                times.append(time.time())
-        handle = Entrez.efetch(db="nucleotide", rettype="gb", retmode="text",
-            id=ids_, retmax=10000)
-        records = SeqIO.parse(handle, 'genbank')
-        for record in records:
-            yield record
+            check_time = time.time()
+            handle = Entrez.efetch(
+                db="nucleotide",
+                id=batch,
+                rettype="gb",
+                retmode="text",
+                retmax=batch_size+1, 
+                queryKey=queryKey,
+                webEnv=webEnv)
+
+            records = SeqIO.parse(handle, 'genbank')
+            for record in records:
+                yield record
 
 
 def get_16s_taxid(record: SeqRecord):
@@ -105,7 +127,7 @@ if __name__ == "__main__":
     logger.info(f"Found {len(ids_16s)} 16s sequences from NCBI")
 
     # post the request for the sequences
-    records = nucleotide_entrez_iterator(ids_16s, chunksize=5000)
+    records = nucleotide_entrez_iterator(ids_16s, chunksize=5000, batch_size=200)
 
     # parse the records for taxid and 16s
     data_16s = []
