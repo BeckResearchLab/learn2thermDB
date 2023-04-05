@@ -32,14 +32,16 @@ LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 # get the logger in subprocesses
 logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
 
-def get_ncbi_from_xml_record(record):
+def get_db_refs_from_xml_record(record):
     """Extract NCBI taxid from record of uniprot"""
     id_ = None
+    alphafold = None
     for db_ref in record.dbxrefs:
         if db_ref.startswith("NCBI Taxonomy"):
             id_ = int(db_ref.split(':')[1])
-            break
-    return id_
+        elif db_ref.startswith("AlphaFoldDB"):
+            alphafold = int(db_ref.split(':')[1])
+    return id_, alphafold
 
 def uniprot_to_parquet_chunking(source_directory: str, endpoint_directory: str, ncbi_id_filter: list, max_filesize: int=100000):
     """Iteratres though downloaded uniprot files and produces fixed size parquet.
@@ -68,19 +70,20 @@ def uniprot_to_parquet_chunking(source_directory: str, endpoint_directory: str, 
         records = learn2therm.io.seq_io_gnuzipped(source_directory+'/'+filename, filetype='uniprot-xml')
         for record in records:
             # check if we have this taxa, if so record, otherwise skip
-            ncbi_id = get_ncbi_from_xml_record(record)
+            ncbi_id, alphafold_id = get_db_refs_from_xml_record(record)
             if ncbi_id is None or ncbi_id not in ncbi_id_filter:
                 continue
             else:
                 data.append((
                     record.id,
                     ncbi_id,
+                    alphafold_id,
                     str(record.seq)
                 ))
 
             # check if it is time to save and reset
             if len(data) >= max_filesize:
-                df = pd.DataFrame(data=data, columns=['pid', 'taxid', 'protein_seq'])
+                df = pd.DataFrame(data=data, columns=['pid', 'taxid', 'alphafold_id', 'protein_seq'])
                 df.to_parquet(endpoint_directory+'/'+f"uniprot_chunk_{total_files}.parquet")
 
                 logger.info(f"File number {total_files+1} completed and saved with size {len(data)}.")
@@ -91,7 +94,7 @@ def uniprot_to_parquet_chunking(source_directory: str, endpoint_directory: str, 
             else:
                 pass
     # finish up
-    df = pd.DataFrame(data=data, columns=['pid', 'taxid', 'protein_seq'])
+    df = pd.DataFrame(data=data, columns=['pid', 'taxid', 'alphafold_id', 'protein_seq'])
     df.to_parquet(endpoint_directory+'/'+f"uniprot_chunk_{total_files}.parquet")
     logger.info(f"File number {total_files+1} completed and saved with size {len(data)}.")
     total_count += len(df)
