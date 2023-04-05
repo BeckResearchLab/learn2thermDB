@@ -20,9 +20,26 @@ stages:
     - ./data/metrics/s0.1_protein_per_data_distr.csv
     params:
     - get_raw_data_proteins.max_prot_per_file
+    - get_raw_data_proteins.dev_no_delete_raw_files
+    - get_raw_data_proteins.dev_only_one_uniprot_file
     metrics:
     - ./data/metrics/s0.1_metrics.yaml
-
+  label_taxa:
+      cmd: python pipeline/s1.0_label_taxa.py
+      deps:
+      - pipeline/s1.0_label_taxa.py
+      - ./learn2therm/utils.py
+      - ./data/taxa.parquet
+      params:
+      - label_taxa.ogt_threshold
+      outs:
+      - ./data/taxa_thermophile_labels.parquet'
+      metrics:
+      - ./data/metrics/s1.0_metrics.yaml:
+          cache: false
+      plots:
+      - ./data/plots/ogt_hist.png:
+          cache: false
   # get_bacdive_ogt:
   #   cmd: python pipeline/s0.1_get_bacdive_ogt.py
   #   deps:
@@ -39,23 +56,7 @@ stages:
   #   metrics:
   #   - ./data/metrics/s0.1_metrics.yaml:
   #       cache: false
-  # label_taxa:
-  #   cmd: python pipeline/s1.0_label_taxa.py
-  #   deps:
-  #   - pipeline/s1.0_label_taxa.py
-  #   - ./learn2therm/utils.py
-  #   - ./data/taxa/taxa_info_and_ogt.csv
-  #   params:
-  #   - label_taxa.ogt_threshold
-  #   - label_taxa.ogt_determination_method
-  #   outs:
-  #   - ./data/taxa/labels.csv
-  #   metrics:
-  #   - ./data/metrics/s1.0_metrics.yaml:
-  #       cache: false
-  #   plots:
-  #   - ./data/plots/ogt_hist.png:
-  #       cache: false
+  
   # get_proteins:
   #   cmd: python pipeline/s1.1_get_protein_sequences.py
   #   deps:

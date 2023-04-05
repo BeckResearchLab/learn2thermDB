@@ -4,17 +4,20 @@
 
 # S0 data extraction params
 get_raw_data_taxa:
-  min_16s_len: 1300                    # number of cores for parallel execution
-  max_16s_len: 1600                 # number of "data" to sample down to for testing
+  min_16s_len: 1300                  # min number of nucleotides in 16s to keep
+  max_16s_len: 1600                  # max number of nucleotides in 16s to keep
 get_raw_data_proteins:
-  max_prot_per_file: 100000
+  max_prot_per_file: 100000          # size of parquet files containing proteins
+  dev_no_delete_raw_files: true
+  dev_only_one_uniprot_file: true
+label_taxa:
+  ogt_threshold: 40.0                # binary threshold to consider something as thermophilic
 
 # # S1 data preparation params
 # get_protein_sequences:
 #   n_jobs: 40                    # number of cores for parallel execution
 #   n_sample: null                 # number of "data" to sample down to for testing
-# label_taxa:
-#   ogt_threshold: 40.0          # binary threshold to consider something as thermophilic
+
 #   ogt_determination_method: 'true ogt only'     # method of parsing raw bacdive outputs saved to csv
 # get_16s_blast_scores:
 #   num_threads: 40                        # number of cpus to run in parallel
