@@ -20,6 +20,8 @@ stages:
     - ./data/metrics/s0.1_protein_per_data_distr.csv
     params:
     - get_raw_data_proteins.max_prot_per_file
+    - get_raw_data_proteins.dev_no_delete_raw_files
+    - get_raw_data_proteins.dev_only_one_uniprot_file
     metrics:
     - ./data/metrics/s0.1_metrics.yaml
   label_taxa:

@@ -114,28 +114,38 @@ if __name__ == "__main__":
     logger.info(f"Only considering proteins from taxa with ids {ncbi_id_filter}")
 
     # download the raw data into temporary files
-    with tempfile.TemporaryDirectory(dir='./tmp') as tmpdir:
-        ftp = FTP('ftp.uniprot.org')
-        ftp.login(user="anonymous", passwd=EMAIL)
-        ftp.cwd('/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/') 
-        addresses = [
-            'uniprot_sprot_archaea.xml.gz',
-            'uniprot_sprot_bacteria.xml.gz',
-            'uniprot_trembl_archaea.xml.gz',
-            'uniprot_trembl_bacteria.xml.gz',
-        ]
-        # download each file from uniprot
-        for i, address in enumerate(addresses):
-            with open(tmpdir+f'/{address}', 'wb') as file:
-                ftp.retrbinary(f"RETR {address}", file.write)
-        ftp.close()
-        # extract information downloaded into only needed information
-        uniprot_to_parquet_chunking(
-            source_directory=tmpdir,
-            endpoint_directory='./data/proteins',
-            ncbi_id_filter=ncbi_id_filter,
-            max_filesize=params['max_prot_per_file'])
+    tmpdir = tempfile.mkdtemp(dir='./tmp')
+
+    ftp = FTP('ftp.uniprot.org')
+    ftp.login(user="anonymous", passwd=EMAIL)
+    ftp.cwd('/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/') 
+    addresses = [
+        'uniprot_sprot_archaea.xml.gz',
+        'uniprot_sprot_bacteria.xml.gz',
+        'uniprot_trembl_archaea.xml.gz',
+        'uniprot_trembl_bacteria.xml.gz',
+    ]
+    if params['dev_only_one_uniprot_file']:
+        addresses = addresses[:1]
+        logger.info(f"Downloading only {addresses}")
+
+    # download each file from uniprot
+    for i, address in enumerate(addresses):
+        with open(tmpdir+f'/{address}', 'wb') as file:
+            ftp.retrbinary(f"RETR {address}", file.write)
+        logger.info(f"Completed download of {address}")
+    ftp.close()
+    # extract information downloaded into only needed information
+    uniprot_to_parquet_chunking(
+        source_directory=tmpdir,
+        endpoint_directory='./data/proteins',
+        ncbi_id_filter=ncbi_id_filter,
+        max_filesize=params['max_prot_per_file'])
+    
     logger.info(f"Finished extracting data from uniprot.")
+    if not params['dev_no_delete_raw_files']:
+        logger.info(f"Raw uniprot files being removed.")
+        shutil.rmtree(tmpdir)
     
     # get some metrics from the files using duckdb
     con = duckdb.connect()
