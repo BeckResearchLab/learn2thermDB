@@ -40,7 +40,7 @@ def get_db_refs_from_xml_record(record):
         if db_ref.startswith("NCBI Taxonomy"):
             id_ = int(db_ref.split(':')[1])
         elif db_ref.startswith("AlphaFoldDB"):
-            alphafold = int(db_ref.split(':')[1])
+            alphafold = str(db_ref.split(':')[1])
     return id_, alphafold
 
 def uniprot_to_parquet_chunking(source_directory: str, endpoint_directory: str, ncbi_id_filter: list, max_filesize: int=100000):
