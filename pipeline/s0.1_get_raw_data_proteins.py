@@ -11,6 +11,7 @@ from yaml import safe_load as yaml_load
 import learn2therm.utils
 import learn2therm.io
 
+import datetime
 from ftplib import FTP
 import logging
 import os
@@ -147,6 +148,7 @@ if __name__ == "__main__":
     # save metrics
     metrics = {}
     metrics['n_proteins'] = int(total_proteins)
+    metrics['protein_pulled_date'] = str(datetime.now().strftime("%m/%d/%Y"))
     with open('./data/metrics/s0.1_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)
 

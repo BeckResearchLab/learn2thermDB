@@ -14,6 +14,7 @@ Optimal Growth Temperature:
     Projects 33175[BioProject] OR 33317[BioProject]
 
 """
+import datetime
 import pandas as pd
 import numpy as np
 from yaml import dump as yaml_dump
@@ -115,6 +116,7 @@ if __name__ == "__main__":
     # save metrics
     metrics = {}
     metrics['n_taxa'] = len(taxa_df)
+    metrics['taxa_pulled_date'] = str(datetime.now().strftime("%m/%d/%Y"))
     with open('./data/metrics/s0.0_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)
 
