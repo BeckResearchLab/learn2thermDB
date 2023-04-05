@@ -9,7 +9,8 @@ stages:
     - get_raw_data_taxa.min_16s_len
     - get_raw_data_taxa.max_16s_len
     metrics:
-    - ./data/metrics/s0.0_metrics.yaml
+    - ./data/metrics/s0.0_metrics.yaml:
+        cache: false
   get_raw_data_proteins:
     cmd: python pipeline/s0.1_get_raw_data_proteins.py
     deps:
@@ -23,7 +24,7 @@ stages:
     - get_raw_data_proteins.dev_no_delete_raw_files
     - get_raw_data_proteins.dev_only_one_uniprot_file
     metrics:
-    - ./data/metrics/s0.1_metrics.yaml
+    - ./data/metrics/s0.1_metrics.yaml:
         cache: false
   label_taxa:
       cmd: python pipeline/s1.0_label_taxa.py
