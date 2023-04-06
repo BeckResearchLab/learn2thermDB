@@ -1,6 +1,7 @@
 """Ingest Uniprot
 
-Download raw uniprot data files, not tracked by dvc.
+Parse raw uniprot files into parquet with minimal information
+ready for downstream processing.
 """
 import duckdb
 import numpy as np
@@ -11,12 +12,12 @@ from yaml import safe_load as yaml_load
 import learn2therm.utils
 import learn2therm.io
 
-import datetime
-from ftplib import FTP
+from codecarbon import OfflineEmissionsTracker
+
 import logging
 import os
 import shutil
-import tempfile
+
 
 try:
     EMAIL = os.environ['ENV_EMAIL']
@@ -103,7 +104,7 @@ def uniprot_to_parquet_chunking(source_directory: str, endpoint_directory: str, 
 if __name__ == "__main__":
     # DVC tracked parameters
     with open("./params.yaml", "r") as stream:
-        params = yaml_load(stream)['get_raw_data_proteins']
+        params = yaml_load(stream)['parse_proteins']
     logger.info(f"Loaded parameters: {params}")
 
     if not os.path.exists('./data/proteins'):
@@ -111,6 +112,14 @@ if __name__ == "__main__":
     else:
         shutil.rmtree('./data/proteins')
         os.mkdir('./data/proteins')
+
+    tracker = OfflineEmissionsTracker(
+        project_name=f"s0.2",
+        output_dir='./data/',
+        country_iso_code='USA',
+        region='Washington'
+    ) 
+    tracker.start()
 
     # get the ncbi ids we have taxa data for
     ncbi_id_filter = list(pd.read_parquet('./data/taxa.parquet', columns=['taxid'])['taxid'])
@@ -135,8 +144,9 @@ if __name__ == "__main__":
 
     # save metrics
     metrics = {}
+    carbon = tracker.stop()
     metrics['n_proteins'] = int(total_proteins)
-    metrics['protein_pulled_date'] = str(datetime.datetime.now().strftime("%m/%d/%Y"))
+    metrics['s0.2_carbon'] = float(carbon)
     with open('./data/metrics/s0.2_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)
 
