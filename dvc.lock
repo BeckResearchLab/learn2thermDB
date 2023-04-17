@@ -320,11 +320,41 @@ stages:
       size: 2980
     params:
       params.yaml:
-        get_raw_data_proteins.dev_only_one_uniprot_file: true
+        get_raw_data_proteins.dev_only_one_uniprot_file: false
     outs:
     - path: ./data/metrics/s0.1_metrics.yaml
-      md5: 84a693dacf4019c50a3d277a4afbd8d0
+      md5: ce3427ac0343b5f4204dcac97b52a21b
       size: 32
     - path: ./data/uniprot/uniprot_pulled_timestamp
-      md5: efdf302794bd03835d410be119d6c048
+      md5: 94d41857f48c2078539a5792fb0c0e72
       size: 10
+  parse_proteins:
+    cmd: python pipeline/s0.2_parse_proteins.py
+    deps:
+    - path: ./data/taxa.parquet
+      md5: e62b6a3fbb8232e4dfeca04c863ba761
+      size: 6487331
+    - path: ./data/uniprot/uniprot_pulled_timestamp
+      md5: 94d41857f48c2078539a5792fb0c0e72
+      size: 10
+    - path: ./learn2therm/io.py
+      md5: 4f49985e8dcfb88d2c4504744e05d96a
+      size: 4031
+    - path: ./pipeline/s0.2_parse_proteins.py
+      md5: 02f3ff82eda1ee4666b00cb1f2530c16
+      size: 6349
+    params:
+      params.yaml:
+        parse_proteins.dev_only_one_uniprot_file: false
+        parse_proteins.max_prot_per_file: 100000
+    outs:
+    - path: ./data/metrics/s0.2_metrics.yaml
+      md5: 9c9c61230814c8126dd15d9e2301119a
+      size: 124
+    - path: ./data/metrics/s0.2_protein_per_data_distr.csv
+      md5: a8d3ea3b8a2d255cadb284a898bac28d
+      size: 117996
+    - path: ./data/proteins/
+      md5: 757ec4a54deebf18560b0f186d0ef631.dir
+      size: 12403229084
+      nfiles: 364

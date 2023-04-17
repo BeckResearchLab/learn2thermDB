@@ -32,6 +32,9 @@ stages:
     outs:
     - ./data/metrics/s0.2_protein_per_data_distr.csv
     - ./data/proteins/
+    params:
+    - parse_proteins.max_prot_per_file
+    - parse_proteins.dev_only_one_uniprot_file
     metrics:
     - ./data/metrics/s0.2_metrics.yaml:
         cache: false
