@@ -1,4 +1,17 @@
 stages:
+  full_protein_search_space:
+    wdir: ../
+    cmd: python ./analysis_pipeline/t0.2_full_protein_search_space.py
+    deps:
+    - ./data/taxa.parquet
+    - ./data/metrics/s0.2_protein_per_data_distr.csv
+    metrics:
+    - ./data/metrics/t0.2_total_search_space.csv:
+        cache: false
+    plots:
+    - ./data/plots/total_search_space.png:
+        cache: false
+
   protein_alignment_resource_test:
     wdir: ../
     cmd: python ./analysis_pipeline/t1.4_protein_alignment_resource_test.py
