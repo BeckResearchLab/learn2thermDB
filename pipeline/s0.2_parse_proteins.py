@@ -1,6 +1,7 @@
 """Ingest Uniprot
 
-Download raw uniprot data files, not tracked by dvc.
+Parse raw uniprot files into parquet with minimal information
+ready for downstream processing.
 """
 import duckdb
 import numpy as np
@@ -11,13 +12,12 @@ from yaml import safe_load as yaml_load
 import learn2therm.utils
 import learn2therm.io
 
-import codecarbon
-
 import datetime
+from codecarbon import OfflineEmissionsTracker
 import logging
 import os
 import shutil
-import tempfile
+
 
 if 'LOGLEVEL' in os.environ:
     LOGLEVEL = os.environ['LOGLEVEL']
@@ -121,14 +121,14 @@ if __name__ == "__main__":
 
     if not os.path.exists('./data/proteins'):
         os.mkdir('./data/proteins')
-        
-    data_tracker = codecarbon.OfflineEmissionsTracker( 
-        project_name="data_prep_classifier",
-        output_dir="./data/",
-        country_iso_code="USA",
-        region="washington"
-    )
-    data_tracker.start()
+
+    tracker = OfflineEmissionsTracker(
+        project_name=f"s0.2",
+        output_dir='./data/',
+        country_iso_code='USA',
+        region='Washington'
+    ) 
+    tracker.start()
 
     # get the ncbi ids we have taxa data for
     ncbi_id_filter = list(pd.read_parquet('./data/taxa.parquet', columns=['taxid'])['taxid'])
@@ -155,11 +155,13 @@ if __name__ == "__main__":
     total_with_structures = con.execute("SELECT COUNT(*) FROM './data/proteins/*.parquet' WHERE pdb_id NOT NULL OR alphafold_id NOT NULL").fetchone()[0]
 
     # save metrics
-    co2 = data_tracker.stop()
+
+    co2 = tracker.stop()
     metrics = {'s0.2_co2': float(co2)}
     metrics['n_proteins'] = int(total_found)
     metrics['percent_prot_w_struc'] = float(total_with_structures/total_found)
     metrics['protein_pulled_date'] = str(datetime.datetime.now().strftime("%m/%d/%Y"))
+
     with open('./data/metrics/s0.2_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)
 

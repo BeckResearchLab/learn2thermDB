@@ -307,7 +307,7 @@ stages:
         get_raw_data_taxa.min_16s_len: 1300
     outs:
     - path: ./data/metrics/s0.0_metrics.yaml
-      md5: 6f6f16ebd5cc7a07a5c29acee7f02084
+      md5: 5dd2e4cdd6433bb2bb4c0ae2b7e2b783
       size: 42
     - path: ./data/taxa.parquet
       md5: e62b6a3fbb8232e4dfeca04c863ba761
