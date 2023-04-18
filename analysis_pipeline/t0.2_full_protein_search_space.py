@@ -73,5 +73,16 @@ def main():
     plt.savefig('data/plots/total_search_space.png', dpi=300)
     plt.show()
 
+    # now create a plot of the cumulative sum of proteins as number of proteins
+    # per taxa increases
+    protein_counts_sorted = protein_counts.sort_values('n_proteins', ascending=True)['n_proteins']
+    protein_counts_cumsum = protein_counts_sorted.cumsum()
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(protein_counts_sorted, protein_counts_cumsum)
+    ax.set_xlabel('Number of Proteins in organism')
+    ax.set_ylabel('Cumulative Sum of Proteins')
+    plt.savefig('data/plots/cumsum_proteins.png', dpi=300)
+
 if __name__ == '__main__':
     main()

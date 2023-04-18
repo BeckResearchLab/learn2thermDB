@@ -1,15 +1,42 @@
 stages:
+  get_ecoli:
+    wdir: ../
+    cmd: python ./analysis_pipeline/t0.1a_get_all_ecoli.py
+    deps:
+    - ./data/uniprot/uniprot_pulled_timestamp
+    - ./analysis_pipeline/t0.1a_get_all_ecoli.py
+    outs:
+    - ./data/uniprot/uniprot_ecoli.xml
+    metrics:
+    - ./data/metrics/t0.1a_metrics.yaml:
+        cache: false
   full_protein_search_space:
     wdir: ../
     cmd: python ./analysis_pipeline/t0.2_full_protein_search_space.py
     deps:
     - ./data/taxa.parquet
     - ./data/metrics/s0.2_protein_per_data_distr.csv
+    - ./analysis_pipeline/t0.2_full_protein_search_space.py
     metrics:
     - ./data/metrics/t0.2_total_search_space.csv:
         cache: false
     plots:
     - ./data/plots/total_search_space.png:
+        cache: false
+    - ./data/plots/cumsum_proteins.png:
+        cache: false
+  chosen_protein_search_space:
+    wdir: ../
+    cmd: python ./analysis_pipeline/t1.0_chosen_protein_search_space.py
+    deps:
+    - ./data/taxa_thermophile_labels.parquet
+    - ./data/metrics/s0.2_protein_per_data_distr.csv
+    - ./analysis_pipeline/t1.0_chosen_protein_search_space.py
+    metrics:
+    - ./data/metrics/t1.0_chosen_protein_search_space.yaml:
+        cache: false
+    plots:
+    - ./data/plots/protein_per_taxa_hist.png:
         cache: false
 
   protein_alignment_resource_test:

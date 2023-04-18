@@ -30,7 +30,7 @@ stages:
     - ./data/uniprot/uniprot_pulled_timestamp
     - ./data/taxa.parquet
     outs:
-    - ./data/metrics/s0.2_protein_per_data_distr.csv
+    - dvc 
     - ./data/proteins/
     params:
     - parse_proteins.max_prot_per_file

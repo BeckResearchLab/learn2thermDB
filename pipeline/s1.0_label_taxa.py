@@ -34,27 +34,27 @@ if __name__ == '__main__':
     logger.info(f"Loaded parameters: {params}")
 
     # load the OGT and taxa information
-    taxa = pd.read_parquet('./data/taxa.parquet', columns=['taxid', 'ogt'])
-    if taxa.isna().sum() > 0:
+    taxa = pd.read_parquet('./data/taxa.parquet', columns=['taxid', 'temperature'])
+    if taxa.isna().any().any():
         raise ValueError("Found taxa with NaN values")
     else:
         pass
     
     # extract meso or thermo based on threshold
     logger.info("Labeling thermophiles")
-    thermo_bools = taxa['ogt'].apply(lambda ogt: ogt > params['ogt_threshold'])
+    thermo_bools = taxa['temperature'].apply(lambda ogt: ogt > params['ogt_threshold'])
     taxa['thermophile_label'] = thermo_bools
 
     # make plot of OGT and remove it as a column
     # save plot
     fig, ax = plt.subplots(figsize=(5,5))
     ax.set_xlabel('OGT [C]')
-    taxa['ogt'].plot.hist(bins=15, ax=ax)
+    taxa['temperature'].plot.hist(bins=15, ax=ax)
     ax.vlines(x=[params['ogt_threshold']], ymin=0, ymax=ax.get_ylim()[1], colors=['r'])
     plt.savefig('./data/plots/ogt_hist.png', bbox_inches='tight', dpi=250)
-    taxa = taxa.drop(columns=['ogt'])
     
     # save to file
+    taxa = taxa[['taxid', 'thermophile_label']]
     taxa.to_parquet('./data/taxa_thermophile_labels.parquet')
 
     # save metrics

@@ -81,29 +81,28 @@ stages:
   label_taxa:
     cmd: python pipeline/s1.0_label_taxa.py
     deps:
-    - path: ./data/taxa/taxa_info_and_ogt.csv
-      md5: a5bb1873b2aeac4026516a91dd94c3e1
-      size: 3826414
+    - path: ./data/taxa.parquet
+      md5: e62b6a3fbb8232e4dfeca04c863ba761
+      size: 6487331
     - path: ./learn2therm/utils.py
       md5: 4845b20446345d469e7eae2a6968e962
       size: 1766
     - path: pipeline/s1.0_label_taxa.py
-      md5: c0fcb9fe2835e2a8d851c25d4a63ed80
-      size: 3668
+      md5: 25490ac9fbdb57c0499c5ea44346157d
+      size: 2151
     params:
       params.yaml:
-        label_taxa.ogt_determination_method: true ogt only
         label_taxa.ogt_threshold: 40.0
     outs:
     - path: ./data/metrics/s1.0_metrics.yaml
-      md5: b81c7de57507e95b010902f79b970d99
+      md5: dc8b932adf1ca2bb9256408a6ae075a1
       size: 26
     - path: ./data/plots/ogt_hist.png
-      md5: 871e6c2307c407eda0191b082617a367
-      size: 35538
-    - path: ./data/taxa/labels.csv
-      md5: 22b516c22355a1697527f0099c5b8075
-      size: 161752
+      md5: 466d2be9c799b458bd6ad9897d9904ad
+      size: 34384
+    - path: ./data/taxa_thermophile_labels.parquet
+      md5: 50bc6d01dae38aefde571ba766851e4f
+      size: 120740
   get_16s_blast_scores:
     cmd: python pipeline/s1.2_get_16s_blast_scores.py
     deps:
