@@ -14,6 +14,7 @@ import subprocess
 
 import numpy as np
 import pandas as pd
+import duckdb as ddb
 
 from Bio.Blast.Applications import NcbimakeblastdbCommandline, NcbiblastpCommandline
 from Bio.Blast import NCBIXML
@@ -293,10 +294,10 @@ class AlignmentHandler:
     """
     def __init__(
         self,
+        protein_database: str,
         meso_index: str,
         thermo_index: str,
         max_seq_len: int, 
-        protein_deposit: str,
         alignment_score_deposit: str,
         alignment_params: dict = {},
         metrics: list = ['scaled_local_symmetric_percent_id'],
@@ -304,10 +305,10 @@ class AlignmentHandler:
         self.meso = meso_index
         self.thermo = thermo_index
         self.max_seq_len = max_seq_len
-        if type(protein_deposit) == str:
-            self.protein_deposit = protein_deposit
+        if type(protein_database) == str:
+            self.protein_database = protein_database
         else:
-            raise ValueError(f"`protein_deposit` must be a string of a filepath")
+            raise ValueError(f"`protein_database` must be a string of a filepath")
         
         if type(alignment_score_deposit) == str:
             self.alignment_score_deposit = alignment_score_deposit
@@ -328,10 +329,8 @@ class AlignmentHandler:
             raise ValueError(f"`metrics` should be list")
 
         # prepare instance variables
-        self.meso_input_path = None
-        self.thermo_input_path = None
-        self.output_path = None
-        self.output_exists = None
+        self.meso_seqs = None
+        self.thermo_seqs = None
         return
     
     @property
@@ -339,23 +338,20 @@ class AlignmentHandler:
         return f"{self.thermo}-{self.meso}"
 
     def _prepare_input_output_state(self):
-        """Check and setup the input and output file paths.
+        """Check and setup the input databse and output file paths.
         
         We are inside the worker if we have gotten to this stage.
         """
         # inputs
-        if not os.path.exists(self.protein_deposit):
-            raise ValueError(f"{self.protein_deposit} does not exist, cannot look for proteins")
+        if not os.path.exists(self.protein_database):
+            raise ValueError(f"{self.protein_database} does not exist, cannot look for proteins")
         else:
-            if not self.protein_deposit.endswith('/'):
-                self.protein_deposit = self.protein_deposit+'/'
-            self.meso_input_path = self.protein_deposit+f"taxa_index_{self.meso}.csv"
-            self.thermo_input_path = self.protein_deposit+f"taxa_index_{self.thermo}.csv"
-
-            if not os.path.exists(self.meso_input_path):
-                raise ValueError(f"Could not find protein file for taxa {self.meso}")
-            if not os.path.exists(self.thermo_input_path):
-                raise ValueError(f"Could not find protein file for taxa {self.thermo}")
+            conn = ddb.connect(self.protein_database, read_only=True)
+            self.meso_seqs = conn.execute(f"SELECT * FROM proteins WHERE taxa_index='{self.meso}'").df()
+            self.thermo_seqs = conn.execute(f"SELECT * FROM proteins WHERE taxa_index='{self.thermo}'").df()
+            conn.close()
+            self.meso_seqs['protein_len'] = self.meso_seqs['protein_seq'].apply(len)
+            self.thermo_seqs['protein_len'] = self.thermo_seqs['protein_seq'].apply(len)
         
         # output
         if not os.path.exists(self.alignment_score_deposit):
@@ -425,8 +421,8 @@ class AlignmentHandler:
 
         # check the total number of pairwise seq we are doing
         time1 = time.time()
-        meso_lengths = pd.read_csv(self.meso_input_path, sep=';', usecols=[3])['protein_len']
-        thermo_lengths = pd.read_csv(self.thermo_input_path, sep=';', usecols=[3])['protein_len']
+        meso_lengths = self.meso_seqs['protein_len']
+        thermo_lengths = self.thermo_seqs['protein_len']
         logger.info(
             f"Running alignment for {self.pair_indexes} with total proteins counts ({len(thermo_lengths)},{len(meso_lengths)})")
         meso_count = (meso_lengths<=self.max_seq_len).sum()
@@ -454,22 +450,11 @@ class AlignmentHandler:
         # create the iterators over the actual protein sequences
         # these only exist so that we can load a small chunk of sequences into memory
         # at a time
-        meso_iter = learn2therm.io.csv_id_seq_iterator(
-            self.meso_input_path,
-            max_seq_length=self.max_seq_len,
-            seq_col="protein_seq",
-            sep=';',
-            index_col='seq_id',
-            chunksize=100
-        )
-        thermo_iter = learn2therm.io.csv_id_seq_iterator(
-            self.thermo_input_path,
-            max_seq_length=self.max_seq_len,
-            seq_col="protein_seq",
-            sep=';',
-            index_col='seq_id',
-            chunksize=100
-        )
+        def seq_id_iter(df):
+            for row in df.itertuples():
+                yield row['taxid'], row['protein_seq']
+        meso_iter = seq_id_iter(self.meso_seqs)
+        thermo_iter = seq_id_iter(self.thermo_seqs)
 
         # create the temporary files that a blastlike algorithm expects
         logger.info(f"Pair {self.pair_indexes}, using alignment parameters {self.alignment_params}")

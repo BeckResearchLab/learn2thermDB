@@ -30,20 +30,20 @@ def seq_io_gnuzipped(filepath: str, filetype: str):
     list of records
     """
     with gzip.open(filepath, 'rb') as f_in:
-        tmp = tempfile.NamedTemporaryFile(delete=False)
+        tmp = tempfile.NamedTemporaryFile(delete=False, dir='./tmp')
         tmp.close()
         with open(tmp.name, 'w+b') as f_out:
             shutil.copyfileobj(f_in, f_out)
-            f_out.close()
-        with open(tmp.name, 'rt') as f_out:
-            records = SeqIO.parse(f_out, filetype)
+        f_out = open(tmp.name, 'rt')
+        records = SeqIO.parse(f_out, filetype)
+        while True:
             try:
-                for r in records:
-                    yield r
+                r = next(records)
+                yield r
             except StopIteration:
                 f_out.close()
                 os.remove(tmp.name)
-                raise
+                break
 
 
 def csv_id_seq_iterator(csv_filepath: str, seq_col: str, index_col: str=None, id_filter: Collection = None, chunksize: int = 512, max_seq_length: int=None, **kwargs):
