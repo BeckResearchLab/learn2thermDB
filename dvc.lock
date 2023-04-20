@@ -328,32 +328,41 @@ stages:
       md5: 94d41857f48c2078539a5792fb0c0e72
       size: 10
   parse_proteins:
-    cmd: python pipeline/s0.2_parse_proteins.py
+    cmd: python pipeline/s0.3_parse_proteins.py
     deps:
     - path: ./data/taxa.parquet
       md5: e62b6a3fbb8232e4dfeca04c863ba761
       size: 6487331
+    - path: ./data/uniprot/proteome_metadata.csv
+      md5: 443402462165307962a45b7d7dbef5d8
+      size: 6275005
     - path: ./data/uniprot/uniprot_pulled_timestamp
       md5: 94d41857f48c2078539a5792fb0c0e72
       size: 10
     - path: ./learn2therm/io.py
       md5: 4f49985e8dcfb88d2c4504744e05d96a
       size: 4031
-    - path: ./pipeline/s0.2_parse_proteins.py
-      md5: 02f3ff82eda1ee4666b00cb1f2530c16
-      size: 6349
+    - path: ./pipeline/s0.3_parse_proteins.py
+      md5: 207e5f22371e1ca6b26471fed7eba44d
+      size: 7248
     params:
       params.yaml:
-        parse_proteins.dev_only_one_uniprot_file: false
+        parse_proteins.dev_only_one_uniprot_file: true
         parse_proteins.max_prot_per_file: 100000
     outs:
-    - path: ./data/metrics/s0.2_metrics.yaml
-      md5: 9c9c61230814c8126dd15d9e2301119a
-      size: 124
-    - path: ./data/metrics/s0.2_protein_per_data_distr.csv
-      md5: a8d3ea3b8a2d255cadb284a898bac28d
-      size: 117996
+    - path: ./data/metrics/s0.3_metrics.yaml
+      md5: 19a01cea42c25b43d4d9eea29cf3f36d
+      size: 122
+    - path: ./data/metrics/s0.3_protein_per_data_distr.csv
+      md5: 4dcfd709aa4c3a22af25bf2d07197e2f
+      size: 511
     - path: ./data/proteins/
-      md5: 757ec4a54deebf18560b0f186d0ef631.dir
-      size: 12403229084
-      nfiles: 364
+      md5: e8b0b7031673123424f9f71bc09fc149.dir
+      size: 87504
+      nfiles: 1
+  get_proteome_mdata:
+    cmd: python pipeline/s0.2_get_proteome_mdata.py
+    outs:
+    - path: ./data/uniprot/proteome_metadata.csv
+      md5: 443402462165307962a45b7d7dbef5d8
+      size: 6275005

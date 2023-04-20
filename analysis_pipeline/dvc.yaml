@@ -1,15 +1,4 @@
 stages:
-  get_ecoli:
-    wdir: ../
-    cmd: python ./analysis_pipeline/t0.1a_get_all_ecoli.py
-    deps:
-    - ./data/uniprot/uniprot_pulled_timestamp
-    - ./analysis_pipeline/t0.1a_get_all_ecoli.py
-    outs:
-    - ./data/uniprot/uniprot_ecoli.xml
-    metrics:
-    - ./data/metrics/t0.1a_metrics.yaml:
-        cache: false
   full_protein_search_space:
     wdir: ../
     cmd: python ./analysis_pipeline/t0.2_full_protein_search_space.py
