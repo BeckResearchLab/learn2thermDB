@@ -30,10 +30,11 @@ LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
 
 def get_db_refs_from_xml_record(record):
-    """Extract NCBI taxid from record of uniprot"""
+    """Extract NCBI taxid and proteomes from record of uniprot"""
     id_ = None
     alphafold = None
     pdb = None
+    proteomes = []
     for db_ref in record.dbxrefs:
         if db_ref.startswith("NCBI Taxonomy"):
             id_ = int(db_ref.split(':')[1])
@@ -41,9 +42,11 @@ def get_db_refs_from_xml_record(record):
             alphafold = str(db_ref.split(':')[1])
         elif db_ref.startswith("PDB:"):
             pdb = str(db_ref.split(':')[1])
-    return id_, alphafold, pdb
+        elif db_ref.startswith("Proteomes:"):
+            proteomes.append(str(db_ref.split(':')[1]))
+    return id_, alphafold, pdb, proteomes
 
-def uniprot_to_parquet_chunking(source_directory: str, endpoint_directory: str, ncbi_id_filter: list, max_filesize: int=100000, one_file: bool = False):
+def uniprot_to_parquet_chunking(source_directory: str, endpoint_directory: str, ncbi_id_filter: list, proteome_metadata: pd.DataFrame, max_filesize: int=100000, one_file: bool = False):
     """Iteratres though downloaded uniprot files and produces fixed size parquet.
     
     Final files only contain sequence and NCBI id.
@@ -75,26 +78,40 @@ def uniprot_to_parquet_chunking(source_directory: str, endpoint_directory: str, 
         for record in records:
             logger.debug(f"Opened record {record}")
             # check if we have this taxa, if so record, otherwise skip
-            ncbi_id, alphafold_id, pdb_id = get_db_refs_from_xml_record(record)
+            ncbi_id, alphafold_id, pdb_id, proteomes = get_db_refs_from_xml_record(record)
             total_count += 1
             scanned_count += 1
             # if we cannot match it to a taxa, we do not want it
             if ncbi_id is None or ncbi_id not in ncbi_id_filter:
                 continue
+
+            # Check if the protein has any proteomes and if they match the taxid
+            if proteomes:
+                matching_proteomes = proteome_metadata[
+                    (proteome_metadata['species_taxid'] == ncbi_id) &
+                    (proteome_metadata['pid'].isin(proteomes))
+                ]
+                if matching_proteomes.empty:
+                    continue
+                else:
+                    proteome = matching_proteomes['pid'].values[0]
             else:
-                data.append((
-                    record.id,
-                    ncbi_id,
-                    pdb_id,
-                    alphafold_id,
-                    str(record.seq)
-                ))
+                proteome = None
+            
+            data.append((
+                record.id,
+                ncbi_id,
+                pdb_id,
+                alphafold_id,
+                proteome,
+                str(record.seq)
+            ))
 
             # check if it is time to save and reset
             if len(data) >= max_filesize:
                 df = pd.DataFrame(
                     data=data,
-                    columns=['pid', 'taxid', 'pdb_id', 'alphafold_id', 'protein_seq'])
+                    columns=['pid', 'taxid', 'pdb_id', 'alphafold_id', 'proteome', 'protein_seq'])
                 df.to_parquet(endpoint_directory+'/'+f"uniprot_chunk_{total_files}.parquet")
 
                 logger.info(f"File number {total_files+1} complete. Total proteins scanned {total_count}.Found {len(data)} from {scanned_count} in chunk. Return ratio {len(data)/scanned_count}.")
@@ -107,7 +124,7 @@ def uniprot_to_parquet_chunking(source_directory: str, endpoint_directory: str, 
                 pass
         logger.info(f"Completed parsing {filename}")
     # finish up
-    df = pd.DataFrame(data=data, columns=['pid', 'taxid', 'pdb_id', 'alphafold_id', 'protein_seq'])
+    df = pd.DataFrame(data=data, columns=['pid', 'taxid', 'pdb_id', 'alphafold_id', 'proteome', 'protein_seq'])
     df.to_parquet(endpoint_directory+'/'+f"uniprot_chunk_{total_files}.parquet")
     logger.info(f"File number {total_files+1} complete. Total proteins scanned {total_count}.Found {len(data)} from {scanned_count} in chunk. Return ratio {len(data)/scanned_count}.")
     taken_count += len(df)
@@ -130,6 +147,10 @@ if __name__ == "__main__":
     ) 
     tracker.start()
 
+    # Load proteome metadata
+    proteome_metadata = pd.read_csv('./data/uniprot/proteome_metadata.csv')
+    
+
     # get the ncbi ids we have taxa data for
     ncbi_id_filter = list(pd.read_parquet('./data/taxa.parquet', columns=['taxid'])['taxid'])
     logger.info(f"Only considering proteins from taxa with ids {ncbi_id_filter}")
@@ -139,6 +160,7 @@ if __name__ == "__main__":
         source_directory='./data/uniprot',
         endpoint_directory='./data/proteins',
         ncbi_id_filter=ncbi_id_filter,
+        proteome_metadata=proteome_metadata,
         max_filesize=params['max_prot_per_file'],
         one_file=params['dev_only_one_uniprot_file']
     )
@@ -150,19 +172,18 @@ if __name__ == "__main__":
 
     # get some metadata about number of proteins per taxa
     protein_per_taxa_counts = con.execute("SELECT taxid, COUNT(*) FROM './data/proteins/*.parquet' GROUP BY taxid").df()
-    protein_per_taxa_counts.to_csv('./data/metrics/s0.2_protein_per_data_distr.csv')
+    protein_per_taxa_counts.to_csv('./data/metrics/s0.3_protein_per_data_distr.csv')
     # how many have structures
     total_with_structures = con.execute("SELECT COUNT(*) FROM './data/proteins/*.parquet' WHERE pdb_id NOT NULL OR alphafold_id NOT NULL").fetchone()[0]
 
     # save metrics
 
     co2 = tracker.stop()
-    metrics = {'s0.2_co2': float(co2)}
+    metrics = {'s0.3_co2': float(co2)}
     metrics['n_proteins'] = int(total_found)
     metrics['percent_prot_w_struc'] = float(total_with_structures/total_found)
-    metrics['protein_pulled_date'] = str(datetime.datetime.now().strftime("%m/%d/%Y"))
 
-    with open('./data/metrics/s0.2_metrics.yaml', "w") as stream:
+    with open('./data/metrics/s0.3_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)
 
 

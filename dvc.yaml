@@ -22,21 +22,26 @@ stages:
     metrics:
     - ./data/metrics/s0.1_metrics.yaml:
         cache: false
+  get_proteome_mdata:
+    cmd: python pipeline/s0.2_get_proteome_mdata.py
+    outs:
+    - ./data/uniprot/proteome_metadata.csv
   parse_proteins:
-    cmd: python pipeline/s0.2_parse_proteins.py
+    cmd: python pipeline/s0.3_parse_proteins.py
     deps: 
-    - ./pipeline/s0.2_parse_proteins.py
+    - ./pipeline/s0.3_parse_proteins.py
     - ./learn2therm/io.py
     - ./data/uniprot/uniprot_pulled_timestamp
+    - ./data/uniprot/proteome_metadata.csv
     - ./data/taxa.parquet
     outs:
-    - dvc 
     - ./data/proteins/
+    - ./data/metrics/s0.3_protein_per_data_distr.csv
     params:
     - parse_proteins.max_prot_per_file
     - parse_proteins.dev_only_one_uniprot_file
     metrics:
-    - ./data/metrics/s0.2_metrics.yaml:
+    - ./data/metrics/s0.3_metrics.yaml:
         cache: false
   label_taxa:
       cmd: python pipeline/s1.0_label_taxa.py
