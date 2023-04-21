@@ -27,7 +27,7 @@ import dask
 
 import learn2therm.io
 
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any, Callable
 
 import logging
 logger = logging.getLogger(__name__)
@@ -135,21 +135,33 @@ class BlastMetrics:
                 ((hsp.query_end +1 - hsp.query_start)/self.record.query_length + (hsp.sbjct_end +1 - hsp.sbjct_start)/alignment.length)/2)
         return np.argmax(scores), max(scores)
 
-    def compute_metric(self, metric_name: str):
-        """Compute the metric with specified name for each alignment"""
-        if not hasattr(self, metric_name):
-            raise ValueError(f"No metric found with name : {metric_name}")
-        else:
-            metric = getattr(self, metric_name)
-        
-        logger.debug(f"Computing metric `{metric_name}` for all alignments in query {self.qid}")
+    def compute_metrics(self, metric_names: List[str]):
+        """Compute the specified metrics for each alignment"""
+        # Check if all metric names are valid
+        for metric_name in metric_names:
+            if not hasattr(self, metric_name):
+                raise ValueError(f"No metric found with name : {metric_name}")
+
+        logger.debug(f"Computing metrics {metric_names} for all alignments in query {self.qid}")
 
         outputs = []
         for alignment in self.record.alignments:
             hsp_id, _ = self.id_hsp_best_cov(alignment)
             hsp = alignment.hsps[hsp_id]
-            outputs.append((self.qid, alignment.hit_id.split('|')[-1], metric(alignment, hsp)))
-        return pd.DataFrame(data=outputs, columns=['query_id', 'subject_id', metric_name])
+
+            # Compute all the metrics for the current alignment
+            metric_values = [getattr(self, metric_name)(alignment, hsp) for metric_name in metric_names]
+
+            # Append the query ID, subject ID, and metric values to the outputs list
+            if  '|' in alignment.hit_id:
+                hit_id = alignment.hit_id.split('|')[-2]
+            else:
+                hit_id = alignment.hit_id
+            outputs.append((self.qid, hit_id, *metric_values))
+
+        # Create the DataFrame with columns for query ID, subject ID, and each metric
+        columns = ['query_id', 'subject_id'] + metric_names
+        return pd.DataFrame(data=outputs, columns=columns)
 
     @staticmethod
     def raw_gap_excluding_percent_id(n_matches, n_gaps, n_columns):
@@ -246,74 +258,38 @@ class BlastMetrics:
         return hsp.score
 
 class AlignmentHandler:
-    """Abstract parent. Handles preparing, alignment, and post evaluation for a taxa pair
+    """Abstract parent. Handles preparing, alignment, and post evaluation for two sets of protein sequences.
     
     High level steps:
-    - find the proteins from meso and thermo taxa
-    - prepare temporary input and output files of the desired proteins, uses BlastFiles
+    - prepare input and output files for the desired protein sets, uses BlastFiles
     - run alignment
     - apply metrics, uses BlastMetrics
-    - deposit results to file
-
-    This class expects files containing proteins of a very specific format, any deviation
-    will cause issues:
-    - files containing proteins for each taxa must all be in the same directory
-    - file name of the form `taxa_index_X.csv`
-    - file contains columns, in order: seq_id, protein_seq, protein_desc, protein_len
-    - column seperator is semicolon ;
+    - give back results as a DataFrame
 
     Children must define `_call_alignment`
 
-    Notes
-    -----
-    Class will create an empty file for the output. Alternatively, if the file already exists,
-    execution is skipped. This is to ensure that if a pair takes too long for a job, the pair
-    is not repeatedly ran and failed over and over. This leaves the vulnerability of the cluster
-    ending mid computation and future jobs skipping the pair. AlignmentClusterState handles this
-    issue.
-
     Parameters
     ----------
-    meso_index : str
-        index of mesophile
-    thermo_index : str
-        index of thermophile
-    max_seq_len : int
-        maximum length og protein sequence to consider
-    protein_deposit : str
-        path to directory containing protein files. Each file is of the form `taxa_index_X.csv`
-        X is taxa index
-    alignment_score_deposit : str
-        path to directory to deposit completed metrics, files will be created of the form `taxa_pair_X-Y.csv`
-        X is thermo taxa index, Y is meso
+    seqs_A : DataFrame
+        DataFrame containing protein sequences for the first set
+        Must have columns 'id' and 'seq'
+    seqs_B : DataFrame
+        DataFrame containing protein sequences for the second set
+        Must have columns 'id' and 'seq'
     alignment_params : dict
         parameters to pass to alignment method
     metrics: dict
         metric names to compute
-
     """
     def __init__(
         self,
-        protein_database: str,
-        meso_index: str,
-        thermo_index: str,
-        max_seq_len: int, 
-        alignment_score_deposit: str,
+        seqs_A: pd.DataFrame,
+        seqs_B: pd.DataFrame,
         alignment_params: dict = {},
         metrics: list = ['scaled_local_symmetric_percent_id'],
     ):
-        self.meso = meso_index
-        self.thermo = thermo_index
-        self.max_seq_len = max_seq_len
-        if type(protein_database) == str:
-            self.protein_database = protein_database
-        else:
-            raise ValueError(f"`protein_database` must be a string of a filepath")
-        
-        if type(alignment_score_deposit) == str:
-            self.alignment_score_deposit = alignment_score_deposit
-        else:
-            raise ValueError(f"`alignment_score_deposit` must be a string of a filepath")
+        self.seqs_A = seqs_A
+        self.seqs_B = seqs_B
         
         if type(alignment_params) == dict:
             self.alignment_params = alignment_params
@@ -327,47 +303,6 @@ class AlignmentHandler:
             self.metrics = metrics
         else:
             raise ValueError(f"`metrics` should be list")
-
-        # prepare instance variables
-        self.meso_seqs = None
-        self.thermo_seqs = None
-        return
-    
-    @property
-    def pair_indexes(self):
-        return f"{self.thermo}-{self.meso}"
-
-    def _prepare_input_output_state(self):
-        """Check and setup the input databse and output file paths.
-        
-        We are inside the worker if we have gotten to this stage.
-        """
-        # inputs
-        if not os.path.exists(self.protein_database):
-            raise ValueError(f"{self.protein_database} does not exist, cannot look for proteins")
-        else:
-            conn = ddb.connect(self.protein_database, read_only=True)
-            self.meso_seqs = conn.execute(f"SELECT * FROM proteins WHERE taxa_index='{self.meso}'").df()
-            self.thermo_seqs = conn.execute(f"SELECT * FROM proteins WHERE taxa_index='{self.thermo}'").df()
-            conn.close()
-            self.meso_seqs['protein_len'] = self.meso_seqs['protein_seq'].apply(len)
-            self.thermo_seqs['protein_len'] = self.thermo_seqs['protein_seq'].apply(len)
-        
-        # output
-        if not os.path.exists(self.alignment_score_deposit):
-            raise ValueError(f"Could not find deposit for data {self.alignment_score_deposit}")
-        else:
-            if not self.alignment_score_deposit.endswith('/'):
-                self.alignment_score_deposit = self.alignment_score_deposit+'/'
-            self.output_path = self.alignment_score_deposit+f"taxa_pair_{self.thermo}-{self.meso}.csv"
-            # check if this output has been created
-            if os.path.exists(self.output_path):
-                self.output_exists = True
-            else:
-                self.output_exists = False
-                # create an empty file
-                file = open(self.output_path, 'w')
-                file.close()
         return
 
     def _call_alignment(self, query_file: str, subject_db: str, output_file: str):
@@ -376,14 +311,14 @@ class AlignmentHandler:
         Parameters
         ----------
         query_file : str
-            path to temporary fast file containing queries
+            path to temporary fasta file containing queries
         subject_db : str
             path of temporary db containing subjects
         output_file: str
             path to temporary file to deposit alignment outputs, XML format
         """
         raise NotImplemented()
-    
+
     def _compute_metrics(self, blast_record):
         """computes each of the metrics asked for for a single record.
         
@@ -392,82 +327,44 @@ class AlignmentHandler:
         DataFrame of protein pair indexes and list of metrics computed for a single query sequence
         """
         metric_handler = BlastMetrics(blast_record)
-        df_outputs = [metric_handler.compute_metric(m) for m in self.metrics]
-        # each df has query and subject id and one metric
-        # join them all
-        joined_df = df_outputs[0].set_index(['query_id', 'subject_id'])
-        for df in df_outputs[1:]:
-            joined_df = joined_df.join(df.set_index(['query_id', 'subject_id']))
-        out = joined_df.reset_index()
-        # ensure ordering
-        out = out[['query_id', 'subject_id']+self.metrics]
-        return out
+        df_outputs = metric_handler.compute_metrics(self.metrics)
+        return df_outputs
 
     def run(self):
-        """Run the whole alignment workflow for this taxa pair."""
+        """Run the whole alignment workflow for this pair of sequence sets."""
+
         time0 = time.time()
-        # start carbon tracking
-        tracker = OfflineEmissionsTracker( 
-            project_name=f"align_{self.pair_indexes}",
-            output_dir=self.alignment_score_deposit,
-            country_iso_code='USA',
-            region='Washington'
-        )
-        tracker.start()
-        
-        # check and prepare the state
-        logger.debug(f"Checking and preparing file state for {self.pair_indexes}")
-        self._prepare_input_output_state()
 
         # check the total number of pairwise seq we are doing
         time1 = time.time()
-        meso_lengths = self.meso_seqs['protein_len']
-        thermo_lengths = self.thermo_seqs['protein_len']
-        logger.info(
-            f"Running alignment for {self.pair_indexes} with total proteins counts ({len(thermo_lengths)},{len(meso_lengths)})")
-        meso_count = (meso_lengths<=self.max_seq_len).sum()
-        thermo_count = (thermo_lengths<=self.max_seq_len).sum()
-        pairwise_space = meso_count * thermo_count
-        logger.info(
-            f"Alignment for {self.pair_indexes}, considering only seqs <= {self.max_seq_len} long, totalling ({thermo_count},{meso_count}). Total pairwise space {pairwise_space}")
-        time2 = time.time()
-        logger.debug(f"Parsed alignment space for {self.pair_indexes}, took {(time2-time1)/60}m")
+        count_A = len(self.seqs_A)
+        count_B = len(self.seqs_B)
 
-        # if we have already done this part, get the results so that we can compute global
-        # metrics and escape
-        if self.output_exists:
-            try:
-                hits = len(pd.read_csv(self.output_path, usecols=[0]))
-            except pd.errors.EmptyDataError:
-                # it is possible we run into an empty file. If this is the case, it is because
-                # another worker started it but timed out. This is okay
-                # if we start again we will also time out, so instead
-                # cut our losses for that pair
-                hits = 0
-            emissions = tracker.stop()
-            return {'pair': self.pair_indexes, 'pw_space': pairwise_space, 'hits':hits, 'emissions': emissions}
+        pairwise_space = count_A * count_B
+        logger.info(
+            f"Running alignment considering seqs totalling ({count_A},{count_B}). Total pairwise space {pairwise_space}")
+        time2 = time.time()
+        logger.debug(f"Parsed alignment, took {(time2-time1)/60}m")
 
         # create the iterators over the actual protein sequences
-        # these only exist so that we can load a small chunk of sequences into memory
-        # at a time
         def seq_id_iter(df):
-            for row in df.itertuples():
-                yield row['taxid'], row['protein_seq']
-        meso_iter = seq_id_iter(self.meso_seqs)
-        thermo_iter = seq_id_iter(self.thermo_seqs)
+            for _, row in df.iterrows():
+                yield row['id'], row['seq']
+        iter_A = seq_id_iter(self.seqs_A)
+        iter_B = seq_id_iter(self.seqs_B)
 
         # create the temporary files that a blastlike algorithm expects
-        logger.info(f"Pair {self.pair_indexes}, using alignment parameters {self.alignment_params}")
+        logger.info(f"Using alignment parameters {self.alignment_params}")
         time1 = time.time()
-        with BlastFiles(thermo_iter, meso_iter, dbtype='prot') as (query_tmp, subject_tmp, out_tmp):
+        with BlastFiles(iter_A, iter_B, dbtype='prot') as (query_tmp, subject_tmp, out_tmp):
             time2 = time.time()
-            logger.debug(f"Pair {self.pair_indexes} temporary file preparation complete at {(query_tmp, subject_tmp, out_tmp)}, took {(time2-time1)/60}m")
+            logger.debug(f"Temporary file preparation complete at {(query_tmp, subject_tmp, out_tmp)}, took {(time2-time1)/60}m")
 
             # run the alignment itself
             time1 = time.time()
             self._call_alignment(query_tmp, subject_tmp, out_tmp)
             time2 = time.time()
-            logger.debug(f"Pair {self.pair_indexes} alignment complete, took {(time2-time1)/60}m")
+            logger.debug(f"Alignment complete, took {(time2-time1)/60}m")
 
             # apply the metrics to it
             # blast record io
@@ -481,15 +378,10 @@ class AlignmentHandler:
                 df = self._compute_metrics(record)
                 dataframes.append(df)
                 hits += len(df)
-            to_deposit = pd.concat(dataframes, ignore_index=True)
-            logger.debug(f"Head of results DF: \n{to_deposit.head()}")
-            logger.debug(f"Saving results to file {self.output_path}")
-            to_deposit.rename(columns={'query_id':'thermo_protein_id', "subject_id": "meso_protein_id"}, inplace=True)
-            to_deposit.to_csv(self.output_path)
+            df_results = pd.concat(dataframes, ignore_index=True)
             time2 = time.time()
-            logger.debug(f"Computing metrics for {self.pair_indexes} took {(time2-time1)/60}m")  
-        emissions = tracker.stop()
-        return {'pair': self.pair_indexes, 'pw_space': pairwise_space, 'hits': hits, 'execution_time': (time2-time0)/60, 'emissions': emissions}
+            logger.debug(f"Computed metrics, saved to file, head of results DF: \n{df_results.head()} took {(time2-time1)/60}m")  
+        return df_results, {'pw_space': pairwise_space, 'hits': hits, 'execution_time': (time2-time0)/60}
 
 class BlastAlignmentHandler(AlignmentHandler):
     """Alignment using blastp
@@ -549,7 +441,7 @@ class DiamondAlignmentHandler(AlignmentHandler):
         time0 = time.time()
         # diamond requires a special DB type
         command = f"diamond makedb --in {subject_db} -d {subject_db}.diamond"
-        logger.debug(f"Updating DB for diamond for pair {self.pair_indexes}")
+        logger.debug(f"Updating DB for diamond")
         process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         # wait for it to be done
         while process.poll() is None:
@@ -560,7 +452,7 @@ class DiamondAlignmentHandler(AlignmentHandler):
             logger.error(stderr)
             raise ValueError(f"Conversion to diamond db failed, check logs.")
         time1 = time.time()
-        logger.debug(f"Updated DB for diamond for pair {self.pair_indexes}, took {(time1-time0)/60}m")
+        logger.debug(f"Updated DB for diamond took {(time1-time0)/60}m")
         
         
         command = f"diamond blastp -d {subject_db}.diamond -q {query_file} -o {output_file} --outfmt 5 --max-target-seqs 1000000 --max-hsps 100 --evalue 100 --query-cover 50 --subject-cover 0 --id 0 --masking 0"
@@ -586,14 +478,124 @@ class DiamondAlignmentHandler(AlignmentHandler):
             logger.error(stderr)
             raise ValueError(f"Diamond alignment failed, check logs.")
         return
+            
+class TaxaAlignmentWorker:
+    """Runs alignment for a taxa pair.
 
-class AlignmentClusterState:
+    Produces an output file in the output directory with the following format:
+        align_taxa_{meso_index}_{thermo_index}.parquet
+
+    Note that the file is always created, even if the alignment fails.
+    Additionally, if the file already exists, it will not be overwritten.
+    
+    Parameters
+    ----------
+    meso_index : int
+        index of meso taxa
+    thermo_index : int  
+        index of thermo taxa
+    protein_database : str
+        path to protein database
+    output_dir : str
+        path to output directory
+    max_seq_len : int
+        maximum sequence length
+    alignment_params : Dict[str, Any]
+        parameters for alignment
+    alignment_handler : AlignmentHandler
+        class to handle alignment
+    metrics : list
+        list of metrics to compute
+    restart : bool
+        whether to restart if output file already exists
+    """
+    def __init__(
+        self,
+        meso_index: int,
+        thermo_index: int,
+        protein_database: str,
+        output_dir: str,
+        max_seq_len: int,
+        alignment_params: Dict[str, Any],
+        aligner_class: AlignmentHandler = BlastAlignmentHandler,
+        metrics: list = ['scaled_local_symmetric_percent_id'],
+    ):
+        self.meso_index = meso_index
+        self.thermo_index = thermo_index
+        self.protein_database = protein_database
+        if not output_dir.endswith("/"):
+            output_dir = output_dir + "/"
+        self.output_dir = output_dir
+        self.max_seq_len = max_seq_len
+        self.alignment_params = alignment_params
+        self.aligner_class = aligner_class
+        self.metrics = metrics
+
+    def run(self):
+        # define output file
+        output_filename = f"align_taxa_{self.thermo_index}-{self.meso_index}.parquet"
+
+        # start carbon tracking
+        tracker = OfflineEmissionsTracker( 
+            project_name=output_filename,
+            output_dir=self.output_dir,
+            country_iso_code='USA',
+            region='Washington'
+        )
+        tracker.start()
+        # if we have already done this part, get the results so that we can compute global
+        # metrics and escape
+        if os.path.exists(self.output_dir+output_filename):
+            try:
+                hits = len(pd.read_parquet(self.output_dir+output_filename))
+            except pd.errors.EmptyDataError:
+                # it is possible we run into an empty file. If this is the case, it is because
+                # another worker started it but timed out. This is okay
+                # if we start again we will also time out, so instead
+                # cut our losses for that pair
+                hits = 0
+            emissions = tracker.stop()
+            run_metadata =  {'target': output_filename, 'pw_space': None, 'hits': hits, 'execution_time': None, 'emissions': emissions}
+        else:
+            file = open(self.output_dir+output_filename, "w")
+            file.close()
+
+            # connect to DB
+            conn = ddb.connect(self.protein_database, read_only=True)
+            # get sequences from DB, lower length format
+            meso_sequences = conn.execute(f"SELECT pid, sequence FROM proteins WHERE taxid={self.meso_index}").df()
+            thermo_sequences = conn.execute(f"SELECT pid, sequence FROM proteins WHERE taxid={self.thermo_index}").df()
+            logger.info(f"Found {len(meso_sequences)} meso sequences and {len(thermo_sequences)} thermo sequences for pair {self.taxa_pair}")
+            # filter by length
+            meso_sequences = meso_sequences[meso_sequences['sequence'].str.len() <= self.max_seq_len]
+            thermo_sequences = thermo_sequences[thermo_sequences['sequence'].str.len() <= self.max_seq_len]
+            logger.info(f"After filtering by length, found {len(meso_sequences)} meso sequences and {len(thermo_sequences)} thermo sequences for pair {self.taxa_pair}")
+
+            conn.close()
+            # give sequences to alignment handler
+            handler = self.aligner_class(
+                seq_A=thermo_sequences,
+                seq_B=meso_sequences,
+                alignment_params=self.alignment_params,
+                metrics=self.metrics)
+            # run handler, get output
+            results, run_metadata = handler.run()
+            # save output
+            results.to_parquet(self.output_dir+output_filename)
+            # return metadata
+        emissions = tracker.stop()
+        run_metadata['emissions'] = emissions
+        run_metadata['target'] = output_filename
+        return run_metadata
+
+
+class TaxaAlignmentClusterState:
     """Prepares and tracks the state of execution for a set of taxa pair alignments.
     
     This class exists to ensure that the correct work is skipped in the case that 
     we want to allow task skipping, and that no excess compute is wasted to job times.
     
-    The aligner handlers will skip work if the output files already exists. Unfortunately,
+    The TaxaAlignmentWorker will skip work if the output files already exists. Unfortunately,
     they would skip taxa pairs that started but did not finish due to the cluster going down.
     We want to ensure that they only skip pairs that have either completed or could not be
     completed in worker time.
@@ -606,7 +608,7 @@ class AlignmentClusterState:
     killer_workers = False
         - use when tasks are fast. In this case, workers are not closed after each task
         - some percentage of tasks will get cutoff even if they are quick, and subsequent
-          handlers will skip them
+          workers will skip them
     killer_workers = True
         - always use when tasks are long
         - when tasks are short, this adds non negligable overhead, so instead should be used
@@ -622,13 +624,11 @@ class AlignmentClusterState:
     aligner_class : AlignmentHandler
     max_seq_len : int
         maximum length of proteins
-    protein_deposit : str
-        directory containing protein sequence files with appropriate format
-    alignment_score_deposit : str
-        path to directory to deposit completed metrics, files will be created of the form `taxa_pair_X-Y.csv`
+    protein_database : str
+        duckdb database of proteins
+    output_dir : str
+        path to directory to deposit completed metrics, files will be created of the form `align_taxa_X-Y.parquet`
         X is thermo taxa index, Y is meso
-    worker_function : callable
-        Must take a single argument, an AlignmentHandler instance, and return a dict containing the key "pair"
     alignment_params : dict
         parameters to pass to alignment method
     metrics: dict
@@ -637,30 +637,33 @@ class AlignmentClusterState:
         whether to completely restart all work regardless of execution state
     killer_workers: bool, default True
         Whether or not to kill worker after each task
+    worker_function: Callable, default lambda aligner: aligner.run()
+        Function taking one argument, the aligner, that runs the job
     """
     def __init__(
         self,
         pairs: List[Tuple[str]],
         client,
-        protein_deposit: str,
-        alignment_score_deposit: str,
+        protein_database: str,
+        output_dir: str,
         max_seq_len: int = 100,
         aligner_class: AlignmentHandler = BlastAlignmentHandler,
-        worker_function: callable = lambda handler: handler.run(),
         alignment_params: dict = {},
         metrics: list = ['scaled_local_symmetric_percent_id'],
         restart: bool = True,
-        killer_workers: bool = True
+        killer_workers: bool = True,
+        worker_function: Callable = lambda aligner: aligner.run()
     ):
         self.killer_workers = killer_workers
+        self.worker_function = worker_function
 
-        if not alignment_score_deposit.endswith('/'):
-            alignment_score_deposit = alignment_score_deposit + '/'
-        self.alignment_score_deposit = alignment_score_deposit
+        if not output_dir.endswith('/'):
+            output_dir = output_dir + '/'
+        self.output_dir = output_dir
         
         # prepare and empty deposit if either we asked for restart
         # or cannot find existing metadata
-        if restart or not os.path.exists(alignment_score_deposit+'completion_state.metadat'):
+        if restart or not os.path.exists(output_dir+'completion_state.metadat'):
             logger.info(f"Starting execution of {len(pairs)} from scratch")
             shutil.rmtree(alignment_score_deposit, ignore_errors=True)
             os.makedirs(alignment_score_deposit)
@@ -668,25 +671,24 @@ class AlignmentClusterState:
         
         # otherwise load the metadata
         else:
-            self.metadata=pd.read_csv(alignment_score_deposit+'completion_state.metadat', index_col=0)
+            self.metadata=pd.read_csv(output_dir+'completion_state.metadat', index_col=0)
             # get all pairs what we successfully got a hit for
-            completed = self.metadata[self.metadata['hits'] > 0]['pair'].values
+            completed = self.metadata[self.metadata['hits'] > 0]['target'].values
             logger.info(f"Completed pairs: {completed}")
 
             # check existing files and clean the ones that were not completed
             # or timed out, which will be stored in metadata
-            existing_files = os.listdir(alignment_score_deposit)
-            existing_files = [f for f in existing_files if f.startswith('taxa')]
+            existing_files = os.listdir(output_dir)
+            existing_files = [f for f in existing_files if f.startswith('align_taxa')]
             cleanup_counter = 0
             
-            for filename in existing_files:
-                pair = filename.split('_')[-1].split('.')[0]
-                if pair in completed:
+            for target in existing_files:
+                if target in completed:
                     pass
-                    logger.info(f"Pair {pair} already completed")
+                    logger.info(f"{target} already completed")
                 else:
-                    logger.info(f"Pair {pair} erroneously ended, cleaning up file")
-                    os.remove(alignment_score_deposit+filename)
+                    logger.info(f"{target} erroneously ended, cleaning up file")
+                    os.remove(output_dir+target)
                     cleanup_counter += 1
 
             logger.info(f"Found {len(completed)} pairs already complete. Cleaned up {cleanup_counter} erroneous files.")
@@ -694,7 +696,7 @@ class AlignmentClusterState:
             # now cleanup the incoming pairs to only the ones that are not done
             new_pairs = []
             for pair in pairs:
-                if '-'.join([str(pair[0]), str(pair[1])]) in completed:
+                if f"align_taxa_{pair[0]}_{pair[1]}.parquet" in completed:
                     pass
                 else:
                     new_pairs.append(pair)
@@ -703,14 +705,16 @@ class AlignmentClusterState:
             pairs = new_pairs
             
         # create aligners and send out the job 
-        aligners = [aligner_class(
+        aligners = [TaxaAlignmentWorker(
             meso_index=mi,
             thermo_index=ti,
             max_seq_len=max_seq_len,
-            protein_deposit=protein_deposit,
-            alignment_score_deposit=alignment_score_deposit,
-            metrics=metrics,
+            protein_database=protein_database,
+            output_dir=output_dir,
+            aligner_class=aligner_class,
             alignment_params=alignment_params,
+            metrics=metrics,
+            worker_function=worker_function
         ) for (ti, mi) in pairs]
         self.aligners = aligners
         self.client = client
@@ -732,7 +736,7 @@ class AlignmentClusterState:
                     self.metadata = pd.DataFrame(data=[list(result.values())], columns=list(result.keys()))
                 else:
                     self.metadata = pd.concat([self.metadata, pd.Series(result).to_frame().T], axis=0, ignore_index=True)
-                self.metadata.to_csv(self.alignment_score_deposit+'completion_state.metadat')
+                self.metadata.to_csv(self.output_dir+'completion_state.metadat')
                 yield result
 
         self.futures_modified = futures_modified(
