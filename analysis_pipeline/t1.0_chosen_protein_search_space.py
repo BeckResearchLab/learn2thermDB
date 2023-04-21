@@ -1,15 +1,21 @@
 """Assess the total search space for protein pairs after the taxa labeling
-decision.
+decision and runs a resource test.
 
 Load the taxa information and the number of proteins for each taxa. Then
 compute the pairwise search space possible as the difference for the
-meso vs thermo space chosen
+meso vs thermo space chosen.
+
+Also run a resource test to estimate the cost of searching for all possible
+protein pairs in pure alignment runtime not including worker overhead.
+Note that for the test, random proteins are aligned instead of meso vs thermo 
+proteins, which may not be representative of the actual search space.
 
 Inputs
 ------
 - data/taxa_thermophile_labels.parquet : contains taxaid and label for each taxa
-- data/metrics/s0.2_protein_per_data_distr.csv : contains the number of proteins
+- data/metrics/s0.3_protein_per_data_distr.csv : contains the number of proteins
     for each taxa
+- data/proteins
 
 The script looks at the quantity of proteins per mesophile and thermophile,
 and extracts that to the search space available before taxa pair filering
@@ -18,12 +24,30 @@ Outputs
 -------
 - data/plots/protein_per_taxa_hist.png : histogram of the number of proteins per taxa
   colored by the taxa label as mesophile or thermophile
+- data/plots/search_space_resources.png : plot of the resources used to compute
+  protein pairs, extrapolated to the total search space
 - data/metrics/t1.0_protein_search_space.yaml : contains search space size
 """
 import pandas as pd
+import duckdb as ddb
+from codecarbon import OfflineEmissionsTracker
 import seaborn as sns
 import matplotlib.pyplot as plt
 import yaml
+import tracemalloc
+import tempfile
+
+from learn2therm.blast import BlastAlignmentHandler, DiamondAlignmentHandler
+
+if 'LOGLEVEL' in os.environ:
+    LOGLEVEL = os.environ['LOGLEVEL']
+    LOGLEVEL = getattr(logging, LOGLEVEL)
+else:
+    LOGLEVEL = logging.INFO
+LOGNAME = __file__
+LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
+
+NUM_SAMPLE = 10000
 
 def load_data():
     taxa = pd.read_parquet('./data/taxa_thermophile_labels.parquet')
@@ -49,8 +73,12 @@ def compute_search_space(taxa):
     return total_pairs
 
 def main():
+    logger = learn2therm.utils.get_logger(LOGNAME, LOGFILE, LOGLEVEL)
+
     taxa = load_data()
     total_pairs = compute_search_space(taxa)
+    scaling_factor = total_pairs / NUM_SAMPLE
+    metrics = {'total_possible_pairs_no_filter': int(total_pairs)}
 
     sns.set(style='whitegrid')
     plt.figure(figsize=(10, 6))
@@ -61,8 +89,97 @@ def main():
     plt.savefig('./data/plots/protein_per_taxa_hist.png', dpi=300)
     plt.show()
 
+    logger.info("Computed total search space: %s", total_pairs)
+
+    # now run a resource test
+    # first get the params for running blast and diamond
+    with open("./params.yaml", "r") as stream:
+        params = yaml_load(stream)['get_protein_blast_scores']
+    blast_params = params['method_blast_params']
+    diamond_params = params['method_diamond_params']
+
+
+    # get a random set of proteins
+    with tempfile.TemporaryDirectory(dir='./') as tmpdir:
+        conn = ddb.connect(tmpdir+'/test.db', read_onlt=False)
+        conn.execute("CREATE TABLE proteins AS SELECT * FROM read_parquet('./data/proteins')")
+        conn.commit()
+        logger.info("Created temporary database with proteins table")
+        query_proteins = conn.execute(f"SELECT * FROM proteins ORDER BY RANDOM() LIMIT {NUM_SAMPLE}").df()
+        subject_proteins = conn.execute(f"SELECT * FROM proteins ORDER BY RANDOM() LIMIT {NUM_SAMPLE}").df()
+        logger.info("Extracted random sample of proteins")
+
+    # rename dfs to meet expected format
+    query_proteins = query_proteins.rename(columns={'pid': 'id', 'protein_seq': 'seq'})
+    subject_proteins = subject_proteins.rename(columns={'pid': 'id', 'protein_seq': 'seq'})
+
+    # run blast
+    # start carbon and ram tracking
+    c_tracker = OfflineEmissionsTracker(
+        project_name="t1.0_blast",
+        output_dir='./data/',
+        country_iso_code='USA',
+        region='Washington'
+    )
+    c_tracker.start()
+    tracemalloc.start()
+
+    handler = BlastAlignmentHandler(
+        query_proteins,
+        subject_proteins,
+        **blast_params
+    )
+    _, blast_metadata = handler.run()
+    blast_carbon = c_tracker.stop() * scaling_factor
+    blast_ram = tracemalloc.get_traced_memory()[1] / 1e9 * scaling_factor
+    blast_time = blast_metadata['execution_time']/60 * scaling_factor
+    blast_hits = blast_metadata['hits'] * scaling_factor
+    logger.info("Ran blast")
+
+    # run diamond
+    # start carbon and ram tracking
+    c_tracker = OfflineEmissionsTracker(
+        project_name="t1.0_diamond",
+        output_dir='./data/',
+        country_iso_code='USA',
+        region='Washington'
+    )
+    c_tracker.start()
+    tracemalloc.start()
+
+    handler = DiamondAlignmentHandler(
+        query_proteins,
+        subject_proteins,
+        **diamond_params
+    )
+    _, diamond_metadata = handler.run()
+    diamond_carbon = c_tracker.stop() * scaling_factor
+    diamond_ram = tracemalloc.get_traced_memory()[1] / 1e9
+    diamond_time = diamond_metadata['execution_time']/60 * scaling_factor
+    diamond_hits = diamond_metadata['hits'] * scaling_factor
+    logger.info("Ran diamond")
+
+    # make plot with results
+    x = ['BLASTP', 'DIAMOND']
+    times = [blast_time, diamond_time]
+    hits = [blast_hits, diamond_hits]
+    ram = [blast_ram, diamond_ram]
+    carbon = [blast_carbon, diamond_carbon]
+
+    fig, ax = plt.subplots(1, 4, figsize=(20, 6))
+    sns.barplot(x=x, y=times, ax=ax[0], label='total execution time')
+    sns.barplot(x=x, y=hits, ax=ax[1], label='total hits')
+    sns.barplot(x=x, y=ram, ax=ax[2], label='ram used')
+    sns.barplot(x=x, y=carbon, ax=ax[3], label='carbon used')
+
+    ax[0].set_ylabel('expected time (hr)')
+    ax[1].set_ylabel('expected hits')
+    ax[2].set_ylabel('expected min ram per processor (GB)')
+    ax[3].set_ylabel('expected carbon (kg)')
+
+    plt.savefig('./data/plots/search_space_resource_test.png', dpi=300)
+
     # save metrics to yaml
-    metrics = {'total_possible_pairs_no_filter': int(total_pairs)}
     with open('./data/metrics/t1.0_chosen_protein_search_space.yaml', 'w') as f:
         yaml.dump(metrics, f)
 

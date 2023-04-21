@@ -2,7 +2,6 @@
 # execution of pipeline steps is dependant on these and data dependancy of the steps
 #########################################################################
 
-# S0 data extraction params
 get_raw_data_taxa:
   min_16s_len: 1300                  # min number of nucleotides in 16s to keep
   max_16s_len: 1600                  # max number of nucleotides in 16s to keep
@@ -10,7 +9,7 @@ get_raw_data_proteins:
   dev_only_one_uniprot_file: false
 parse_proteins:
   max_prot_per_file: 100000          # size of parquet files containing proteins
-  dev_only_one_uniprot_file: true
+  dev_only_one_uniprot_file: false
 label_taxa:
   ogt_threshold: 40.0                # binary threshold to consider something as thermophilic
 
@@ -54,41 +53,41 @@ label_taxa:
 #     subject_align_cov:
 #       thresh: 0.75
 #       greater: true
-# get_protein_blast_scores:
-#   dask_cluster_class: 'SLURMCluster'
-#   max_protein_length: 400            # only consider proteins with length less than number
-#   method: 'diamond'
-#   n_jobs: 48
-#   restart: true
-#   checkpoint: null                   # if int, dvc will checkpoint every N, currently is broken because dask continues to run workers while checkpointing
-#   primary_sweep: true               # run without worker closing to start, do this for fast aligner methods like diamond
-#   method_blast_params:
-#     num_threads: 6                        # number of cpus to run in parallel         
-#     word_size: 3                    # size of words for initial exact matching of nucleotides
-#     gapopen: 11               # cost to open a gap
-#     gapextend: 1             # cost to extend gap
-#     matrix: 'BLOSUM62'
-#     threshold: 11          # minumum score for word to be added to blast lookup table
-#     ungapped: false                  # whether to do ungapped alignment
-#   method_diamond_params:
-#     num_threads: 6
-#     sensitivity: 'ultra-sensitive'
-#     iterate: false                  # start with low sensitivity and only go lower towards target sensitivity for failure
-#     global_ranking: null           # hard limit on the number of Smith Waterman extensions that will be computed for each query.
-#     gapopen: 11
-#     gapextend: 1
-#     matrix: 'BLOSUM62'
-#   blast_metrics:
-#     - local_gap_compressed_percent_id
-#     - scaled_local_query_percent_id
-#     - scaled_local_symmetric_percent_id
-#     - local_E_value
-#     - query_align_start
-#     - query_align_end
-#     - subject_align_end
-#     - subject_align_start
-#     - query_align_len
-#     - query_align_cov
-#     - subject_align_len
-#     - subject_align_cov
-#     - bit_score
+get_protein_blast_scores:
+  dask_cluster_class: 'SLURMCluster'
+  max_protein_length: 400            # only consider proteins with length less than number
+  method: 'diamond'
+  n_jobs: 48
+  restart: true
+  checkpoint: null                   # if int, dvc will checkpoint every N, currently is broken because dask continues to run workers while checkpointing
+  primary_sweep: true               # run without worker closing to start, do this for fast aligner methods like diamond
+  method_blast_params:
+    num_threads: 6                        # number of cpus to run in parallel         
+    word_size: 3                    # size of words for initial exact matching of nucleotides
+    gapopen: 11               # cost to open a gap
+    gapextend: 1             # cost to extend gap
+    matrix: 'BLOSUM62'
+    threshold: 11          # minumum score for word to be added to blast lookup table
+    ungapped: false                  # whether to do ungapped alignment
+  method_diamond_params:
+    num_threads: 6
+    sensitivity: 'ultra-sensitive'
+    iterate: false                  # start with low sensitivity and only go lower towards target sensitivity for failure
+    global_ranking: null           # hard limit on the number of Smith Waterman extensions that will be computed for each query.
+    gapopen: 11
+    gapextend: 1
+    matrix: 'BLOSUM62'
+  blast_metrics:
+    - local_gap_compressed_percent_id
+    - scaled_local_query_percent_id
+    - scaled_local_symmetric_percent_id
+    - local_E_value
+    - query_align_start
+    - query_align_end
+    - subject_align_end
+    - subject_align_start
+    - query_align_len
+    - query_align_cov
+    - subject_align_len
+    - subject_align_cov
+    - bit_score
