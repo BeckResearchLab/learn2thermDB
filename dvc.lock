@@ -347,19 +347,19 @@ stages:
       size: 7161
     params:
       params.yaml:
-        parse_proteins.dev_only_one_uniprot_file: true
+        parse_proteins.dev_only_one_uniprot_file: false
         parse_proteins.max_prot_per_file: 100000
     outs:
     - path: ./data/metrics/s0.3_metrics.yaml
-      md5: e362043a119c78ca3735acfe179c6f90
+      md5: fe32ce40ed8fa3b1990ee67b8e30c7bc
       size: 89
     - path: ./data/metrics/s0.3_protein_per_data_distr.csv
-      md5: 4dcfd709aa4c3a22af25bf2d07197e2f
-      size: 511
+      md5: 5d3a2703c494746599ec95a764367d05
+      size: 115307
     - path: ./data/proteins/
-      md5: e8b0b7031673123424f9f71bc09fc149.dir
-      size: 87504
-      nfiles: 1
+      md5: 9fcd187f3774b6244e32147674fba2d5.dir
+      size: 6739084091
+      nfiles: 200
   get_proteome_mdata:
     cmd: python pipeline/s0.2_get_proteome_mdata.py
     outs:
