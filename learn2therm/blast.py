@@ -408,9 +408,6 @@ class BlastAlignmentHandler(AlignmentHandler):
             outfmt=5,
             out=output_file,
             max_target_seqs=10000000, # very large so we do not throw out any pairs. will have to increase if there is more than this num of mesos
-            evalue=100, # very large so we do not lose any hits
-            # the rest are tunable params
-            qcov_hsp_perc=50,
             max_hsps=100,
             **self.alignment_params
         )()
@@ -455,7 +452,7 @@ class DiamondAlignmentHandler(AlignmentHandler):
         logger.debug(f"Updated DB for diamond took {(time1-time0)/60}m")
         
         
-        command = f"diamond blastp -d {subject_db}.diamond -q {query_file} -o {output_file} --outfmt 5 --max-target-seqs 1000000 --max-hsps 100 --evalue 100 --query-cover 50 --subject-cover 0 --id 0 --masking 0"
+        command = f"diamond blastp -d {subject_db}.diamond -q {query_file} -o {output_file} --outfmt 5 --max-target-seqs 1000000 --max-hsps 100 --id 0 --masking 0"
         command = command + f" --{self.alignment_params['sensitivity']}"
         if self.alignment_params['iterate']:
             command = command + " --iterate"
@@ -463,6 +460,9 @@ class DiamondAlignmentHandler(AlignmentHandler):
         command = command + f" --gapopen {self.alignment_params['gapopen']}"
         command = command + f" --gapextend {self.alignment_params['gapextend']}"
         command = command + f" --threads {self.alignment_params['num_threads']}"
+        command = command + f" --evalue {self.alignment_params['evalue']}"
+        command = command + f" --query-cover {self.alignment_params['hsp_cov']}"
+        command = command + f" --subject-cover {self.alignment_params['hsp_cov']}"
         if self.alignment_params['global_ranking']:
             command = command + f" --global_ranking {self.alignment_params['global_ranking']}"
         

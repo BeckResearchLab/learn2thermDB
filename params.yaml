@@ -69,6 +69,8 @@ get_protein_blast_scores:
     matrix: 'BLOSUM62'
     threshold: 11          # minumum score for word to be added to blast lookup table
     ungapped: false                  # whether to do ungapped alignment
+    evalue: .00001               # minimum evalue
+    qcov_hsp_perc: 75            # minimum percent query coverage
   method_diamond_params:
     num_threads: 6
     sensitivity: 'ultra-sensitive'
@@ -77,6 +79,8 @@ get_protein_blast_scores:
     gapopen: 11
     gapextend: 1
     matrix: 'BLOSUM62'
+    evalue: .00001
+    hsp_cov: 75                    # minumum coverage of alignment  
   blast_metrics:
     - local_gap_compressed_percent_id
     - scaled_local_query_percent_id

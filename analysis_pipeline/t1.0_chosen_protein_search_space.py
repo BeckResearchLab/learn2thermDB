@@ -28,16 +28,21 @@ Outputs
   protein pairs, extrapolated to the total search space
 - data/metrics/t1.0_protein_search_space.yaml : contains search space size
 """
+import os
+import logging
+
 import pandas as pd
 import duckdb as ddb
 from codecarbon import OfflineEmissionsTracker
 import seaborn as sns
 import matplotlib.pyplot as plt
-import yaml
+from yaml import safe_load as yaml_load
+from yaml import dump as yaml_dump
 import tracemalloc
 import tempfile
 
 from learn2therm.blast import BlastAlignmentHandler, DiamondAlignmentHandler
+import learn2therm.utils
 
 if 'LOGLEVEL' in os.environ:
     LOGLEVEL = os.environ['LOGLEVEL']
@@ -49,10 +54,8 @@ LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 
 NUM_SAMPLE = 10000
 
-def load_data():
+def load_data(protein_counts):
     taxa = pd.read_parquet('./data/taxa_thermophile_labels.parquet')
-    protein_counts = pd.read_csv('./data/metrics/s0.2_protein_per_data_distr.csv', index_col=0)
-    protein_counts = protein_counts.rename(columns={'count_star()': 'n_proteins'})
 
     # outer join the two dataframes to get all taxa on taxid
     taxa = taxa.merge(protein_counts, on='taxid', how='outer', )
@@ -73,12 +76,56 @@ def compute_search_space(taxa):
     return total_pairs
 
 def main():
-    logger = learn2therm.utils.get_logger(LOGNAME, LOGFILE, LOGLEVEL)
+    logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, 'w')
 
-    taxa = load_data()
+    # now run a resource test
+    # first get the params for running blast and diamond
+    with open("./params.yaml", "r") as stream:
+        params = yaml_load(stream)['get_protein_blast_scores']
+    max_protein_length = params['max_protein_length']
+    blast_params = params['method_blast_params']
+    diamond_params = params['method_diamond_params']
+
+
+    # get a random set of proteins
+    with tempfile.TemporaryDirectory(dir='./') as tmpdir:
+        conn = ddb.connect(tmpdir+'/proteins.db', read_only=False)
+        conn.execute("CREATE TABLE proteins AS SELECT * FROM read_parquet('./data/proteins/*.parquet')")
+        conn.commit()
+        logger.info("Created temporary database with proteins table")
+
+        # get some test proteins to run resource test alignment on
+        # considering the max protein length
+        query_proteins = conn.execute(
+            f"""SELECT pid, protein_seq, LENGTH(protein_seq) AS len FROM proteins 
+            WHERE len<={max_protein_length}
+            ORDER BY RANDOM()
+            LIMIT {NUM_SAMPLE}
+            """).df()
+        subject_proteins = conn.execute(
+            f"""SELECT pid, protein_seq, LENGTH(protein_seq) AS len FROM proteins 
+            WHERE len<={max_protein_length}
+            ORDER BY RANDOM()
+            LIMIT {NUM_SAMPLE}
+            """).df()
+        logger.info("Extracted random sample of proteins")
+
+        # get some metadata about taxa protein join
+        # protein total counts per organism was tracked in s0.3
+        # but lets recompute that data considering a max protien length
+        protein_counts = conn.execute(
+            f"""SELECT taxid, COUNT(*) AS n_proteins
+            FROM proteins
+            WHERE LENGTH(protein_seq)<={max_protein_length}
+            GROUP BY taxid""").df()
+
+
+    # taxa metadata considering max protein length
+    taxa = load_data(protein_counts)
     total_pairs = compute_search_space(taxa)
+    logger.info(f"{total_pairs} possible pairings after sequence length filtering")
     scaling_factor = total_pairs / NUM_SAMPLE
-    metrics = {'total_possible_pairs_no_filter': int(total_pairs)}
+    metrics = {'chosen_binary_possible_pairs_max_len': int(total_pairs)}
 
     sns.set(style='whitegrid')
     plt.figure(figsize=(10, 6))
@@ -91,23 +138,6 @@ def main():
 
     logger.info("Computed total search space: %s", total_pairs)
 
-    # now run a resource test
-    # first get the params for running blast and diamond
-    with open("./params.yaml", "r") as stream:
-        params = yaml_load(stream)['get_protein_blast_scores']
-    blast_params = params['method_blast_params']
-    diamond_params = params['method_diamond_params']
-
-
-    # get a random set of proteins
-    with tempfile.TemporaryDirectory(dir='./') as tmpdir:
-        conn = ddb.connect(tmpdir+'/test.db', read_onlt=False)
-        conn.execute("CREATE TABLE proteins AS SELECT * FROM read_parquet('./data/proteins')")
-        conn.commit()
-        logger.info("Created temporary database with proteins table")
-        query_proteins = conn.execute(f"SELECT * FROM proteins ORDER BY RANDOM() LIMIT {NUM_SAMPLE}").df()
-        subject_proteins = conn.execute(f"SELECT * FROM proteins ORDER BY RANDOM() LIMIT {NUM_SAMPLE}").df()
-        logger.info("Extracted random sample of proteins")
 
     # rename dfs to meet expected format
     query_proteins = query_proteins.rename(columns={'pid': 'id', 'protein_seq': 'seq'})
@@ -127,13 +157,14 @@ def main():
     handler = BlastAlignmentHandler(
         query_proteins,
         subject_proteins,
-        **blast_params
+        alignment_params=blast_params
     )
     _, blast_metadata = handler.run()
     blast_carbon = c_tracker.stop() * scaling_factor
-    blast_ram = tracemalloc.get_traced_memory()[1] / 1e9 * scaling_factor
+    blast_ram = tracemalloc.get_traced_memory()[1] / 1e9
     blast_time = blast_metadata['execution_time']/60 * scaling_factor
     blast_hits = blast_metadata['hits'] * scaling_factor
+    tracemalloc.stop()
     logger.info("Ran blast")
 
     # run diamond
@@ -150,7 +181,7 @@ def main():
     handler = DiamondAlignmentHandler(
         query_proteins,
         subject_proteins,
-        **diamond_params
+        alignment_params=diamond_params
     )
     _, diamond_metadata = handler.run()
     diamond_carbon = c_tracker.stop() * scaling_factor
@@ -158,6 +189,7 @@ def main():
     diamond_time = diamond_metadata['execution_time']/60 * scaling_factor
     diamond_hits = diamond_metadata['hits'] * scaling_factor
     logger.info("Ran diamond")
+    tracemalloc.stop()
 
     # make plot with results
     x = ['BLASTP', 'DIAMOND']
@@ -181,7 +213,7 @@ def main():
 
     # save metrics to yaml
     with open('./data/metrics/t1.0_chosen_protein_search_space.yaml', 'w') as f:
-        yaml.dump(metrics, f)
+        yaml_dump(metrics, f)
 
 if __name__ == '__main__':
     main()
