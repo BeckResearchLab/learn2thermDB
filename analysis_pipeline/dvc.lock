@@ -161,6 +161,43 @@ stages:
     - path: ./data/taxa_thermophile_labels.parquet
       md5: 68b6dc086ee2d5f8e71373522e43f64a
       size: 120740
+    params:
+      params.yaml:
+        get_protein_blast_scores.blast_metrics:
+        - local_gap_compressed_percent_id
+        - scaled_local_query_percent_id
+        - scaled_local_symmetric_percent_id
+        - local_E_value
+        - query_align_start
+        - query_align_end
+        - subject_align_end
+        - subject_align_start
+        - query_align_len
+        - query_align_cov
+        - subject_align_len
+        - subject_align_cov
+        - bit_score
+        get_protein_blast_scores.max_protein_length: 400
+        get_protein_blast_scores.method_blast_params:
+          num_threads: 6
+          word_size: 3
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          threshold: 11
+          ungapped: false
+          evalue: 1e-05
+          qcov_hsp_perc: 75
+        get_protein_blast_scores.method_diamond_params:
+          num_threads: 6
+          sensitivity: ultra-sensitive
+          iterate: false
+          global_ranking:
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          evalue: 1e-05
+          hsp_cov: 75
     outs:
     - path: ./data/metrics/t1.0_chosen_protein_search_space.yaml
       md5: 1d4408a116ae014ba3e31292a2317258
@@ -169,5 +206,5 @@ stages:
       md5: 6dbb1f1dd3522859773213f2534ae4f2
       size: 97650
     - path: ./data/plots/search_space_resource_test.png
-      md5: 47a31fd110f8cd4a6fbae4adddcfb141
-      size: 185563
+      md5: e83c1c31efce54edde4ecc03fab291dc
+      size: 185432

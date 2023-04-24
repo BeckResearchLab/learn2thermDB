@@ -61,68 +61,30 @@ stages:
       plots:
       - ./data/plots/ogt_hist.png:
           cache: false
-  # get_bacdive_ogt:
-  #   cmd: python pipeline/s0.1_get_bacdive_ogt.py
-  #   deps:
-  #   - pipeline/s0.1_get_bacdive_ogt.py
-  #   - ./learn2therm/bacdive.py
-  #   - ./learn2therm/io.py
-  #   - ./learn2therm/utils.py
-  #   - ./data/refseq
-  #   outs:
-  #   - ./data/taxa/taxa_info_and_ogt.csv
-  #   params:
-  #   - get_bacdive_ogt.n_jobs
-  #   - get_bacdive_ogt.n_sample
-  #   metrics:
-  #   - ./data/metrics/s0.1_metrics.yaml:
-  #       cache: false
-  
-  # get_proteins:
-  #   cmd: python pipeline/s1.1_get_protein_sequences.py
-  #   deps:
-  #   - pipeline/s1.1_get_protein_sequences.py
-  #   - ./learn2therm/io.py
-  #   - ./learn2therm/utils.py
-  #   - ./data/refseq
-  #   - ./data/taxa/taxa_info_and_ogt.csv
-  #   outs:
-  #   - ./data/taxa/16s_rRNA.csv
-  #   - ./data/taxa/proteins
-  #   params:
-  #   - get_protein_sequences.n_jobs
-  #   - get_protein_sequences.n_sample
-  #   metrics:
-  #   - ./data/metrics/s1.1_metrics.yaml:
-  #       cache: false
-  #   plots:
-  #   - ./data/plots/protein_length_hist.png:
-  #       cache: false
-  # get_16s_blast_scores:
-  #   cmd: python pipeline/s1.2_get_16s_blast_scores.py
-  #   deps:
-  #   - ./pipeline/s1.2_get_16s_blast_scores.py
-  #   - ./learn2therm/io.py
-  #   - ./learn2therm/utils.py
-  #   - ./learn2therm/blast.py
-  #   - ./data/taxa/labels.csv
-  #   - ./data/taxa/16s_rRNA.csv
-  #   outs:
-  #   - ./data/taxa_pairs/pairwise_16s_blast.csv
-  #   - ./data/taxa_pairs/16s_align_emissions.csv
-  #   params:
-  #   - get_16s_blast_scores.num_threads
-  #   - get_16s_blast_scores.word_size
-  #   - get_16s_blast_scores.gapopen_penalty
-  #   - get_16s_blast_scores.gapextend_penalty
-  #   - get_16s_blast_scores.reward
-  #   - get_16s_blast_scores.penalty
-  #   - get_16s_blast_scores.ungapped
-  #   - get_16s_blast_scores.n_sample
-  #   - get_16s_blast_scores.blast_metrics
-  #   metrics:
-  #   - ./data/metrics/s1.2_metrics.yaml:
-  #       cache: false
+  get_16s_blast_scores:
+    cmd: python pipeline/s1.1_get_16s_blast_scores.py
+    deps:
+    - ./pipeline/s1.1_get_16s_blast_scores.py
+    - ./learn2therm/io.py
+    - ./learn2therm/utils.py
+    - ./learn2therm/blast.py
+    - ./data/taxa/taxa_thermopgile_labels.parquet
+    - ./data/taxa/taxa.parquet
+    outs:
+    - ./data/taxa_pairs/alignment/
+    params:
+    - get_16s_blast_scores.num_threads
+    - get_16s_blast_scores.word_size
+    - get_16s_blast_scores.gapopen_penalty
+    - get_16s_blast_scores.gapextend_penalty
+    - get_16s_blast_scores.reward
+    - get_16s_blast_scores.penalty
+    - get_16s_blast_scores.ungapped
+    - get_16s_blast_scores.dev_n_sample
+    - get_16s_blast_scores.blast_metrics
+    metrics:
+    - ./data/metrics/s1.2_metrics.yaml:
+        cache: false
   # label_all_pairs:
   #   cmd: python pipeline/s1.3_label_all_pairs.py
   #   deps:
