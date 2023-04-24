@@ -7,7 +7,7 @@ is increased.
 Inputs
 ------
 - data/taxa.parquet : contains taxaid and OGT for each taxa
-- data/metrics/s0.2_protein_per_data_distr.csv : contains the number of proteins
+- data/metrics/s0.3_protein_per_data_distr.csv : contains the number of proteins
     for each taxa
 
 The script loops through binary OGT thresholds from 30.0 to 50.0 C and
@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 
 def load_data():
     taxa = pd.read_parquet('./data/taxa.parquet')
-    protein_counts = pd.read_csv('./data/metrics/s0.2_protein_per_data_distr.csv')
+    protein_counts = pd.read_csv('./data/metrics/s0.3_protein_per_data_distr.csv')
     protein_counts = protein_counts.rename(columns={'count_star()': 'n_proteins'})
 
     return taxa, protein_counts
@@ -44,8 +44,12 @@ def compute_search_space(taxa, protein_counts, ogt_threshold, window_width):
     protein_counts_above = protein_counts_above['n_proteins'].values.reshape(1,-1)
     
     total_pairs = (protein_counts_below * protein_counts_above).sum()
+    n_meso_total = protein_counts_below.sum()
+    n_thermo_total = protein_counts_above.sum()
+    n_meso_mean = protein_counts_below.mean()
+    n_thermo_mean = protein_counts_above.mean()
 
-    return total_pairs
+    return n_meso_total, n_thermo_total, n_meso_mean, n_thermo_mean, total_pairs
 
 def main():
     taxa, protein_counts = load_data()
@@ -57,18 +61,35 @@ def main():
 
     for ogt_threshold in thresholds:
         for window_width in window_widths:
-            total_pairs = compute_search_space(taxa, protein_counts, ogt_threshold, window_width)
-            search_space_data.append([ogt_threshold, window_width, total_pairs])
+            n_meso_total, n_thermo_total, n_meso_mean, n_thermo_mean, total_pairs = compute_search_space(taxa, protein_counts, ogt_threshold, window_width)
+            search_space_data.append([ogt_threshold, window_width, n_meso_total, n_thermo_total, n_meso_mean, n_thermo_mean, total_pairs])
 
-    search_space_df = pd.DataFrame(search_space_data, columns=['threshold', 'window_width', 'total_pairs'])
+    search_space_df = pd.DataFrame(search_space_data, columns=['threshold', 'window_width', 'n_meso_total', 'n_thermo_total', 'n_meso_mean', 'n_thermo_mean', 'total_pairs'])
     search_space_df.to_csv('data/metrics/t0.2_total_search_space.csv', index=False)
 
     sns.set(style='whitegrid')
-    plt.figure(figsize=(10, 6))
-    sns.lineplot(data=search_space_df, x='threshold', y='total_pairs', hue='window_width', marker='o')
+    fig, ax = plt.subplots(5,1,figsize=(10, 30))
 
-    plt.xlabel('OGT Threshold (°C)')
-    plt.ylabel('Total Possible Protein Pairs')
+    sns.lineplot(data=search_space_df, x='threshold', y='n_meso_total', hue='window_width', marker='o', ax=ax[0])
+    ax[0].set_xlabel('OGT Threshold (°C)')
+    ax[0].set_ylabel('Number of mesophilic proteins')
+
+    sns.lineplot(data=search_space_df, x='threshold', y='n_thermo_total', hue='window_width', marker='o', ax=ax[1])
+    ax[1].set_xlabel('OGT Threshold (°C)')
+    ax[1].set_ylabel('Number of thermophilic proteins')
+
+    sns.lineplot(data=search_space_df, x='threshold', y='total_pairs', hue='window_width', marker='o', ax=ax[2])
+    ax[2].set_xlabel('OGT Threshold (°C)')
+    ax[2].set_ylabel('Total possible pairs')
+
+    sns.lineplot(data=search_space_df, x='threshold', y='n_meso_mean', hue='window_width', marker='o', ax=ax[3])
+    ax[3].set_xlabel('OGT Threshold (°C)')
+    ax[3].set_ylabel('Meso proteins per organism')
+
+    sns.lineplot(data=search_space_df, x='threshold', y='n_thermo_mean', hue='window_width', marker='o', ax=ax[4])
+    ax[4].set_xlabel('OGT Threshold (°C)')
+    ax[4].set_ylabel('Thermo proteins per organism')
+
     plt.legend(title='Window Width (°C)', loc='upper left')
     plt.savefig('data/plots/total_search_space.png', dpi=300)
     plt.show()

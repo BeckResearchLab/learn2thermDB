@@ -127,9 +127,13 @@ if __name__ == '__main__':
 
     url = 'https://rest.uniprot.org/proteomes/search?compressed=false&format=json&query=%28%2A%29&size=500'
     proteomes = []
+    i = 0
     for batch, total in get_batch(url):
+        i += 1
+        logger.info(f"Got {500*i} total")
         content = json.loads(batch.text)['results']
         proteomes.extend(content)
+
     logger.info("Completed downlaoding proteomes...")
 
     # parse into dataframe
@@ -145,12 +149,4 @@ if __name__ == '__main__':
     strain_aggregated_df = pd.concat(strain_aggregated_dfs)
     logger.info(f"Aggregated over strains, remaining proteomes: {len(strain_aggregated_df)}")
 
-    # now aggregate on species
-    species_groups = strain_aggregated_df.groupby('species_taxid')
-    species_aggregated_dfs = []
-    for i, group in species_groups:
-        best_proteome = get_best_proteome_from_group(group)
-        species_aggregated_dfs.append(best_proteome)
-    species_aggregated_df = pd.concat(species_aggregated_dfs)
-    logger.info(f"Aggregated over species, remaining proteomes: {len(species_aggregated_df)}")
-    species_aggregated_df.reset_index(drop=True).to_csv('./data/uniprot/proteome_metadata.csv')
+    strain_aggregated_df.reset_index(drop=True).to_csv('./data/uniprot/proteome_metadata.csv')

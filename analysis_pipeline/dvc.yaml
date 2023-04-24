@@ -4,7 +4,7 @@ stages:
     cmd: python ./analysis_pipeline/t0.2_full_protein_search_space.py
     deps:
     - ./data/taxa.parquet
-    - ./data/metrics/s0.2_protein_per_data_distr.csv
+    - ./data/metrics/s0.3_protein_per_data_distr.csv
     - ./analysis_pipeline/t0.2_full_protein_search_space.py
     metrics:
     - ./data/metrics/t0.2_total_search_space.csv:

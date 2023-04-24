@@ -98,10 +98,10 @@ stages:
       md5: dc8b932adf1ca2bb9256408a6ae075a1
       size: 26
     - path: ./data/plots/ogt_hist.png
-      md5: 466d2be9c799b458bd6ad9897d9904ad
-      size: 34384
+      md5: 45f5421118a7ac3c5f9208de43aa4e09
+      size: 31166
     - path: ./data/taxa_thermophile_labels.parquet
-      md5: 50bc6d01dae38aefde571ba766851e4f
+      md5: 68b6dc086ee2d5f8e71373522e43f64a
       size: 120740
   get_16s_blast_scores:
     cmd: python pipeline/s1.2_get_16s_blast_scores.py
@@ -322,10 +322,10 @@ stages:
         get_raw_data_proteins.dev_only_one_uniprot_file: false
     outs:
     - path: ./data/metrics/s0.1_metrics.yaml
-      md5: ce3427ac0343b5f4204dcac97b52a21b
+      md5: 034622e986ae390c770b1fd4d1c02efc
       size: 32
     - path: ./data/uniprot/uniprot_pulled_timestamp
-      md5: 94d41857f48c2078539a5792fb0c0e72
+      md5: 88a4ed10c38792e572fc6d7ed432d8c3
       size: 10
   parse_proteins:
     cmd: python pipeline/s0.3_parse_proteins.py
@@ -334,35 +334,39 @@ stages:
       md5: e62b6a3fbb8232e4dfeca04c863ba761
       size: 6487331
     - path: ./data/uniprot/proteome_metadata.csv
-      md5: 443402462165307962a45b7d7dbef5d8
-      size: 6275005
+      md5: e858a56f6842ce772940c7e2394e978f
+      size: 8045021
     - path: ./data/uniprot/uniprot_pulled_timestamp
-      md5: 94d41857f48c2078539a5792fb0c0e72
+      md5: 88a4ed10c38792e572fc6d7ed432d8c3
       size: 10
     - path: ./learn2therm/io.py
       md5: 4f49985e8dcfb88d2c4504744e05d96a
       size: 4031
     - path: ./pipeline/s0.3_parse_proteins.py
-      md5: 3da43b7f768e1b3dbd0e93571e738fd2
-      size: 7161
+      md5: f454cd553e5e800d6f9dac774a680112
+      size: 11021
     params:
       params.yaml:
         parse_proteins.dev_only_one_uniprot_file: false
         parse_proteins.max_prot_per_file: 100000
     outs:
     - path: ./data/metrics/s0.3_metrics.yaml
-      md5: fe32ce40ed8fa3b1990ee67b8e30c7bc
-      size: 89
+      md5: f9e4b23f68c45f8f0b7aad338c301335
+      size: 90
     - path: ./data/metrics/s0.3_protein_per_data_distr.csv
-      md5: 5d3a2703c494746599ec95a764367d05
-      size: 115307
+      md5: 00f3a4ce6743ad51fcad580e0b00e586
+      size: 118659
     - path: ./data/proteins/
-      md5: 9fcd187f3774b6244e32147674fba2d5.dir
-      size: 6739084091
-      nfiles: 200
+      md5: 389a0968431c8d8fda7b40de45df17f6.dir
+      size: 8031552496
+      nfiles: 239
   get_proteome_mdata:
     cmd: python pipeline/s0.2_get_proteome_mdata.py
+    deps:
+    - path: pipeline/s0.2_get_proteome_mdata.py
+      md5: 30612e819c7a75fa695ec91afa571d4d
+      size: 5743
     outs:
     - path: ./data/uniprot/proteome_metadata.csv
-      md5: 443402462165307962a45b7d7dbef5d8
-      size: 6275005
+      md5: e858a56f6842ce772940c7e2394e978f
+      size: 8045021

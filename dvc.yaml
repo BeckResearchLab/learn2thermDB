@@ -24,6 +24,8 @@ stages:
         cache: false
   get_proteome_mdata:
     cmd: python pipeline/s0.2_get_proteome_mdata.py
+    deps:
+    - pipeline/s0.2_get_proteome_mdata.py
     outs:
     - ./data/uniprot/proteome_metadata.csv
   parse_proteins:
