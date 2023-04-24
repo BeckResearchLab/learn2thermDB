@@ -149,18 +149,25 @@ stages:
     cmd: python ./analysis_pipeline/t1.0_chosen_protein_search_space.py
     deps:
     - path: ./analysis_pipeline/t1.0_chosen_protein_search_space.py
-      md5: 11a54caf298cafd7109de85491d4e5f6
-      size: 2460
-    - path: ./data/metrics/s0.2_protein_per_data_distr.csv
-      md5: a8d3ea3b8a2d255cadb284a898bac28d
-      size: 117996
+      md5: 3c286dc227aa1d8af525669e9fb449e6
+      size: 7945
+    - path: ./data/metrics/s0.3_protein_per_data_distr.csv
+      md5: 00f3a4ce6743ad51fcad580e0b00e586
+      size: 118659
+    - path: ./data/proteins
+      md5: 389a0968431c8d8fda7b40de45df17f6.dir
+      size: 8031552496
+      nfiles: 239
     - path: ./data/taxa_thermophile_labels.parquet
-      md5: 50bc6d01dae38aefde571ba766851e4f
+      md5: 68b6dc086ee2d5f8e71373522e43f64a
       size: 120740
     outs:
     - path: ./data/metrics/t1.0_chosen_protein_search_space.yaml
-      md5: d2100e79998c9c63163de90461eaf858
-      size: 47
+      md5: 1d4408a116ae014ba3e31292a2317258
+      size: 53
     - path: ./data/plots/protein_per_taxa_hist.png
-      md5: 2e3075372d3f765593dd5fc633b3541e
-      size: 88389
+      md5: 6dbb1f1dd3522859773213f2534ae4f2
+      size: 97650
+    - path: ./data/plots/search_space_resource_test.png
+      md5: 2ce4d8ff6da60adc4cea5b0b5f6ba14b
+      size: 178477

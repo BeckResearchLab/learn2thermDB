@@ -227,7 +227,7 @@ if __name__ == "__main__":
         os.mkdir('./data/proteins')
 
     tracker = OfflineEmissionsTracker(
-        project_name=f"s0.2",
+        project_name=f"s0.3",
         output_dir='./data/',
         country_iso_code='USA',
         region='Washington'
