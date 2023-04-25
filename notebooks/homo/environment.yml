@@ -1,15 +1,10 @@
-name: learn2thermDB
+name: l2t_homo
 channels:
   - conda-forge
   - defaults
   - bioconda
 dependencies:
   - biopython=1.79
-  - dask=2022.2.1
-  - dask-core=2022.2.1
-  - dask-jobqueue=0.8.1
-  - distributed=2022.2.1
-  - joblib
   - dvc=2.27.2
   - dvc-data=0.10.0
   - dvc-http=2.19.1
@@ -23,12 +18,12 @@ dependencies:
   - python=3.10.6
   - pyyaml=6.0
   - seaborn-base=0.12.0
-  - blast
-  - diamond
+  - pyhmmer
+  - jupyterlab
   - pip
   - pip:
     - bacdive==0.2
     - duckdb==0.7.0
     - codecarbon==2.1.4
-    - dvclive==0.11.0
-
+    - datasketch
+    - nltk
