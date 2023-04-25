@@ -104,26 +104,26 @@ stages:
       md5: 68b6dc086ee2d5f8e71373522e43f64a
       size: 120740
   get_16s_blast_scores:
-    cmd: python pipeline/s1.2_get_16s_blast_scores.py
+    cmd: python pipeline/s1.1_get_16s_blast_scores.py
     deps:
-    - path: ./data/taxa/16s_rRNA.csv
-      md5: 1b0a6d0685ebb0e678b72cb3b57ae8a4
-      size: 21316764
-    - path: ./data/taxa/labels.csv
-      md5: 22b516c22355a1697527f0099c5b8075
-      size: 161752
+    - path: ./data/taxa.parquet
+      md5: e62b6a3fbb8232e4dfeca04c863ba761
+      size: 6487331
+    - path: ./data/taxa_thermophile_labels.parquet
+      md5: 68b6dc086ee2d5f8e71373522e43f64a
+      size: 120740
     - path: ./learn2therm/blast.py
-      md5: 1dada75a9efafa27e269ed7285a9c4c0
-      size: 31876
+      md5: 03d778f06ffcd5c352af03d7a05dc612
+      size: 30342
     - path: ./learn2therm/io.py
-      md5: 0486f89d5dc673fab5af776b57cfd8d2
-      size: 3945
+      md5: 4f49985e8dcfb88d2c4504744e05d96a
+      size: 4031
     - path: ./learn2therm/utils.py
       md5: 4845b20446345d469e7eae2a6968e962
       size: 1766
-    - path: ./pipeline/s1.2_get_16s_blast_scores.py
-      md5: 0bc3de11ded3b112fabb19671dfb1d3f
-      size: 6181
+    - path: ./pipeline/s1.1_get_16s_blast_scores.py
+      md5: b84acf79b40a9fba228cb38879b66fb5
+      size: 6132
     params:
       params.yaml:
         get_16s_blast_scores.blast_metrics:
@@ -140,24 +140,22 @@ stages:
         - subject_align_len
         - subject_align_cov
         - bit_score
+        get_16s_blast_scores.dev_n_sample:
         get_16s_blast_scores.gapextend_penalty: 1
         get_16s_blast_scores.gapopen_penalty: 2
-        get_16s_blast_scores.n_sample:
         get_16s_blast_scores.num_threads: 40
         get_16s_blast_scores.penalty: -2
         get_16s_blast_scores.reward: 1
         get_16s_blast_scores.ungapped: false
         get_16s_blast_scores.word_size: 28
     outs:
-    - path: ./data/metrics/s1.2_metrics.yaml
-      md5: d8037d675c3ac5efbe7fd85ca5316cfd
-      size: 51
-    - path: ./data/taxa_pairs/16s_align_emissions.csv
-      md5: 05d51fc6f8ce7aa2aafb3c734b45126e
-      size: 681
-    - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: aa98b55fec7d0b5a937376b14e094864
-      size: 105641139
+    - path: ./data/metrics/s1.1_metrics.yaml
+      md5: 082ce0a335b194152a901b1bdf4b2163
+      size: 85
+    - path: ./data/taxa_pairs/alignment/
+      md5: a0e59e42eb5f8dd53662a3663fa6cf22.dir
+      size: 122756471
+      nfiles: 42
   label_all_pairs:
     cmd: python pipeline/s1.3_label_all_pairs.py
     deps:

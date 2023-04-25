@@ -22,6 +22,11 @@ stages:
     - ./data/metrics/s0.3_protein_per_data_distr.csv
     - ./data/proteins
     - ./analysis_pipeline/t1.0_chosen_protein_search_space.py
+    params:
+    - get_protein_blast_scores.max_protein_length
+    - get_protein_blast_scores.method_blast_params
+    - get_protein_blast_scores.method_diamond_params
+    - get_protein_blast_scores.blast_metrics
     metrics:
     - ./data/metrics/t1.0_chosen_protein_search_space.yaml:
         cache: false

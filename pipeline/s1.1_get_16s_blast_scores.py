@@ -24,47 +24,54 @@ else:
     LOGLEVEL = logging.INFO
 LOGNAME = __file__
 LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
+# connect to log file
+logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
 
-OUTDIR = "./data/taxa_pairs/"
+OUTDIR = "./data/taxa_pairs/alignment/"
 
 def apply_blast_metric_make_files_chunks(
     records,
     metrics: List[str],
     chunksize: int=100000
 ):
-    """Compute metrics for a single blast record and save to file with locking.
+    """Compute metrics for a single blast record and save to file.
     
     Metrics returns dataframe of (query index, subject_index, metric value) for each metric
     """
-    logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
+    def save(dataframes, total_files):
+        df = pd.concat(dataframes, ignore_index=True)
+        df.to_parquet(OUTDIR+f'taxa_pair_blast_chunk_{total_files}.parquet')
+
     dataframes = []
     current_size = 0
     total_files = 0
+    end = False
     for record in records:
         # compute all metrics
-        metric_handler = learn2therm.blast.BlastMetrics(blast_record)
+        metric_handler = learn2therm.blast.BlastMetrics(record)
         metric_values_df = metric_handler.compute_metrics(metrics)
-        logger.debug(f"Adding {len(out)} alignments for thermophile {metric_handler.qid}")
+        logger.debug(f"Adding {len(metric_values_df)} alignments for thermophile {metric_handler.qid}")
         dataframes.append(metric_values_df)
         current_size += len(metric_values_df)
 
-        if current_size > chunksize:
-            df = pd.concat(dataframes, ignore_index=True)
-            df.to_parquet(OUTDIR+'taxa_pair_blast_chunk_{total_files}.parquet')
+        if current_size > chunksize or end:
+            save(dataframes, total_files)
             logger.info(f"Saved file {total_files} with {current_size} pairwise comparisons")
             total_files += 1
             current_size = 0
             dataframes = []
-
+    logger.info(f"Saved file {total_files} with {current_size} pairwise comparisons")
+    save(dataframes, total_files)
 
 if __name__ == '__main__':
-    # connect to log file
-    logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
-
     # DVC tracked parameters
     with open("./params.yaml", "r") as stream:
         params = yaml_load(stream)['get_16s_blast_scores']
     logger.info(f"Loaded parameters: {params}")
+
+    # directory
+    if not os.path.exists(OUTDIR):
+        os.makedirs(OUTDIR)
 
     tracker = OfflineEmissionsTracker(
         project_name=f"s1.1",
@@ -75,7 +82,7 @@ if __name__ == '__main__':
     tracker.start()
 
     # load the thermo meso labels
-    labels = pd.read_csv('./data/taxa_thermophile_labels.parquet').set_index('taxid', drop=True)['thermophile_label']
+    labels = pd.read_parquet('./data/taxa_thermophile_labels.parquet').set_index('taxid', drop=True)['thermophile_label']
 
     # get the taxa indexes of themophiles and mesophiles
     thermo_indexes = list(labels[labels == True].index)
@@ -89,8 +96,8 @@ if __name__ == '__main__':
     thermophile_iterator = taxa.loc[thermo_indexes]
     mesophile_iterator = taxa.loc[meso_indexes]
     # need tuple of id, seq
-    thermophile_iterator = thermophile_iterator.reset_index().intertuples(index=False)
-    mesophile_iterator = mesophile_iterator.reset_index().intertuples(index=False)
+    thermophile_iterator = thermophile_iterator.reset_index().itertuples(index=False)
+    mesophile_iterator = mesophile_iterator.reset_index().itertuples(index=False)
 
     # sample if we neeed to
     if params['dev_n_sample'] != None:
@@ -143,7 +150,7 @@ if __name__ == '__main__':
     # save metrics
     carbon = tracker.stop()
     total_hits = con.execute(f"SELECT COUNT(*) FROM '{OUTDIR}*.parquet'").fetchone()[0]
-    metrics = {'percent_full_pairwise_16s_blast': float(total_hits/(len(thermo_indexes)*len(meso_indexes)))}
+    metrics = {'fraction_full_pairwise_16s_hits': float(total_hits/(len(thermo_indexes)*len(meso_indexes)))}
     metrics['s1.1_carbon'] = float(carbon)
     with open('./data/metrics/s1.1_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)

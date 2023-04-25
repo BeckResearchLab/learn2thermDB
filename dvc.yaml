@@ -68,8 +68,8 @@ stages:
     - ./learn2therm/io.py
     - ./learn2therm/utils.py
     - ./learn2therm/blast.py
-    - ./data/taxa/taxa_thermopgile_labels.parquet
-    - ./data/taxa/taxa.parquet
+    - ./data/taxa_thermophile_labels.parquet
+    - ./data/taxa.parquet
     outs:
     - ./data/taxa_pairs/alignment/
     params:
@@ -83,21 +83,21 @@ stages:
     - get_16s_blast_scores.dev_n_sample
     - get_16s_blast_scores.blast_metrics
     metrics:
+    - ./data/metrics/s1.1_metrics.yaml:
+        cache: false
+  label_all_pairs:
+    cmd: python pipeline/s1.2_label_all_pairs.py
+    deps:
+    - ./pipeline/s1.2_label_all_pairs.py
+    - ./learn2therm/utils.py
+    - ./data/taxa_pairs/alignment
+    outs:
+    - ./data/taxa_pairs/pair_labels
+    params:
+    - label_all_pairs.blast_metric_thresholds
+    metrics:
     - ./data/metrics/s1.2_metrics.yaml:
         cache: false
-  # label_all_pairs:
-  #   cmd: python pipeline/s1.3_label_all_pairs.py
-  #   deps:
-  #   - ./pipeline/s1.3_label_all_pairs.py
-  #   - ./learn2therm/utils.py
-  #   - ./data/taxa_pairs/pairwise_16s_blast.csv
-  #   outs:
-  #   - ./data/taxa_pairs/pair_labels.csv
-  #   params:
-  #   - label_all_pairs.blast_metric_thresholds
-  #   metrics:
-  #   - ./data/metrics/s1.3_metrics.yaml:
-  #       cache: false
   # get_protein_blast_scores:
   #   cmd: python pipeline/s1.4_get_protein_blast_scores.py
   #   deps:
