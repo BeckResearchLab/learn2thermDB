@@ -177,7 +177,7 @@ stages:
         - subject_align_len
         - subject_align_cov
         - bit_score
-        get_protein_blast_scores.max_protein_length: 400
+        get_protein_blast_scores.max_protein_length: 250
         get_protein_blast_scores.method_blast_params:
           num_threads: 6
           word_size: 3
@@ -200,11 +200,11 @@ stages:
           hsp_cov: 75
     outs:
     - path: ./data/metrics/t1.0_chosen_protein_search_space.yaml
-      md5: 1d4408a116ae014ba3e31292a2317258
-      size: 53
+      md5: a4cb491753a56039b8d48bfa503c7005
+      size: 52
     - path: ./data/plots/protein_per_taxa_hist.png
-      md5: 6dbb1f1dd3522859773213f2534ae4f2
-      size: 97650
+      md5: 1074567ba2516610e77301d97d4bd942
+      size: 99976
     - path: ./data/plots/search_space_resource_test.png
-      md5: e83c1c31efce54edde4ecc03fab291dc
-      size: 185432
+      md5: 63a33eb3eeb80b771880ee282bfa8534
+      size: 217176
