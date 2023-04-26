@@ -123,3 +123,88 @@ stages:
     - path: ./data/analysis/blast_vs_diamond_hits.csv
       md5: c02dd449559e2bdbb1c7a3891a48ad85
       size: 6044
+  full_protein_search_space:
+    cmd: python ./analysis_pipeline/t0.2_full_protein_search_space.py
+    deps:
+    - path: ./analysis_pipeline/t0.2_full_protein_search_space.py
+      md5: 7a16de25a27f7ab5471edbf535265b9a
+      size: 4854
+    - path: ./data/metrics/s0.3_protein_per_data_distr.csv
+      md5: 00f3a4ce6743ad51fcad580e0b00e586
+      size: 118659
+    - path: ./data/taxa.parquet
+      md5: e62b6a3fbb8232e4dfeca04c863ba761
+      size: 6487331
+    outs:
+    - path: ./data/metrics/t0.2_total_search_space.csv
+      md5: 7f7977bf181d72249091ef111175142a
+      size: 1625
+    - path: ./data/plots/cumsum_proteins.png
+      md5: 9c4efbcbc9be7a370702a944f2a33eaa
+      size: 114905
+    - path: ./data/plots/total_search_space.png
+      md5: 153bdef48433ba7f33094e6147ea93b7
+      size: 1030643
+  chosen_protein_search_space:
+    cmd: python ./analysis_pipeline/t1.0_chosen_protein_search_space.py
+    deps:
+    - path: ./analysis_pipeline/t1.0_chosen_protein_search_space.py
+      md5: 66e51003c9abec810cedace6a6e519d0
+      size: 7928
+    - path: ./data/metrics/s0.3_protein_per_data_distr.csv
+      md5: 00f3a4ce6743ad51fcad580e0b00e586
+      size: 118659
+    - path: ./data/proteins
+      md5: 389a0968431c8d8fda7b40de45df17f6.dir
+      size: 8031552496
+      nfiles: 239
+    - path: ./data/taxa_thermophile_labels.parquet
+      md5: 68b6dc086ee2d5f8e71373522e43f64a
+      size: 120740
+    params:
+      params.yaml:
+        get_protein_blast_scores.blast_metrics:
+        - local_gap_compressed_percent_id
+        - scaled_local_query_percent_id
+        - scaled_local_symmetric_percent_id
+        - local_E_value
+        - query_align_start
+        - query_align_end
+        - subject_align_end
+        - subject_align_start
+        - query_align_len
+        - query_align_cov
+        - subject_align_len
+        - subject_align_cov
+        - bit_score
+        get_protein_blast_scores.max_protein_length: 250
+        get_protein_blast_scores.method_blast_params:
+          num_threads: 6
+          word_size: 3
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          threshold: 11
+          ungapped: false
+          evalue: 1e-05
+          qcov_hsp_perc: 75
+        get_protein_blast_scores.method_diamond_params:
+          num_threads: 6
+          sensitivity: ultra-sensitive
+          iterate: false
+          global_ranking:
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          evalue: 1e-05
+          hsp_cov: 75
+    outs:
+    - path: ./data/metrics/t1.0_chosen_protein_search_space.yaml
+      md5: a4cb491753a56039b8d48bfa503c7005
+      size: 52
+    - path: ./data/plots/protein_per_taxa_hist.png
+      md5: 1074567ba2516610e77301d97d4bd942
+      size: 99976
+    - path: ./data/plots/search_space_resource_test.png
+      md5: 63a33eb3eeb80b771880ee282bfa8534
+      size: 217176
