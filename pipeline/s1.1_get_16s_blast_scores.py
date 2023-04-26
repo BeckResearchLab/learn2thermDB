@@ -38,14 +38,17 @@ def apply_blast_metric_make_files_chunks(
     
     Metrics returns dataframe of (query index, subject_index, metric value) for each metric
     """
-    def save(dataframes, total_files):
+    def save(dataframes, total_files, checkpoint_size):
         df = pd.concat(dataframes, ignore_index=True)
-        df.to_parquet(OUTDIR+f'taxa_pair_blast_chunk_{total_files}.parquet')
+        df.index = list(range(checkpoint_size,checkpoint_size+len(df)))
+        checkpoint_size += len(df)
+        df.to_parquet(OUTDIR+f'taxa_pair_blast_chunk_{total_files}.parquet', index=True)
+        return checkpoint_size
 
     dataframes = []
     current_size = 0
+    checkpoint_size = 0
     total_files = 0
-    end = False
     for record in records:
         # compute all metrics
         metric_handler = learn2therm.blast.BlastMetrics(record)
@@ -54,14 +57,14 @@ def apply_blast_metric_make_files_chunks(
         dataframes.append(metric_values_df)
         current_size += len(metric_values_df)
 
-        if current_size > chunksize or end:
-            save(dataframes, total_files)
+        if current_size > chunksize:
+            checkpoint_size = save(dataframes, total_files, checkpoint_size)
             logger.info(f"Saved file {total_files} with {current_size} pairwise comparisons")
             total_files += 1
             current_size = 0
             dataframes = []
     logger.info(f"Saved file {total_files} with {current_size} pairwise comparisons")
-    save(dataframes, total_files)
+    save(dataframes, total_files, checkpoint_size)
 
 if __name__ == '__main__':
     # DVC tracked parameters
@@ -83,6 +86,9 @@ if __name__ == '__main__':
 
     # load the thermo meso labels
     labels = pd.read_parquet('./data/taxa_thermophile_labels.parquet').set_index('taxid', drop=True)['thermophile_label']
+    # filter by if we have proteins or not
+    protein_distr = pd.read_csv('./data/metrics/s0.3_protein_per_data_distr.csv')
+    labels = labels.loc[labels.index[labels.index.isin(protein_distr['taxid'].values)]]
 
     # get the taxa indexes of themophiles and mesophiles
     thermo_indexes = list(labels[labels == True].index)

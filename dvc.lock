@@ -167,8 +167,8 @@ stages:
       md5: 4845b20446345d469e7eae2a6968e962
       size: 1766
     - path: ./pipeline/s1.2_label_all_pairs.py
-      md5: 274b1e7a3ccc0ea80bb5207d00e91aae
-      size: 4016
+      md5: 69e76dece66806d59790fd1a399c8f83
+      size: 4026
     params:
       params.yaml:
         label_all_pairs.blast_metric_thresholds:
@@ -184,8 +184,8 @@ stages:
         label_all_pairs.dev_only_one_file: false
     outs:
     - path: ./data/metrics/s1.2_metrics.yaml
-      md5: 5a6a589b23eaef43bc01b61dd1efc66a
-      size: 77
+      md5: a205ecbf38d992274f21c189cdbc1f6c
+      size: 79
     - path: ./data/taxa_pairs/pair_labels
       md5: bc7154568dec298bc35946d3900c8625.dir
       size: 26986358

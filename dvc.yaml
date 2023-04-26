@@ -70,6 +70,7 @@ stages:
     - ./learn2therm/blast.py
     - ./data/taxa_thermophile_labels.parquet
     - ./data/taxa.parquet
+    - ./data/metrics/s0.3_protein_per_data_distr.csv
     outs:
     - ./data/taxa_pairs/alignment/
     params:
@@ -95,6 +96,7 @@ stages:
     - ./data/taxa_pairs/pair_labels
     params:
     - label_all_pairs.blast_metric_thresholds
+    - label_all_pairs.dev_only_one_file
     metrics:
     - ./data/metrics/s1.2_metrics.yaml:
         cache: false
