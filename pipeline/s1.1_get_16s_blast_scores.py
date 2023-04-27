@@ -88,7 +88,9 @@ if __name__ == '__main__':
     labels = pd.read_parquet('./data/taxa_thermophile_labels.parquet').set_index('taxid', drop=True)['thermophile_label']
     # filter by if we have proteins or not
     protein_distr = pd.read_csv('./data/metrics/s0.3_protein_per_data_distr.csv')
+    init_label_size = len(labels)
     labels = labels.loc[labels.index[labels.index.isin(protein_distr['taxid'].values)]]
+    logger.info(f"Filtered taxa from {init_label_size} to {len(labels)} by protein presence")
 
     # get the taxa indexes of themophiles and mesophiles
     thermo_indexes = list(labels[labels == True].index)
