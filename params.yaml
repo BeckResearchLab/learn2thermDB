@@ -53,8 +53,7 @@ get_protein_blast_scores:
   method: 'diamond'
   n_jobs: 48
   restart: true
-  checkpoint: null                   # if int, dvc will checkpoint every N, currently is broken because dask continues to run workers while checkpointing
-  primary_sweep: true               # run without worker closing to start, do this for fast aligner methods like diamond
+  dev_sample_pairs: 100
   method_blast_params:
     num_threads: 6                        # number of cpus to run in parallel         
     word_size: 3                    # size of words for initial exact matching of nucleotides

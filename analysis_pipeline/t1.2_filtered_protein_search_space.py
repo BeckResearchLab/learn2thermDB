@@ -1,7 +1,7 @@
 """Extract number of possible protein pairs among chosen taxa pairs.
 
 Load the taxa information and the number of proteins for each taxa. Compute
-The toral search space for these taxa, then select a random pair
+The toral search space for these taxa, then select random pairs
 to run a resource test on.
 
 Inputs
@@ -191,7 +191,7 @@ def main():
 
     # compute metrics
     results = pd.read_csv(tmpdir_output+'/completion_state.metadat')
-    logger.info(f"{results['hits'].isna()} taxa pairs failed to complete")
+    logger.info(f"{results['hits'].isna().sum()} taxa pairs failed to complete")
     results = results[~results['hits'].isna()]
     emissions = float(results['emissions'].sum())
     hits = int(results['hits'].sum())

@@ -212,8 +212,8 @@ stages:
     cmd: python ./analysis_pipeline/t1.2_filtered_protein_search_space.py
     deps:
     - path: ./analysis_pipeline/t1.2_filtered_protein_search_space.py
-      md5: 29a263e3e5d1e0d683d4391a5ca03b33
-      size: 9044
+      md5: b646f73c647febd7a8fea827851dc0be
+      size: 9043
     - path: ./data/proteins
       md5: 389a0968431c8d8fda7b40de45df17f6.dir
       size: 8031552496
@@ -226,3 +226,7 @@ stages:
       md5: e39d13aa8604fb9c713b0895cb197258.dir
       size: 16176756
       nfiles: 26
+    outs:
+    - path: ./data/metrics/t1.2_metrics.yaml
+      md5: 5981eb29b303e05d50063bf146b187ff
+      size: 190
