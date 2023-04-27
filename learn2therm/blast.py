@@ -349,7 +349,7 @@ class AlignmentHandler:
         # create the iterators over the actual protein sequences
         def seq_id_iter(df):
             for _, row in df.iterrows():
-                yield row['id'], row['seq']
+                yield row['pid'], row['sequence']
         iter_A = seq_id_iter(self.seqs_A)
         iter_B = seq_id_iter(self.seqs_B)
 
@@ -378,7 +378,10 @@ class AlignmentHandler:
                 df = self._compute_metrics(record)
                 dataframes.append(df)
                 hits += len(df)
-            df_results = pd.concat(dataframes, ignore_index=True)
+            if hits == 0:
+                df_results = pd.DataFrame()
+            else:
+                df_results = pd.concat(dataframes, ignore_index=True)
             time2 = time.time()
             logger.debug(f"Computed metrics, saved to file, head of results DF: \n{df_results.head()} took {(time2-time1)/60}m")  
         return df_results, {'pw_space': pairwise_space, 'hits': hits, 'execution_time': (time2-time0)/60}
@@ -531,6 +534,10 @@ class TaxaAlignmentWorker:
         self.aligner_class = aligner_class
         self.metrics = metrics
 
+    @property
+    def pair_indexes(self):
+        return (self.thermo_index, self.meso_index)
+
     def run(self):
         # define output file
         output_filename = f"align_taxa_{self.thermo_index}-{self.meso_index}.parquet"
@@ -548,12 +555,12 @@ class TaxaAlignmentWorker:
         if os.path.exists(self.output_dir+output_filename):
             try:
                 hits = len(pd.read_parquet(self.output_dir+output_filename))
-            except pd.errors.EmptyDataError:
+            except:
                 # it is possible we run into an empty file. If this is the case, it is because
                 # another worker started it but timed out. This is okay
                 # if we start again we will also time out, so instead
                 # cut our losses for that pair
-                hits = 0
+                hits = None
             emissions = tracker.stop()
             run_metadata =  {'target': output_filename, 'pw_space': None, 'hits': hits, 'execution_time': None, 'emissions': emissions}
         else:
@@ -565,23 +572,27 @@ class TaxaAlignmentWorker:
             # get sequences from DB, lower length format
             meso_sequences = conn.execute(f"SELECT pid, sequence FROM proteins WHERE taxid={self.meso_index}").df()
             thermo_sequences = conn.execute(f"SELECT pid, sequence FROM proteins WHERE taxid={self.thermo_index}").df()
-            logger.info(f"Found {len(meso_sequences)} meso sequences and {len(thermo_sequences)} thermo sequences for pair {self.taxa_pair}")
+            logger.info(f"Found {len(meso_sequences)} meso sequences and {len(thermo_sequences)} thermo sequences for pair {self.pair_indexes}")
             # filter by length
             meso_sequences = meso_sequences[meso_sequences['sequence'].str.len() <= self.max_seq_len]
             thermo_sequences = thermo_sequences[thermo_sequences['sequence'].str.len() <= self.max_seq_len]
-            logger.info(f"After filtering by length, found {len(meso_sequences)} meso sequences and {len(thermo_sequences)} thermo sequences for pair {self.taxa_pair}")
+            logger.info(f"After filtering by length, found {len(meso_sequences)} meso sequences and {len(thermo_sequences)} thermo sequences for pair {self.pair_indexes}")
 
             conn.close()
             # give sequences to alignment handler
             handler = self.aligner_class(
-                seq_A=thermo_sequences,
-                seq_B=meso_sequences,
+                seqs_A=thermo_sequences,
+                seqs_B=meso_sequences,
                 alignment_params=self.alignment_params,
                 metrics=self.metrics)
             # run handler, get output
             results, run_metadata = handler.run()
             # save output
-            results.to_parquet(self.output_dir+output_filename)
+            # if we got none, skip this part
+            if results.empty:
+                logger.info(f"No results for pair {self.pair_indexes}")
+            else:
+                results.to_parquet(self.output_dir+output_filename)
             # return metadata
         emissions = tracker.stop()
         run_metadata['emissions'] = emissions
@@ -665,15 +676,16 @@ class TaxaAlignmentClusterState:
         # or cannot find existing metadata
         if restart or not os.path.exists(output_dir+'completion_state.metadat'):
             logger.info(f"Starting execution of {len(pairs)} from scratch")
-            shutil.rmtree(alignment_score_deposit, ignore_errors=True)
-            os.makedirs(alignment_score_deposit)
+            shutil.rmtree(output_dir, ignore_errors=True)
+            os.makedirs(output_dir)
             self.metadata=None
         
         # otherwise load the metadata
         else:
-            self.metadata=pd.read_csv(output_dir+'completion_state.metadat', index_col=0)
+            self.metadata=pd.read_csv(output_dir+'completion_state.metadat')
             # get all pairs what we successfully got a hit for
-            completed = self.metadata[self.metadata['hits'] > 0]['target'].values
+            completed = self.metadata[~self.metadata['hits'].isna()]['target'].values
+            logger.info(f"Found {len(self.metadata)} worker completions, and {len(completed)} finished jobs")
             logger.info(f"Completed pairs: {completed}")
 
             # check existing files and clean the ones that were not completed
@@ -696,7 +708,7 @@ class TaxaAlignmentClusterState:
             # now cleanup the incoming pairs to only the ones that are not done
             new_pairs = []
             for pair in pairs:
-                if f"align_taxa_{pair[0]}_{pair[1]}.parquet" in completed:
+                if f"align_taxa_{pair[0]}-{pair[1]}.parquet" in completed:
                     pass
                 else:
                     new_pairs.append(pair)
@@ -714,7 +726,6 @@ class TaxaAlignmentClusterState:
             aligner_class=aligner_class,
             alignment_params=alignment_params,
             metrics=metrics,
-            worker_function=worker_function
         ) for (ti, mi) in pairs]
         self.aligners = aligners
         self.client = client
@@ -734,9 +745,12 @@ class TaxaAlignmentClusterState:
                 # record that we completed one
                 if self.metadata is None:
                     self.metadata = pd.DataFrame(data=[list(result.values())], columns=list(result.keys()))
+                    self.metadata.to_csv(self.output_dir+'completion_state.metadat', index=False)
                 else:
-                    self.metadata = pd.concat([self.metadata, pd.Series(result).to_frame().T], axis=0, ignore_index=True)
-                self.metadata.to_csv(self.output_dir+'completion_state.metadat')
+                    file = open(self.output_dir+'completion_state.metadat', 'a')
+                    output_values = [str(v) for v in result.values()]
+                    file.write(','.join(output_values)+'\n')
+                    file.close()
                 yield result
 
         self.futures_modified = futures_modified(

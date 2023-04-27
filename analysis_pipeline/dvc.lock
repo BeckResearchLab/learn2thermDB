@@ -208,3 +208,21 @@ stages:
     - path: ./data/plots/search_space_resource_test.png
       md5: 63a33eb3eeb80b771880ee282bfa8534
       size: 217176
+  filtered_protein_search_space:
+    cmd: python ./analysis_pipeline/t1.2_filtered_protein_search_space.py
+    deps:
+    - path: ./analysis_pipeline/t1.2_filtered_protein_search_space.py
+      md5: 29a263e3e5d1e0d683d4391a5ca03b33
+      size: 9044
+    - path: ./data/proteins
+      md5: 389a0968431c8d8fda7b40de45df17f6.dir
+      size: 8031552496
+      nfiles: 239
+    - path: ./data/taxa_pairs/alignment
+      md5: 40439dc256528d3c1e71b68d53f55ab1.dir
+      size: 90778197
+      nfiles: 26
+    - path: ./data/taxa_pairs/pair_labels
+      md5: e39d13aa8604fb9c713b0895cb197258.dir
+      size: 16176756
+      nfiles: 26

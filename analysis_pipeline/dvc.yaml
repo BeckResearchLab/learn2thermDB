@@ -35,6 +35,14 @@ stages:
         cache: false
     - ./data/plots/search_space_resource_test.png:
         cache: false
+  filtered_protein_search_space:
+    wdir: ../
+    cmd: python ./analysis_pipeline/t1.2_filtered_protein_search_space.py
+    deps:
+    - ./data/taxa_pairs/alignment
+    - ./data/taxa_pairs/pair_labels
+    - ./data/proteins
+    - ./analysis_pipeline/t1.2_filtered_protein_search_space.py
 
   # protein_alignment_resource_test:
   #   wdir: ../
