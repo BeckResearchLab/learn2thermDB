@@ -106,6 +106,9 @@ stages:
   get_16s_blast_scores:
     cmd: python pipeline/s1.1_get_16s_blast_scores.py
     deps:
+    - path: ./data/metrics/s0.3_protein_per_data_distr.csv
+      md5: 00f3a4ce6743ad51fcad580e0b00e586
+      size: 118659
     - path: ./data/taxa.parquet
       md5: e62b6a3fbb8232e4dfeca04c863ba761
       size: 6487331
@@ -113,8 +116,8 @@ stages:
       md5: 68b6dc086ee2d5f8e71373522e43f64a
       size: 120740
     - path: ./learn2therm/blast.py
-      md5: 8ad75b36c57d6ec812c27d3b600fa1a3
-      size: 30502
+      md5: 9ef2730fc56fc3d37295f9589c7fe2d2
+      size: 30424
     - path: ./learn2therm/io.py
       md5: 4f49985e8dcfb88d2c4504744e05d96a
       size: 4031
@@ -122,8 +125,8 @@ stages:
       md5: 4845b20446345d469e7eae2a6968e962
       size: 1766
     - path: ./pipeline/s1.1_get_16s_blast_scores.py
-      md5: 39ff9b12dc8dc97d57cc67b7be09da6a
-      size: 6352
+      md5: e9d8f7a007ac0ab03207bc6b4ce55e56
+      size: 6693
     params:
       params.yaml:
         get_16s_blast_scores.blast_metrics:
@@ -150,12 +153,12 @@ stages:
         get_16s_blast_scores.word_size: 28
     outs:
     - path: ./data/metrics/s1.1_metrics.yaml
-      md5: 0aa514a1f692689ec4b3468410851bbb
+      md5: d46c5b011f7a0dc2efec6d1d9b1ca40f
       size: 85
     - path: ./data/taxa_pairs/alignment/
-      md5: 40a07599a96fcf6b4d7790fa221375e3.dir
-      size: 149632212
-      nfiles: 42
+      md5: 40439dc256528d3c1e71b68d53f55ab1.dir
+      size: 90778197
+      nfiles: 26
   label_all_pairs:
     cmd: python pipeline/s1.2_label_all_pairs.py
     deps:
