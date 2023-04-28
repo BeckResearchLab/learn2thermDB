@@ -11,6 +11,7 @@ import shutil
 import re
 import time
 import subprocess
+from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
@@ -384,7 +385,9 @@ class AlignmentHandler:
                 df_results = pd.concat(dataframes, ignore_index=True)
             time2 = time.time()
             logger.debug(f"Computed metrics, saved to file, head of results DF: \n{df_results.head()} took {(time2-time1)/60}m")  
-        return df_results, {'pw_space': pairwise_space, 'hits': hits, 'execution_time': (time2-time0)/60}
+            out_metadata = {'pw_space': pairwise_space, 'hits': hits, 'execution_time': (time2-time0)/60}
+            logger.debug(f"Metadata for this run: {out_metadata}")
+        return df_results, out_metadata
 
 class BlastAlignmentHandler(AlignmentHandler):
     """Alignment using blastp
@@ -553,16 +556,9 @@ class TaxaAlignmentWorker:
         # if we have already done this part, get the results so that we can compute global
         # metrics and escape
         if os.path.exists(self.output_dir+output_filename):
-            try:
-                hits = len(pd.read_parquet(self.output_dir+output_filename))
-            except:
-                # it is possible we run into an empty file. If this is the case, it is because
-                # another worker started it but timed out. This is okay
-                # if we start again we will also time out, so instead
-                # cut our losses for that pair
-                hits = None
             emissions = tracker.stop()
-            run_metadata =  {'target': output_filename, 'pw_space': None, 'hits': hits, 'execution_time': None, 'emissions': emissions}
+            run_metadata =  {'pw_space': None, 'hits': None, 'execution_time': None, 'emissions': emissions, 'target': output_filename}
+            logger.info(f"Worker already started for pair {self.pair_indexes}, skipping.")
         else:
             file = open(self.output_dir+output_filename, "w")
             file.close()
@@ -592,12 +588,22 @@ class TaxaAlignmentWorker:
             if results.empty:
                 logger.info(f"No results for pair {self.pair_indexes}")
             else:
+                # add come data and do some renaming
+                results['thermo_taxid'] = self.thermo_index
+                results['meso_taxid'] = self.meso_index
+                results = results.rename(columns={'query_id': 'thermo_pid', 'subject_id': 'meso_pid'})
                 results.to_parquet(self.output_dir+output_filename)
             # return metadata
-        emissions = tracker.stop()
-        run_metadata['emissions'] = emissions
-        run_metadata['target'] = output_filename
-        return run_metadata
+            emissions = tracker.stop()
+            run_metadata['emissions'] = emissions
+            run_metadata['target'] = output_filename
+        output_metadata = OrderedDict()
+        output_metadata['pw_space'] = run_metadata['pw_space']
+        output_metadata['hits'] = run_metadata['hits']
+        output_metadata['execution_time'] = run_metadata['execution_time']
+        output_metadata['emissions'] = run_metadata['emissions']
+        output_metadata['target'] = run_metadata['target']
+        return output_metadata
 
 
 class TaxaAlignmentClusterState:

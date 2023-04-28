@@ -374,3 +374,59 @@ stages:
     - path: ./data/uniprot/proteome_metadata.csv
       md5: e858a56f6842ce772940c7e2394e978f
       size: 8045021
+  protein_alignment:
+    cmd: python ./pipeline/s1.3_protein_alignment.py
+    deps:
+    - path: ./data/proteins
+      md5: 389a0968431c8d8fda7b40de45df17f6.dir
+      size: 8031552496
+      nfiles: 239
+    - path: ./data/taxa_pairs/alignment
+      md5: 40439dc256528d3c1e71b68d53f55ab1.dir
+      size: 90778197
+      nfiles: 26
+    - path: ./data/taxa_pairs/pair_labels
+      md5: e39d13aa8604fb9c713b0895cb197258.dir
+      size: 16176756
+      nfiles: 26
+    - path: ./learn2therm/blast.py
+      md5: 74fc8bef37ea610e90867864a95dad3d
+      size: 31222
+    - path: ./pipeline/s1.3_protein_alignment.py
+      md5: 83a15644b81beacbd89434a242184304
+      size: 9654
+    params:
+      params.yaml:
+        get_protein_blast_scores.dask_cluster_class: SLURMCluster
+        get_protein_blast_scores.dev_sample_pairs: 100
+        get_protein_blast_scores.max_protein_length: 250
+        get_protein_blast_scores.method_blast_params:
+          num_threads: 6
+          word_size: 3
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          threshold: 11
+          ungapped: false
+          evalue: 1e-05
+          qcov_hsp_perc: 75
+        get_protein_blast_scores.method_diamond_params:
+          num_threads: 6
+          sensitivity: ultra-sensitive
+          iterate: false
+          global_ranking:
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          evalue: 1e-05
+          hsp_cov: 75
+        get_protein_blast_scores.n_jobs: 20
+        get_protein_blast_scores.restart: true
+    outs:
+    - path: ./data/metrics/s1.3_metrics.yaml
+      md5: 8b4ab0811c1cb6e2b5076094cc3ec322
+      size: 154
+    - path: ./data/protein_pairs/
+      md5: c700b6ddee245a6af096cca742a43815.dir
+      size: 5166943
+      nfiles: 102

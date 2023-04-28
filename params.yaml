@@ -51,9 +51,9 @@ get_protein_blast_scores:
   dask_cluster_class: 'SLURMCluster'
   max_protein_length: 250            # only consider proteins with length less than number
   method: 'diamond'
-  n_jobs: 48
+  n_jobs: 2
   restart: true
-  dev_sample_pairs: 100
+  dev_sample_pairs: 50
   method_blast_params:
     num_threads: 6                        # number of cpus to run in parallel         
     word_size: 3                    # size of words for initial exact matching of nucleotides

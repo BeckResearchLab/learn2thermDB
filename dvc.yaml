@@ -100,6 +100,27 @@ stages:
     metrics:
     - ./data/metrics/s1.2_metrics.yaml:
         cache: false
+  protein_alignment:
+    cmd: python ./pipeline/s1.3_protein_alignment.py
+    deps:
+    - ./data/taxa_pairs/alignment
+    - ./data/taxa_pairs/pair_labels
+    - ./data/proteins
+    - ./pipeline/s1.3_protein_alignment.py
+    - ./learn2therm/blast.py
+    params:
+    - get_protein_blast_scores.dask_cluster_class
+    - get_protein_blast_scores.max_protein_length
+    - get_protein_blast_scores.n_jobs
+    - get_protein_blast_scores.restart
+    - get_protein_blast_scores.dev_sample_pairs
+    - get_protein_blast_scores.method_blast_params
+    - get_protein_blast_scores.method_diamond_params
+    outs:
+    - ./data/protein_pairs/
+    metrics:
+    - ./data/metrics/s1.3_metrics.yaml:
+        cache: false
   # get_protein_blast_scores:
   #   cmd: python pipeline/s1.4_get_protein_blast_scores.py
   #   deps:
