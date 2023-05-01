@@ -390,11 +390,11 @@ stages:
       size: 16176756
       nfiles: 26
     - path: ./learn2therm/blast.py
-      md5: 74fc8bef37ea610e90867864a95dad3d
-      size: 31222
+      md5: aeb075faecd84e9fd9f1594db23030c3
+      size: 31313
     - path: ./pipeline/s1.3_protein_alignment.py
-      md5: 83a15644b81beacbd89434a242184304
-      size: 9654
+      md5: 5087099448411c46db7a85c231904f4a
+      size: 10126
     params:
       params.yaml:
         get_protein_blast_scores.dask_cluster_class: SLURMCluster
@@ -420,13 +420,13 @@ stages:
           matrix: BLOSUM62
           evalue: 1e-05
           hsp_cov: 75
-        get_protein_blast_scores.n_jobs: 20
+        get_protein_blast_scores.n_jobs: 80
         get_protein_blast_scores.restart: true
     outs:
     - path: ./data/metrics/s1.3_metrics.yaml
-      md5: 8b4ab0811c1cb6e2b5076094cc3ec322
-      size: 154
+      md5: 34d0ceb95e58adaa445fec1dcc3f3a1e
+      size: 157
     - path: ./data/protein_pairs/
-      md5: c700b6ddee245a6af096cca742a43815.dir
-      size: 5166943
-      nfiles: 102
+      md5: 5051a7a0a7433c2b720666dac0722b93.dir
+      size: 6954342
+      nfiles: 103
