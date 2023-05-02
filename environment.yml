@@ -27,5 +27,5 @@ dependencies:
     - duckdb==0.7.1
     - codecarbon==2.1.4
     - dvclive==0.11.0
-    - pyhmmer==0.7.4
+    - pyhmmer==0.8.0
 

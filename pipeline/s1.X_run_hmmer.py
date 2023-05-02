@@ -48,7 +48,7 @@ def load_protein_data():
     check s1.3 for inspiration
     """
     # stolen from Evan's t1.0 scripts
-    with tempfile.TemporaryDirectory(dir='../tmp') as tmpdir:
+    with tempfile.TemporaryDirectory(dir='./tmp') as tmpdir:
       # Establishing a connection with Duck DB
       conn = ddb.connect(tmpdir+'proteins.db', read_only=False)
       # Making a SQL table
@@ -96,63 +96,8 @@ def prefetch_targets(hmms_path: str):
     return targets
 
 
-def save_sequences_to_fasta(
-        sequences: pd.core.frame.DataFrame,
-        inputname: str = "input"):
-    """
-    Returns a list of SeqRecord objects and creates a corresponding input Fasta of them
-    Parameters:
-    ------------
-    sequences : pandas.core.frame.DataFrame
-        a dataframe with string amino acid sequences in a 'protein_seq' column
-    input name : str, default = 'input'
-        a name for the input fasta file
-    Returns:
-    ------------
-    file : TextIOWrapper
-        the input fasta file created from the list of SeqRecord objects
-    Raises
-    -------
-    ValueError :
-        if the input dataframe is empty
-    AttributeError :
-        if any of the sequences are invalid
-    """
-    # ensure input file has .fasta extension
-    if not inputname.endswith('.fasta'):
-        inputname = f"{os.path.splitext(inputname)[0]}.fasta"
-
-    # check if input is empty
-    if sequences.empty:
-        raise ValueError("Input dataframe is empty")
-
-    # check if sequences are valid
-    for seq in sequences['protein_seq']:
-        try:
-            Seq(seq)
-        except BaseException as exc:
-            raise AttributeError("Invalid sequence") from exc
-
-    # function
-    records = []
-    for index, seq in sequences.itertuples():
-        try:
-            record = SeqRecord(Seq(seq), id=str(index))
-            records.append(record)
-        except AttributeError as exc:
-            raise AttributeError(f"Invalid sequence: {seq}") from exc
-
-    # raise error if seq not valid
-    if not records:
-        raise AttributeError("No valid sequences found in input")
-
-    with open(inputname, "w", encoding="utf-8") as file:
-        SeqIO.write(records, file, "fasta")
-    return file
-
-
 def run_pyhmmer(
-        input_file: str,
+        seqs: str,
         hmms_path: str,
         prefetch: bool = False,
         output_file: str = None,
@@ -162,7 +107,7 @@ def run_pyhmmer(
     Run HMMER's hmmscan program on a set of input sequences using with HMMs from a database.
     Parameters
     ----------
-    input_file : str
+    seqs : pyhmmer.easel.DigitalSequenceBlock
         Path to the input sequence file.
     hmms_path : str
         Path to the HMM database.
@@ -187,10 +132,6 @@ def run_pyhmmer(
     In normal mode, the HMMs are pressed and stored in a directory before execution.
     In prefetching mode, the HMMs are kept in memory for faster search.
     """
-    # ensure input file has .fasta extension
-    if not input_file.endswith('.fasta'):
-        input_file = f"{os.path.splitext(input_file)[0]}.fasta"
-
     # ensure output_file has .domtblout extension
     if not output_file.endswith('.domtblout'):
         output_file = f"{os.path.splitext(output_file)[0]}.domtblout"
@@ -202,14 +143,12 @@ def run_pyhmmer(
         targets = pyhmmer.plan7.HMMFile("../data/pfam/.h3m")
 
     # HMMscan execution with or without saving output to file
-    with pyhmmer.easel.SequenceFile(input_file, digital=True) as seqs:
-        all_hits = list(pyhmmer.hmmer.hmmscan(seqs, targets, cpus=cpu, E=eval_con))
-        # check if we should save the output
-        if output_file is not None:
-            with open(output_file, "wb") as dst:
-                for i, hits in enumerate(all_hits):
-                    hits.write(dst, format="domains", header=i == 0)
-
+    all_hits = list(pyhmmer.hmmer.hmmscan(seqs, targets, cpus=cpu, E=eval_con))
+    # check if we should save the output
+    if output_file is not None:
+        with open(output_file, "wb") as dst:
+            for i, hits in enumerate(all_hits):
+                hits.write(dst, format="domains", header=i == 0)
     return all_hits
 
 
