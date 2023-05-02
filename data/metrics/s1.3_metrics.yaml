@@ -1,2 +1,4 @@
-num_pairs_conservative: 13784
-true_pair_ratio: 0.01836316815274575
+protein_align_emissions: 1.0618811243890196
+protein_align_hits: 9068773
+protein_align_num_taxa_complete: 9925
+protein_align_return: 0.00044773788929151963

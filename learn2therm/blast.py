@@ -525,6 +525,7 @@ class TaxaAlignmentWorker:
         alignment_params: Dict[str, Any],
         aligner_class: AlignmentHandler = BlastAlignmentHandler,
         metrics: list = ['scaled_local_symmetric_percent_id'],
+        retry_counter: int = 3,
     ):
         self.meso_index = meso_index
         self.thermo_index = thermo_index
@@ -536,6 +537,7 @@ class TaxaAlignmentWorker:
         self.alignment_params = alignment_params
         self.aligner_class = aligner_class
         self.metrics = metrics
+        self.retry_counter = retry_counter
 
     @property
     def pair_indexes(self):
@@ -582,7 +584,16 @@ class TaxaAlignmentWorker:
                 alignment_params=self.alignment_params,
                 metrics=self.metrics)
             # run handler, get output
-            results, run_metadata = handler.run()
+            for i in range(0, self.retry_counter):
+                try:
+                    results, run_metadata = handler.run()
+                    break
+                except:
+                    logger.error(f"Alignment failed for pair {self.pair_indexes}, retrying.")
+                    if i == self.retry_counter - 1:
+                        raise
+                    else:
+                        continue
             # save output
             # if we got none, skip this part
             if results.empty:
@@ -759,12 +770,24 @@ class TaxaAlignmentClusterState:
                     file.close()
                 yield result
 
-        self.futures_modified = futures_modified(
-            distributed.as_completed(client.map(worker_function, aligners)))
+        self._futures = distributed.as_completed(client.map(worker_function, aligners))
+
+        if len(aligners) > 0:
+            self.futures_modified = futures_modified(
+                self._futures
+            )
+        else:
+            self.futures_modified = None
+
+    def _close(self):
+        self.client.cancel(self._futures, force=True)
+        self.client.restart(timeout=15)
+        logger.info(f"Canceled futures. Worker futures: {self.client.has_what()}")
+
 
     def __enter__(self):
         return self.futures_modified
 
     def __exit__(self, type, value, traceback):
-        pass
+        self._close()
             

@@ -18,6 +18,7 @@ Outputs
 from yaml import safe_load as yaml_load
 from yaml import dump as yaml_dump
 import os
+import sys
 import shutil
 import time
 import tempfile
@@ -33,6 +34,7 @@ from codecarbon import OfflineEmissionsTracker
 import dask
 import dask_jobqueue
 import distributed
+from dvc.api import make_checkpoint
 
 import learn2therm.utils
 import learn2therm.blast
@@ -46,6 +48,7 @@ LOGNAME = __file__
 LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 
 OUTPUT_DIR = './data/protein_pairs/'
+WORKER_WAKEUP = 25 # seconds to wait before starting a worker
 
 def prep_taxa_protein_db():
     tmpdir = tempfile.mkdtemp(dir='./tmp', )
@@ -75,7 +78,7 @@ def worker_function(taxa_alignment_worker, wakeup=None):
     t0=time.time()
     pair_indexes = str(taxa_alignment_worker.pair_indexes[0]) + '-' + str(taxa_alignment_worker.pair_indexes[1])
     worker_logfile = f'./logs/s1.3_workers/pair_{pair_indexes}.log'
-    logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, worker_logfile, LOGLEVEL, filemode='a', worker=True)
+    logger = learn2therm.utils.start_logger_if_necessary("script", worker_logfile, LOGLEVEL, filemode='a', worker=True)
     learn2therm.blast.logger = learn2therm.utils.start_logger_if_necessary('learn2therm.blast', worker_logfile, LOGLEVEL, filemode='a', worker=True)
     learn2therm.io.logger = learn2therm.utils.start_logger_if_necessary('learn2therm.io', worker_logfile, LOGLEVEL, filemode='a', worker=True)
 
@@ -91,12 +94,13 @@ def main():
     with open("./params.yaml", "r") as stream:
         params = yaml_load(stream)['get_protein_blast_scores']
     
-    if params['restart'] or not os.path.exists('./logs/s1.3_workers/'):
-        logger = learn2therm.utils.start_logger_if_necessary("", LOGFILE, LOGLEVEL, filemode='w')
-        shutil.rmtree('./logs/s1.3_workers/', ignore_errors=True, onerror=None)
-        os.mkdir('./logs/s1.3_workers/')
-    else:
-        logger = learn2therm.utils.start_logger_if_necessary("", LOGFILE, LOGLEVEL, filemode='a')
+    logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
+    shutil.rmtree('./logs/s1.3_workers/', ignore_errors=True, onerror=None)
+    os.mkdir('./logs/s1.3_workers/')
+    l2t_blast_logger = logging.getLogger('learn2therm.blast')
+    l2t_blast_logger.setLevel(LOGLEVEL)
+    l2t_blast_logger.addHandler(logger.handlers[-1])
+
     logger.info(f"Loaded parameters: {params}")
 
     # setup the database and get some pairs to run
@@ -157,7 +161,7 @@ def main():
         raise ValueError(f"Unknown alignment method {alignment_method}")
 
     # start a cluster object and run it
-    t0 = time.time()
+    total_time = 0
     Cluster = getattr(dask_jobqueue, params['dask_cluster_class'])
     cluster = Cluster(silence_logs=None)
 
@@ -173,66 +177,67 @@ def main():
 
     logger.info(f"{cluster.job_script()}")
 
+    # track if we still have jobs to do
+    complete = False
     # create plugin to use for worker killing and start the client
-    with distributed.Client(cluster) as client:
-        # run one without killer workers, faster option for 
-        # fast tasks
-        logger.info(f"Running primary fast sweep")
-        with learn2therm.blast.TaxaAlignmentClusterState(
-            pairs=pairs,
-            client=client,
-            worker_function=lambda a: worker_function(a, None),
-            max_seq_len=params['max_protein_length'],
-            protein_database=db_path,
-            output_dir=OUTPUT_DIR,
-            aligner_class=Aligner,
-            metrics=params['blast_metrics'],
-            alignment_params=aligner_params,
-            restart=True,
-            killer_workers=False
-        ) as futures:
-            for i, future in enumerate(futures):
-                pass
+    while not complete:
+        t0 = time.time()
+        with distributed.Client(cluster) as client:
+            # run one without killer workers, faster option for 
+            # fast tasks
+            logger.info(f"Running primary fast sweep")
+            with learn2therm.blast.TaxaAlignmentClusterState(
+                pairs=pairs,
+                client=client,
+                worker_function=lambda a: worker_function(a, None),
+                max_seq_len=params['max_protein_length'],
+                protein_database=db_path,
+                output_dir=OUTPUT_DIR,
+                aligner_class=Aligner,
+                metrics=params['blast_metrics'],
+                alignment_params=aligner_params,
+                restart=False,
+                killer_workers=False
+            ) as futures:
+                if futures is None:
+                    complete = True
+                # otherwise get back calculations
+                for i, future in enumerate(futures):
+                    logger.debug(f"Ran {i} futures")
+                    if i >= params['save_frequency']:
+                        break
+        # give a second for the client to close
+        t1 = time.time()
+        total_time += (t1-t0)/60/60
+        logger.info(f'Checkpoint. Took {total_time} total time')
 
-        logger.info(f"Running slow safe sweep")
-        with learn2therm.blast.TaxaAlignmentClusterState(
-            pairs=pairs,
-            client=client,
-            worker_function=lambda a: worker_function(a, None),
-            max_seq_len=params['max_protein_length'],
-            protein_database=db_path,
-            output_dir=OUTPUT_DIR,
-            aligner_class=Aligner,
-            metrics=params['blast_metrics'],
-            alignment_params=aligner_params,
-            restart=False,
-            killer_workers=True
-        ) as futures:
-            for i, future in enumerate(futures):
-                pass
-    
-    t1 = time.time()
-    total_time = (t1-t0)/60/60
-    logger.info(f'Completed all tasks, took {total_time} hr')
+        # compute metrics
+        results = pd.read_csv(OUTPUT_DIR+'/completion_state.metadat')
+        logger.info(f"{results['hits'].isna().sum()} taxa pairs failed to complete")
+        results = results[~results['hits'].isna()]
+        num_taxa_pairs_completed = len(results)
+        emissions = float(results['emissions'].sum())
+        hits = int(results['hits'].sum())
+        pairwise_space = int(results['pw_space'].sum())
+        logger.info(f'Initially calculated pairwise space: {total_space}, pairwise space completed: {pairwise_space}')
+        logger.info(f"taxa pairs complete: {num_taxa_pairs_completed}")
 
-    # compute metrics
-    results = pd.read_csv(OUTPUT_DIR+'/completion_state.metadat')
-    logger.info(f"{results['hits'].isna().sum()} taxa pairs failed to complete")
-    results = results[~results['hits'].isna()]
-    emissions = float(results['emissions'].sum())
-    hits = int(results['hits'].sum())
-    pairwise_space = int(results['pw_space'].sum())
-    logger.info(f'Initially calculated pairwise space: {total_space}, actual pairwise space: {pairwise_space}')
+        # extrapolate out metrics to total space
+        metrics = {}
+        metrics['protein_align_emissions'] = emissions
+        metrics['protein_align_hits'] = hits
+        metrics['protein_align_num_taxa_complete'] = num_taxa_pairs_completed
+        metrics['protein_align_return'] = hits/pairwise_space
 
-    # extrapolate out metrics to total space
-    metrics = {}
-    metrics['protein_align_emissions'] = emissions
-    metrics['protein_align_hits'] = hits
-    metrics['protein_align_time'] = total_time
-    metrics['protein_aling_return'] = hits/pairwise_space
+        with open('./data/metrics/s1.3_metrics.yaml', "w") as stream:
+            yaml_dump(metrics, stream)
 
-    with open('./data/metrics/s1.3_metrics.yaml', "w") as stream:
-        yaml_dump(metrics, stream)
+        # make checkpoint and restart the cluster
+        make_checkpoint()
+
+    # end script, we are done. For some reason the script hangs sometimes
+    # so we force a successful exit
+    sys.exit(0)
 
 if __name__ == '__main__':
     main()

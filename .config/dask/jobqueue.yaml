@@ -17,12 +17,12 @@ jobqueue:
     shebang: "#!/usr/bin/env bash"
     queue: compute
     account: cheme
-    walltime: '00:20:00'
+    walltime: '01:30:00'
     job-mem: null
     log-directory: './logs/dask/'
     
     job_extra_directives: ['--nodes=1', '--ntasks-per-node=1', '--hint=multithread']
-    worker_extra_args: ["--lifetime", "18m", "--lifetime-stagger", "2m"]
+    worker_extra_args: ["--lifetime", "85m", "--lifetime-stagger", "5m"]
     job_script_prologue: ["source ~/.bashrc", "conda activate learn2thermDB"]    
     
     # Scheduler options
