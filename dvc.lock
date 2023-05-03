@@ -424,9 +424,9 @@ stages:
         get_protein_blast_scores.save_frequency: 10000
     outs:
     - path: ./data/metrics/s1.3_metrics.yaml
-      md5: d9562b7f4a3eda36e518ee1ae0fe945a
-      size: 155
+      md5: fc1f4c3e4ca67679c1ee68d1dcf75d11
+      size: 156
     - path: ./data/protein_pairs/
-      md5: 4d965c155b61901459d8f2c6330903d3.dir
-      size: 646673688
-      nfiles: 10090
+      md5: 492d204448c823d5e6474779207fd206.dir
+      size: 1300971484
+      nfiles: 20019
