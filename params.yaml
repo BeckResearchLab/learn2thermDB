@@ -52,7 +52,7 @@ get_protein_blast_scores:
   max_protein_length: 250            # only consider proteins with length less than number
   method: 'diamond'
   n_jobs: 80
-  save_frequency: 10000
+  save_frequency: 25000
   dev_sample_pairs: null
   method_blast_params:
     num_threads: 6                        # number of cpus to run in parallel         

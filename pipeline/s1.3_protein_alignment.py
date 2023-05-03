@@ -163,7 +163,6 @@ def main():
     # start a cluster object and run it
     total_time = 0
     Cluster = getattr(dask_jobqueue, params['dask_cluster_class'])
-    cluster = Cluster(silence_logs=None)
 
     # determine if we have the job capacity to be killing workers after jobs
     # heuristically at three, the few is more likely that all jobs die
@@ -173,14 +172,16 @@ def main():
         minimum_jobs = params['n_jobs'] - 1
     else:
         minimum_jobs = 1
-    cluster.adapt(minimum=minimum_jobs, maximum=params['n_jobs'], target_duration='5s')
-
-    logger.info(f"{cluster.job_script()}")
 
     # track if we still have jobs to do
     complete = False
     # create plugin to use for worker killing and start the client
     while not complete:
+        logger.info('Starting cluster...')
+        cluster = Cluster(silence_logs=None)
+        cluster.adapt(minimum=minimum_jobs, maximum=params['n_jobs'], target_duration='5s')
+        logger.info(f"{cluster.job_script()}")
+
         t0 = time.time()
         with distributed.Client(cluster) as client:
             # run one without killer workers, faster option for 
@@ -206,6 +207,10 @@ def main():
                     logger.debug(f"Ran {i} futures")
                     if i >= params['save_frequency']:
                         break
+        # close the cluster while we compute metrics and DVC does its thing
+        cluster.close()
+        logger.info("Cluster closed, DVC checkpoint")
+
         # give a second for the client to close
         t1 = time.time()
         total_time += (t1-t0)/60/60

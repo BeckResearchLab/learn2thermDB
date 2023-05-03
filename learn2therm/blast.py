@@ -713,8 +713,7 @@ class TaxaAlignmentClusterState:
             
             for target in existing_files:
                 if target in completed:
-                    pass
-                    logger.info(f"{target} already completed")
+                    logger.debug(f"{target} already completed")
                 else:
                     logger.info(f"{target} erroneously ended, cleaning up file")
                     os.remove(output_dir+target)
@@ -781,6 +780,7 @@ class TaxaAlignmentClusterState:
 
     def _close(self):
         self.client.cancel(self._futures, force=True)
+        time.sleep(15)
         self.client.restart(timeout=15)
         logger.info(f"Canceled futures. Worker futures: {self.client.has_what()}")
 
