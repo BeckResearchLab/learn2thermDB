@@ -155,8 +155,8 @@ stages:
       md5: 00f3a4ce6743ad51fcad580e0b00e586
       size: 118659
     - path: ./data/proteins
-      md5: 389a0968431c8d8fda7b40de45df17f6.dir
-      size: 8031552496
+      md5: 57724bc351619b85c205a65f2f7bfd73.dir
+      size: 7997391585
       nfiles: 239
     - path: ./data/taxa_thermophile_labels.parquet
       md5: 68b6dc086ee2d5f8e71373522e43f64a
@@ -212,11 +212,11 @@ stages:
     cmd: python ./analysis_pipeline/t1.2_filtered_protein_search_space.py
     deps:
     - path: ./analysis_pipeline/t1.2_filtered_protein_search_space.py
-      md5: b646f73c647febd7a8fea827851dc0be
-      size: 9043
+      md5: 4855763a152e3d92177fe2bfad68f13a
+      size: 9049
     - path: ./data/proteins
-      md5: 389a0968431c8d8fda7b40de45df17f6.dir
-      size: 8031552496
+      md5: 57724bc351619b85c205a65f2f7bfd73.dir
+      size: 7997391585
       nfiles: 239
     - path: ./data/taxa_pairs/alignment
       md5: 40439dc256528d3c1e71b68d53f55ab1.dir
@@ -226,6 +226,32 @@ stages:
       md5: e39d13aa8604fb9c713b0895cb197258.dir
       size: 16176756
       nfiles: 26
+    params:
+      params.yaml:
+        get_protein_blast_scores.dask_cluster_class: SLURMCluster
+        get_protein_blast_scores.dev_sample_pairs:
+        get_protein_blast_scores.max_protein_length: 250
+        get_protein_blast_scores.method_blast_params:
+          num_threads: 6
+          word_size: 3
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          threshold: 11
+          ungapped: false
+          evalue: 1e-05
+          qcov_hsp_perc: 75
+        get_protein_blast_scores.method_diamond_params:
+          num_threads: 6
+          sensitivity: ultra-sensitive
+          iterate: false
+          global_ranking:
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          evalue: 1e-05
+          hsp_cov: 75
+        get_protein_blast_scores.n_jobs: 80
     outs:
     - path: ./data/metrics/t1.2_metrics.yaml
       md5: 5981eb29b303e05d50063bf146b187ff

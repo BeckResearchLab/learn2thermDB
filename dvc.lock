@@ -361,8 +361,8 @@ stages:
       md5: 00f3a4ce6743ad51fcad580e0b00e586
       size: 118659
     - path: ./data/proteins/
-      md5: 389a0968431c8d8fda7b40de45df17f6.dir
-      size: 8031552496
+      md5: 57724bc351619b85c205a65f2f7bfd73.dir
+      size: 7997391585
       nfiles: 239
   get_proteome_mdata:
     cmd: python pipeline/s0.2_get_proteome_mdata.py
@@ -378,8 +378,8 @@ stages:
     cmd: python ./pipeline/s1.3_protein_alignment.py
     deps:
     - path: ./data/proteins
-      md5: 389a0968431c8d8fda7b40de45df17f6.dir
-      size: 8031552496
+      md5: 57724bc351619b85c205a65f2f7bfd73.dir
+      size: 7997391585
       nfiles: 239
     - path: ./data/taxa_pairs/alignment
       md5: 40439dc256528d3c1e71b68d53f55ab1.dir
@@ -427,6 +427,6 @@ stages:
       md5: c6e702e9cbcb8a879b5f5b60a2f935f4
       size: 154
     - path: ./data/protein_pairs/
-      md5: 8b43e134c79dc7e9793f28106448554f.dir
-      size: 5844918133
-      nfiles: 89901
+      md5: 36032e82e37828dca4b55d4515083692.dir
+      size: 5844848550
+      nfiles: 89900
