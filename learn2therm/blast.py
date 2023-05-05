@@ -562,8 +562,9 @@ class TaxaAlignmentWorker:
             run_metadata =  {'pw_space': None, 'hits': None, 'execution_time': None, 'emissions': emissions, 'target': output_filename}
             logger.info(f"Worker already started for pair {self.pair_indexes}, skipping.")
         else:
-            file = open(self.output_dir+output_filename, "w")
-            file.close()
+            # save empty file to indicate that we are working on this pair
+            out_columns = ['thermo_pid', 'meso_pid'] + self.metrics + ['thermo_taxid', 'meso_taxid']
+            pd.DataFrame(columns=out_columns).to_parquet(self.output_dir+output_filename)
 
             # connect to DB
             conn = ddb.connect(self.protein_database, read_only=True)
