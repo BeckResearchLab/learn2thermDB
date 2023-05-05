@@ -81,50 +81,52 @@ stages:
   label_taxa:
     cmd: python pipeline/s1.0_label_taxa.py
     deps:
-    - path: ./data/taxa/taxa_info_and_ogt.csv
-      md5: a5bb1873b2aeac4026516a91dd94c3e1
-      size: 3826414
+    - path: ./data/taxa.parquet
+      md5: e62b6a3fbb8232e4dfeca04c863ba761
+      size: 6487331
     - path: ./learn2therm/utils.py
       md5: 4845b20446345d469e7eae2a6968e962
       size: 1766
     - path: pipeline/s1.0_label_taxa.py
-      md5: c0fcb9fe2835e2a8d851c25d4a63ed80
-      size: 3668
+      md5: 25490ac9fbdb57c0499c5ea44346157d
+      size: 2151
     params:
       params.yaml:
-        label_taxa.ogt_determination_method: true ogt only
         label_taxa.ogt_threshold: 40.0
     outs:
     - path: ./data/metrics/s1.0_metrics.yaml
-      md5: b81c7de57507e95b010902f79b970d99
+      md5: dc8b932adf1ca2bb9256408a6ae075a1
       size: 26
     - path: ./data/plots/ogt_hist.png
-      md5: 871e6c2307c407eda0191b082617a367
-      size: 35538
-    - path: ./data/taxa/labels.csv
-      md5: 22b516c22355a1697527f0099c5b8075
-      size: 161752
+      md5: 45f5421118a7ac3c5f9208de43aa4e09
+      size: 31166
+    - path: ./data/taxa_thermophile_labels.parquet
+      md5: 68b6dc086ee2d5f8e71373522e43f64a
+      size: 120740
   get_16s_blast_scores:
-    cmd: python pipeline/s1.2_get_16s_blast_scores.py
+    cmd: python pipeline/s1.1_get_16s_blast_scores.py
     deps:
-    - path: ./data/taxa/16s_rRNA.csv
-      md5: 1b0a6d0685ebb0e678b72cb3b57ae8a4
-      size: 21316764
-    - path: ./data/taxa/labels.csv
-      md5: 22b516c22355a1697527f0099c5b8075
-      size: 161752
+    - path: ./data/metrics/s0.3_protein_per_data_distr.csv
+      md5: 00f3a4ce6743ad51fcad580e0b00e586
+      size: 118659
+    - path: ./data/taxa.parquet
+      md5: e62b6a3fbb8232e4dfeca04c863ba761
+      size: 6487331
+    - path: ./data/taxa_thermophile_labels.parquet
+      md5: 68b6dc086ee2d5f8e71373522e43f64a
+      size: 120740
     - path: ./learn2therm/blast.py
-      md5: 1dada75a9efafa27e269ed7285a9c4c0
-      size: 31876
+      md5: 8629c30a7e83db6699688656ce1c1a9d
+      size: 32286
     - path: ./learn2therm/io.py
-      md5: 0486f89d5dc673fab5af776b57cfd8d2
-      size: 3945
+      md5: 4f49985e8dcfb88d2c4504744e05d96a
+      size: 4031
     - path: ./learn2therm/utils.py
       md5: 4845b20446345d469e7eae2a6968e962
       size: 1766
-    - path: ./pipeline/s1.2_get_16s_blast_scores.py
-      md5: 0bc3de11ded3b112fabb19671dfb1d3f
-      size: 6181
+    - path: ./pipeline/s1.1_get_16s_blast_scores.py
+      md5: e9d8f7a007ac0ab03207bc6b4ce55e56
+      size: 6693
     params:
       params.yaml:
         get_16s_blast_scores.blast_metrics:
@@ -141,55 +143,56 @@ stages:
         - subject_align_len
         - subject_align_cov
         - bit_score
+        get_16s_blast_scores.dev_n_sample:
         get_16s_blast_scores.gapextend_penalty: 1
         get_16s_blast_scores.gapopen_penalty: 2
-        get_16s_blast_scores.n_sample:
-        get_16s_blast_scores.num_threads: 40
+        get_16s_blast_scores.num_threads: 20
         get_16s_blast_scores.penalty: -2
         get_16s_blast_scores.reward: 1
         get_16s_blast_scores.ungapped: false
         get_16s_blast_scores.word_size: 28
     outs:
-    - path: ./data/metrics/s1.2_metrics.yaml
-      md5: d8037d675c3ac5efbe7fd85ca5316cfd
-      size: 51
-    - path: ./data/taxa_pairs/16s_align_emissions.csv
-      md5: 05d51fc6f8ce7aa2aafb3c734b45126e
-      size: 681
-    - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: aa98b55fec7d0b5a937376b14e094864
-      size: 105641139
+    - path: ./data/metrics/s1.1_metrics.yaml
+      md5: d46c5b011f7a0dc2efec6d1d9b1ca40f
+      size: 85
+    - path: ./data/taxa_pairs/alignment/
+      md5: 40439dc256528d3c1e71b68d53f55ab1.dir
+      size: 90778197
+      nfiles: 26
   label_all_pairs:
-    cmd: python pipeline/s1.3_label_all_pairs.py
+    cmd: python pipeline/s1.2_label_all_pairs.py
     deps:
-    - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: aa98b55fec7d0b5a937376b14e094864
-      size: 105641139
+    - path: ./data/taxa_pairs/alignment
+      md5: 40439dc256528d3c1e71b68d53f55ab1.dir
+      size: 90778197
+      nfiles: 26
     - path: ./learn2therm/utils.py
       md5: 4845b20446345d469e7eae2a6968e962
       size: 1766
-    - path: ./pipeline/s1.3_label_all_pairs.py
-      md5: f0d91704f22ee5db710eee93b4a16607
-      size: 3385
+    - path: ./pipeline/s1.2_label_all_pairs.py
+      md5: 69e76dece66806d59790fd1a399c8f83
+      size: 4026
     params:
       params.yaml:
         label_all_pairs.blast_metric_thresholds:
           scaled_local_symmetric_percent_id:
-            thresh: 0.88
+            thresh: 0.85
             greater: true
           query_align_cov:
-            thresh: 0.75
+            thresh: 0.9
             greater: true
           subject_align_cov:
-            thresh: 0.75
+            thresh: 0.9
             greater: true
+        label_all_pairs.dev_only_one_file: false
     outs:
-    - path: ./data/metrics/s1.3_metrics.yaml
-      md5: 17ebe184c757a0eaebe16f820785d8e5
-      size: 67
-    - path: ./data/taxa_pairs/pair_labels.csv
-      md5: 93559135b6d41a9a510a775e0236ecfc
-      size: 9633344
+    - path: ./data/metrics/s1.2_metrics.yaml
+      md5: 18466601d8fcf363f24b57ab214b367d
+      size: 79
+    - path: ./data/taxa_pairs/pair_labels
+      md5: e39d13aa8604fb9c713b0895cb197258.dir
+      size: 16176756
+      nfiles: 26
   get_protein_blast_scores:
     cmd: python pipeline/s1.4_get_protein_blast_scores.py
     deps:
@@ -295,3 +298,135 @@ stages:
     - path: ./data/database
       md5: a893878e4fb7d693f3cdb8f889d0ecbb
       size: 34233659392
+  get_raw_data_taxa:
+    cmd: python pipeline/s0.0_get_raw_data_taxa.py
+    deps:
+    - path: pipeline/s0.0_get_raw_data_taxa.py
+      md5: 70be4fd1a678b2be181125c79af47bdf
+      size: 5882
+    params:
+      params.yaml:
+        get_raw_data_taxa.max_16s_len: 1600
+        get_raw_data_taxa.min_16s_len: 1300
+    outs:
+    - path: ./data/metrics/s0.0_metrics.yaml
+      md5: 5dd2e4cdd6433bb2bb4c0ae2b7e2b783
+      size: 42
+    - path: ./data/taxa.parquet
+      md5: e62b6a3fbb8232e4dfeca04c863ba761
+      size: 6487331
+  get_raw_data_proteins:
+    cmd: python pipeline/s0.1_get_raw_data_proteins.py
+    deps:
+    - path: ./pipeline/s0.1_get_raw_data_proteins.py
+      md5: 35f8f12d0b65e2fc6d95011631fe94d2
+      size: 2980
+    params:
+      params.yaml:
+        get_raw_data_proteins.dev_only_one_uniprot_file: false
+    outs:
+    - path: ./data/metrics/s0.1_metrics.yaml
+      md5: 034622e986ae390c770b1fd4d1c02efc
+      size: 32
+    - path: ./data/uniprot/uniprot_pulled_timestamp
+      md5: 88a4ed10c38792e572fc6d7ed432d8c3
+      size: 10
+  parse_proteins:
+    cmd: python pipeline/s0.3_parse_proteins.py
+    deps:
+    - path: ./data/taxa.parquet
+      md5: e62b6a3fbb8232e4dfeca04c863ba761
+      size: 6487331
+    - path: ./data/uniprot/proteome_metadata.csv
+      md5: e858a56f6842ce772940c7e2394e978f
+      size: 8045021
+    - path: ./data/uniprot/uniprot_pulled_timestamp
+      md5: 88a4ed10c38792e572fc6d7ed432d8c3
+      size: 10
+    - path: ./learn2therm/io.py
+      md5: 4f49985e8dcfb88d2c4504744e05d96a
+      size: 4031
+    - path: ./pipeline/s0.3_parse_proteins.py
+      md5: 303840cef5b2c827dc9def560d86e9df
+      size: 11021
+    params:
+      params.yaml:
+        parse_proteins.dev_only_one_uniprot_file: false
+        parse_proteins.max_prot_per_file: 100000
+    outs:
+    - path: ./data/metrics/s0.3_metrics.yaml
+      md5: f9e4b23f68c45f8f0b7aad338c301335
+      size: 90
+    - path: ./data/metrics/s0.3_protein_per_data_distr.csv
+      md5: 00f3a4ce6743ad51fcad580e0b00e586
+      size: 118659
+    - path: ./data/proteins/
+      md5: 57724bc351619b85c205a65f2f7bfd73.dir
+      size: 7997391585
+      nfiles: 239
+  get_proteome_mdata:
+    cmd: python pipeline/s0.2_get_proteome_mdata.py
+    deps:
+    - path: pipeline/s0.2_get_proteome_mdata.py
+      md5: 30612e819c7a75fa695ec91afa571d4d
+      size: 5743
+    outs:
+    - path: ./data/uniprot/proteome_metadata.csv
+      md5: e858a56f6842ce772940c7e2394e978f
+      size: 8045021
+  protein_alignment:
+    cmd: python ./pipeline/s1.3_protein_alignment.py
+    deps:
+    - path: ./data/proteins
+      md5: 57724bc351619b85c205a65f2f7bfd73.dir
+      size: 7997391585
+      nfiles: 239
+    - path: ./data/taxa_pairs/alignment
+      md5: 40439dc256528d3c1e71b68d53f55ab1.dir
+      size: 90778197
+      nfiles: 26
+    - path: ./data/taxa_pairs/pair_labels
+      md5: e39d13aa8604fb9c713b0895cb197258.dir
+      size: 16176756
+      nfiles: 26
+    - path: ./learn2therm/blast.py
+      md5: 8629c30a7e83db6699688656ce1c1a9d
+      size: 32286
+    - path: ./pipeline/s1.3_protein_alignment.py
+      md5: ea35dfeaf16eda52795292314414d420
+      size: 10209
+    params:
+      params.yaml:
+        get_protein_blast_scores.dask_cluster_class: SLURMCluster
+        get_protein_blast_scores.dev_sample_pairs:
+        get_protein_blast_scores.max_protein_length: 250
+        get_protein_blast_scores.method_blast_params:
+          num_threads: 6
+          word_size: 3
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          threshold: 11
+          ungapped: false
+          evalue: 1e-05
+          qcov_hsp_perc: 75
+        get_protein_blast_scores.method_diamond_params:
+          num_threads: 6
+          sensitivity: ultra-sensitive
+          iterate: false
+          global_ranking:
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          evalue: 1e-05
+          hsp_cov: 75
+        get_protein_blast_scores.n_jobs: 80
+        get_protein_blast_scores.save_frequency: 25000
+    outs:
+    - path: ./data/metrics/s1.3_metrics.yaml
+      md5: c6e702e9cbcb8a879b5f5b60a2f935f4
+      size: 154
+    - path: ./data/protein_pairs/
+      md5: 69e57872faa75625fad8889af303bb6b.dir
+      size: 6147864412
+      nfiles: 89900

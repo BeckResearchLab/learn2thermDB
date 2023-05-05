@@ -11,7 +11,7 @@ jobqueue:
 
     interface: null             # Network interface to use like eth0 or ib0
     death-timeout: 60           # Number of seconds to wait if a worker can not find a scheduler
-    local-directory: /mmfs1/gscratch/cheme/usr/evankomp/repos/learn2therm/       # Location of fast local storage like /scratch or $TMPDIR
+    local-directory: /mmfs1/gscratch/cheme/usr/evankomp/repos/learn2thermDB/       # Location of fast local storage like /scratch or $TMPDIR
 
     # SLURM resource manager options
     shebang: "#!/usr/bin/env bash"
@@ -22,8 +22,8 @@ jobqueue:
     log-directory: './logs/dask/'
     
     job_extra_directives: ['--nodes=1', '--ntasks-per-node=1', '--hint=multithread']
-    worker_extra_args: ["--lifetime", "85m", "--lifetime-stagger", "2m"]
-    job_script_prologue: ["source ~/.bashrc", "conda activate learn2therm"]    
+    worker_extra_args: ["--lifetime", "85m", "--lifetime-stagger", "5m"]
+    job_script_prologue: ["source ~/.bashrc", "conda activate learn2thermDB"]    
     
     # Scheduler options
     scheduler-options: {}

@@ -2,27 +2,25 @@
 # execution of pipeline steps is dependant on these and data dependancy of the steps
 #########################################################################
 
-# S0 data extraction params
-get_bacdive_ogt:
-  n_jobs: 6                    # number of cores for parallel execution
-  n_sample: null                 # number of "data" to sample down to for testing
-
-# S1 data preparation params
-get_protein_sequences:
-  n_jobs: 40                    # number of cores for parallel execution
-  n_sample: null                 # number of "data" to sample down to for testing
+get_raw_data_taxa:
+  min_16s_len: 1300                  # min number of nucleotides in 16s to keep
+  max_16s_len: 1600                  # max number of nucleotides in 16s to keep
+get_raw_data_proteins:
+  dev_only_one_uniprot_file: false
+parse_proteins:
+  max_prot_per_file: 100000          # size of parquet files containing proteins
+  dev_only_one_uniprot_file: false
 label_taxa:
-  ogt_threshold: 40.0          # binary threshold to consider something as thermophilic
-  ogt_determination_method: 'true ogt only'     # method of parsing raw bacdive outputs saved to csv
+  ogt_threshold: 40.0                # binary threshold to consider something as thermophilic
 get_16s_blast_scores:
-  num_threads: 40                        # number of cpus to run in parallel
+  num_threads: 20                        # number of cpus to run in parallel
   word_size: 28                    # size of words for initial exact matching of nucleotides
   gapopen_penalty: 2               # cost to open a gap
   gapextend_penalty: 1             # cost to extend gap
   reward: 1                        # reward for nucleotide match
   penalty: -2                       # cost of nucleotide mismatch
   ungapped: false                  # whether to do ungapped alignment
-  n_sample: null                     # number of thermophiles and mesophiles to sample for testing
+  dev_n_sample: null                     # number of thermophiles and mesophiles to sample for testing
   blast_metrics:
     - local_gap_compressed_percent_id
     - scaled_local_query_percent_id
@@ -40,22 +38,22 @@ get_16s_blast_scores:
 label_all_pairs:
   blast_metric_thresholds:                  # define which metrics to use to label a taxa pair 
     scaled_local_symmetric_percent_id:    # metric name
-      thresh: 0.88                            # float threshold
+      thresh: 0.85                            # float threshold
       greater: true                         # greater than threshold is good
     query_align_cov:
-      thresh: 0.75
+      thresh: 0.90
       greater: true
     subject_align_cov:
-      thresh: 0.75
+      thresh: 0.90
       greater: true
+  dev_only_one_file: false
 get_protein_blast_scores:
   dask_cluster_class: 'SLURMCluster'
-  max_protein_length: 400            # only consider proteins with length less than number
+  max_protein_length: 250            # only consider proteins with length less than number
   method: 'diamond'
-  n_jobs: 48
-  restart: true
-  checkpoint: null                   # if int, dvc will checkpoint every N, currently is broken because dask continues to run workers while checkpointing
-  primary_sweep: true               # run without worker closing to start, do this for fast aligner methods like diamond
+  n_jobs: 80
+  save_frequency: 25000
+  dev_sample_pairs: null
   method_blast_params:
     num_threads: 6                        # number of cpus to run in parallel         
     word_size: 3                    # size of words for initial exact matching of nucleotides
@@ -64,6 +62,8 @@ get_protein_blast_scores:
     matrix: 'BLOSUM62'
     threshold: 11          # minumum score for word to be added to blast lookup table
     ungapped: false                  # whether to do ungapped alignment
+    evalue: .00001               # minimum evalue
+    qcov_hsp_perc: 75            # minimum percent query coverage
   method_diamond_params:
     num_threads: 6
     sensitivity: 'ultra-sensitive'
@@ -72,6 +72,8 @@ get_protein_blast_scores:
     gapopen: 11
     gapextend: 1
     matrix: 'BLOSUM62'
+    evalue: .00001
+    hsp_cov: 75                    # minumum coverage of alignment  
   blast_metrics:
     - local_gap_compressed_percent_id
     - scaled_local_query_percent_id

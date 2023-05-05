@@ -1,41 +1,96 @@
 stages:
-  protein_alignment_resource_test:
+  full_protein_search_space:
     wdir: ../
-    cmd: python ./analysis_pipeline/t1.4_protein_alignment_resource_test.py
+    cmd: python ./analysis_pipeline/t0.2_full_protein_search_space.py
     deps:
-    - ./analysis_pipeline/t1.4_protein_alignment_resource_test.py
-    - ./learn2therm/utils.py
-    - ./learn2therm/blast.py
-    - ./data/taxa_pairs/pair_labels.csv
-    - ./data/taxa/proteins/
-    - ./data/taxa_pairs/pairwise_16s_blast.csv
+    - ./data/taxa.parquet
+    - ./data/metrics/s0.3_protein_per_data_distr.csv
+    - ./analysis_pipeline/t0.2_full_protein_search_space.py
+    metrics:
+    - ./data/metrics/t0.2_total_search_space.csv:
+        cache: false
+    plots:
+    - ./data/plots/total_search_space.png:
+        cache: false
+    - ./data/plots/cumsum_proteins.png:
+        cache: false
+  chosen_protein_search_space:
+    wdir: ../
+    cmd: python ./analysis_pipeline/t1.0_chosen_protein_search_space.py
+    deps:
+    - ./data/taxa_thermophile_labels.parquet
+    - ./data/metrics/s0.3_protein_per_data_distr.csv
+    - ./data/proteins
+    - ./analysis_pipeline/t1.0_chosen_protein_search_space.py
     params:
-    - get_protein_blast_scores.dask_cluster_class
     - get_protein_blast_scores.max_protein_length
-    - get_protein_blast_scores.method
-    - get_protein_blast_scores.n_jobs
     - get_protein_blast_scores.method_blast_params
     - get_protein_blast_scores.method_diamond_params
     - get_protein_blast_scores.blast_metrics
     metrics:
-    - ./data/metrics/t1.4_metrics.yaml:
+    - ./data/metrics/t1.0_chosen_protein_search_space.yaml:
         cache: false
-  protein_alignment_blast_dia_compare:
+    plots:
+    - ./data/plots/protein_per_taxa_hist.png:
+        cache: false
+    - ./data/plots/search_space_resource_test.png:
+        cache: false
+  filtered_protein_search_space:
     wdir: ../
-    cmd: python ./analysis_pipeline/t1.5_protein_alignment_hits_blast_vs_diamond.py
+    cmd: python ./analysis_pipeline/t1.2_filtered_protein_search_space.py
     deps:
-    - ./analysis_pipeline/t1.5_protein_alignment_hits_blast_vs_diamond.py
-    - ./learn2therm/utils.py
-    - ./learn2therm/blast.py
-    - ./data/taxa_pairs/pair_labels.csv
-    - ./data/taxa/proteins/
-    - ./data/taxa_pairs/pairwise_16s_blast.csv
+    - ./data/taxa_pairs/alignment
+    - ./data/taxa_pairs/pair_labels
+    - ./data/proteins
+    - ./analysis_pipeline/t1.2_filtered_protein_search_space.py
     params:
     - get_protein_blast_scores.dask_cluster_class
     - get_protein_blast_scores.max_protein_length
     - get_protein_blast_scores.n_jobs
+    - get_protein_blast_scores.dev_sample_pairs
     - get_protein_blast_scores.method_blast_params
     - get_protein_blast_scores.method_diamond_params
-    - get_protein_blast_scores.blast_metrics
-    outs:
-    - ./data/analysis/blast_vs_diamond_hits.csv
+    metrics:
+    - ./data/metrics/t1.2_metrics.yaml:
+        cache: false
+
+  # protein_alignment_resource_test:
+  #   wdir: ../
+  #   cmd: python ./analysis_pipeline/t1.4_protein_alignment_resource_test.py
+  #   deps:
+  #   - ./analysis_pipeline/t1.4_protein_alignment_resource_test.py
+  #   - ./learn2therm/utils.py
+  #   - ./learn2therm/blast.py
+  #   - ./data/taxa_pairs/pair_labels.csv
+  #   - ./data/taxa/proteins/
+  #   - ./data/taxa_pairs/pairwise_16s_blast.csv
+  #   params:
+  #   - get_protein_blast_scores.dask_cluster_class
+  #   - get_protein_blast_scores.max_protein_length
+  #   - get_protein_blast_scores.method
+  #   - get_protein_blast_scores.n_jobs
+  #   - get_protein_blast_scores.method_blast_params
+  #   - get_protein_blast_scores.method_diamond_params
+  #   - get_protein_blast_scores.blast_metrics
+  #   metrics:
+  #   - ./data/metrics/t1.4_metrics.yaml:
+  #       cache: false
+  # protein_alignment_blast_dia_compare:
+  #   wdir: ../
+  #   cmd: python ./analysis_pipeline/t1.5_protein_alignment_hits_blast_vs_diamond.py
+  #   deps:
+  #   - ./analysis_pipeline/t1.5_protein_alignment_hits_blast_vs_diamond.py
+  #   - ./learn2therm/utils.py
+  #   - ./learn2therm/blast.py
+  #   - ./data/taxa_pairs/pair_labels.csv
+  #   - ./data/taxa/proteins/
+  #   - ./data/taxa_pairs/pairwise_16s_blast.csv
+  #   params:
+  #   - get_protein_blast_scores.dask_cluster_class
+  #   - get_protein_blast_scores.max_protein_length
+  #   - get_protein_blast_scores.n_jobs
+  #   - get_protein_blast_scores.method_blast_params
+  #   - get_protein_blast_scores.method_diamond_params
+  #   - get_protein_blast_scores.blast_metrics
+  #   outs:
+  #   - ./data/analysis/blast_vs_diamond_hits.csv
