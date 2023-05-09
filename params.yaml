@@ -12,9 +12,8 @@ parse_proteins:
   dev_only_one_uniprot_file: false
 label_taxa:
   ogt_threshold: 40.0                # binary threshold to consider something as thermophilic
-
 get_16s_blast_scores:
-  num_threads: 40                        # number of cpus to run in parallel
+  num_threads: 20                        # number of cpus to run in parallel
   word_size: 28                    # size of words for initial exact matching of nucleotides
   gapopen_penalty: 2               # cost to open a gap
   gapextend_penalty: 1             # cost to extend gap
@@ -39,22 +38,22 @@ get_16s_blast_scores:
 label_all_pairs:
   blast_metric_thresholds:                  # define which metrics to use to label a taxa pair 
     scaled_local_symmetric_percent_id:    # metric name
-      thresh: 0.88                            # float threshold
+      thresh: 0.85                            # float threshold
       greater: true                         # greater than threshold is good
     query_align_cov:
-      thresh: 0.75
+      thresh: 0.90
       greater: true
     subject_align_cov:
-      thresh: 0.75
+      thresh: 0.90
       greater: true
+  dev_only_one_file: false
 get_protein_blast_scores:
   dask_cluster_class: 'SLURMCluster'
   max_protein_length: 250            # only consider proteins with length less than number
   method: 'diamond'
-  n_jobs: 48
-  restart: true
-  checkpoint: null                   # if int, dvc will checkpoint every N, currently is broken because dask continues to run workers while checkpointing
-  primary_sweep: true               # run without worker closing to start, do this for fast aligner methods like diamond
+  n_jobs: 80
+  save_frequency: 25000
+  dev_sample_pairs: null
   method_blast_params:
     num_threads: 6                        # number of cpus to run in parallel         
     word_size: 3                    # size of words for initial exact matching of nucleotides

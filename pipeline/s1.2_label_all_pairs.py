@@ -26,18 +26,12 @@ else:
 LOGNAME = __file__
 LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 
-if __name__ == '__main__':
-    # connect to log file
-    logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
+ALIGNMENT_SCORE_DIR = './data/taxa_pairs/alignment/'
+LABELS_DIR = './data/taxa_pairs/pair_labels/'
 
-    # DVC tracked parameters
-    with open("./params.yaml", "r") as stream:
-        params = yaml_load(stream)['label_all_pairs']
-    logger.info(f"Loaded parameters: {params}")
-
-    # get the columns in the 16s blast file. This will tell us what metrics we actually have available to blast
-    pairwise_score_cols = pd.read_csv('./data/taxa_pairs/pairwise_16s_blast.csv', nrows=1).columns
-
+def process_file(input_file, params, output_dir, output_filename):
+    metric_vals = pd.read_parquet(input_file)
+    pairwise_score_cols = list(metric_vals.columns)
     # the form of metric threshold params is very specific, check and parse them
     if type(params['blast_metric_thresholds']) != dict:
         raise ValueError(f"`blast_metric_thresholds` params should be a dict of (name, dict(thres: float, greater: bool))")
@@ -55,29 +49,60 @@ if __name__ == '__main__':
 
     # for each specified threshold, create a boolean mask
     masks = []
-    for mname, vals in params['blast_metric_thresholds'].items():
-        column_index = pairwise_score_cols.get_loc(mname)
-        if type(column_index) != int:
-            raise ValueError(f'Something went wrong! The position of column {mname} in the blast metrics file is not an integer')
-        metric_vals = pd.read_csv('./data/taxa_pairs/pairwise_16s_blast.csv', usecols=[column_index])[mname]
-        if metric_vals.isna().any():
+    for mname, thresh in params['blast_metric_thresholds'].items():
+        this_metric_vals = metric_vals[mname]
+        if this_metric_vals.isna().any():
             raise ValueError(f'Some metrics came back Nan, this should not be')
-        if vals['greater'] == True:
-            mask = metric_vals > vals['thresh']
+        if thresh['greater'] == True:
+            mask = this_metric_vals > thresh['thresh']
         else:
-            mask = metric_vals < vals['thresh']
-        logger.info(f"Only considering pairs with {mname} {'>' if vals['greater'] else '<'} {vals['thresh']}")
+            mask = this_metric_vals < thresh['thresh']
+        logger.info(f"Only considering pairs with {mname} {'>' if thresh['greater'] else '<'} {thresh['thresh']}")
         masks.append(mask)
     mask = pd.DataFrame(masks).all(axis=0)
     mask.name='is_pair'
-    
+
     # save the data
-    mask.to_csv('./data/taxa_pairs/pair_labels.csv')
-    
+    mask = pd.DataFrame(mask)
+    mask.to_parquet(output_dir+output_filename, index=True)
+
     # save metrics
     metrics = {
-        'num_pairs_conservative': int(mask.sum()),
-        'true_pair_ratio': float(mask.sum()/len(mask))
+        'num_taxa_pairs_conservative': int(mask['is_pair'].sum()),
+        'taxa_pair_found_ratio': float(mask['is_pair'].sum()/len(mask))
     }
-    with open('./data/metrics/s1.3_metrics.yaml', "w") as stream:
-        yaml_dump(metrics, stream)
+    return metrics
+
+if __name__ == '__main__':
+    # connect to log file
+    logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
+
+    # DVC tracked parameters
+    with open("./params.yaml", "r") as stream:
+        params = yaml_load(stream)['label_all_pairs']
+    logger.info(f"Loaded parameters: {params}")
+
+    # check directory exists
+    if not os.path.exists(LABELS_DIR):
+        os.makedirs(LABELS_DIR)
+
+    # execute function on all files in the directory
+    files = os.listdir(ALIGNMENT_SCORE_DIR)
+
+    all_metrics = []
+    for file in files:
+        if not file.endswith('.parquet'):
+            continue
+        logger.info(f"Processing {file}")
+        metrics = process_file(ALIGNMENT_SCORE_DIR+file, params, LABELS_DIR, file)
+        all_metrics.append(metrics)
+        if params['dev_only_one_file']:
+            break
+    
+    agg_metrics = {
+        'num_taxa_pairs_conservative': sum(m['num_taxa_pairs_conservative'] for m in all_metrics),
+        'taxa_pair_found_ratio': sum(m['taxa_pair_found_ratio'] for m in all_metrics) / len(all_metrics)
+    }
+   
+    with open('./data/metrics/s1.2_metrics.yaml', "w") as stream:
+        yaml_dump(agg_metrics, stream)

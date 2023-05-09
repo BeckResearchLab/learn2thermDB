@@ -106,6 +106,9 @@ stages:
   get_16s_blast_scores:
     cmd: python pipeline/s1.1_get_16s_blast_scores.py
     deps:
+    - path: ./data/metrics/s0.3_protein_per_data_distr.csv
+      md5: 00f3a4ce6743ad51fcad580e0b00e586
+      size: 118659
     - path: ./data/taxa.parquet
       md5: e62b6a3fbb8232e4dfeca04c863ba761
       size: 6487331
@@ -113,8 +116,8 @@ stages:
       md5: 68b6dc086ee2d5f8e71373522e43f64a
       size: 120740
     - path: ./learn2therm/blast.py
-      md5: 8ad75b36c57d6ec812c27d3b600fa1a3
-      size: 30502
+      md5: 8629c30a7e83db6699688656ce1c1a9d
+      size: 32286
     - path: ./learn2therm/io.py
       md5: 4f49985e8dcfb88d2c4504744e05d96a
       size: 4031
@@ -122,8 +125,8 @@ stages:
       md5: 4845b20446345d469e7eae2a6968e962
       size: 1766
     - path: ./pipeline/s1.1_get_16s_blast_scores.py
-      md5: 39ff9b12dc8dc97d57cc67b7be09da6a
-      size: 6352
+      md5: e9d8f7a007ac0ab03207bc6b4ce55e56
+      size: 6693
     params:
       params.yaml:
         get_16s_blast_scores.blast_metrics:
@@ -150,19 +153,19 @@ stages:
         get_16s_blast_scores.word_size: 28
     outs:
     - path: ./data/metrics/s1.1_metrics.yaml
-      md5: 0aa514a1f692689ec4b3468410851bbb
+      md5: d46c5b011f7a0dc2efec6d1d9b1ca40f
       size: 85
     - path: ./data/taxa_pairs/alignment/
-      md5: 40a07599a96fcf6b4d7790fa221375e3.dir
-      size: 149632212
-      nfiles: 42
+      md5: 40439dc256528d3c1e71b68d53f55ab1.dir
+      size: 90778197
+      nfiles: 26
   label_all_pairs:
     cmd: python pipeline/s1.2_label_all_pairs.py
     deps:
     - path: ./data/taxa_pairs/alignment
-      md5: 40a07599a96fcf6b4d7790fa221375e3.dir
-      size: 149632212
-      nfiles: 42
+      md5: 40439dc256528d3c1e71b68d53f55ab1.dir
+      size: 90778197
+      nfiles: 26
     - path: ./learn2therm/utils.py
       md5: 4845b20446345d469e7eae2a6968e962
       size: 1766
@@ -184,12 +187,12 @@ stages:
         label_all_pairs.dev_only_one_file: false
     outs:
     - path: ./data/metrics/s1.2_metrics.yaml
-      md5: a205ecbf38d992274f21c189cdbc1f6c
+      md5: 18466601d8fcf363f24b57ab214b367d
       size: 79
     - path: ./data/taxa_pairs/pair_labels
-      md5: bc7154568dec298bc35946d3900c8625.dir
-      size: 26986358
-      nfiles: 42
+      md5: e39d13aa8604fb9c713b0895cb197258.dir
+      size: 16176756
+      nfiles: 26
   get_protein_blast_scores:
     cmd: python pipeline/s1.4_get_protein_blast_scores.py
     deps:
@@ -344,7 +347,7 @@ stages:
       md5: 4f49985e8dcfb88d2c4504744e05d96a
       size: 4031
     - path: ./pipeline/s0.3_parse_proteins.py
-      md5: f454cd553e5e800d6f9dac774a680112
+      md5: 303840cef5b2c827dc9def560d86e9df
       size: 11021
     params:
       params.yaml:
@@ -358,8 +361,8 @@ stages:
       md5: 00f3a4ce6743ad51fcad580e0b00e586
       size: 118659
     - path: ./data/proteins/
-      md5: 389a0968431c8d8fda7b40de45df17f6.dir
-      size: 8031552496
+      md5: 57724bc351619b85c205a65f2f7bfd73.dir
+      size: 7997391585
       nfiles: 239
   get_proteome_mdata:
     cmd: python pipeline/s0.2_get_proteome_mdata.py
@@ -371,3 +374,59 @@ stages:
     - path: ./data/uniprot/proteome_metadata.csv
       md5: e858a56f6842ce772940c7e2394e978f
       size: 8045021
+  protein_alignment:
+    cmd: python ./pipeline/s1.3_protein_alignment.py
+    deps:
+    - path: ./data/proteins
+      md5: 57724bc351619b85c205a65f2f7bfd73.dir
+      size: 7997391585
+      nfiles: 239
+    - path: ./data/taxa_pairs/alignment
+      md5: 40439dc256528d3c1e71b68d53f55ab1.dir
+      size: 90778197
+      nfiles: 26
+    - path: ./data/taxa_pairs/pair_labels
+      md5: e39d13aa8604fb9c713b0895cb197258.dir
+      size: 16176756
+      nfiles: 26
+    - path: ./learn2therm/blast.py
+      md5: 8629c30a7e83db6699688656ce1c1a9d
+      size: 32286
+    - path: ./pipeline/s1.3_protein_alignment.py
+      md5: ea35dfeaf16eda52795292314414d420
+      size: 10209
+    params:
+      params.yaml:
+        get_protein_blast_scores.dask_cluster_class: SLURMCluster
+        get_protein_blast_scores.dev_sample_pairs:
+        get_protein_blast_scores.max_protein_length: 250
+        get_protein_blast_scores.method_blast_params:
+          num_threads: 6
+          word_size: 3
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          threshold: 11
+          ungapped: false
+          evalue: 1e-05
+          qcov_hsp_perc: 75
+        get_protein_blast_scores.method_diamond_params:
+          num_threads: 6
+          sensitivity: ultra-sensitive
+          iterate: false
+          global_ranking:
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          evalue: 1e-05
+          hsp_cov: 75
+        get_protein_blast_scores.n_jobs: 80
+        get_protein_blast_scores.save_frequency: 25000
+    outs:
+    - path: ./data/metrics/s1.3_metrics.yaml
+      md5: c6e702e9cbcb8a879b5f5b60a2f935f4
+      size: 154
+    - path: ./data/protein_pairs/
+      md5: 69e57872faa75625fad8889af303bb6b.dir
+      size: 6147864412
+      nfiles: 89900

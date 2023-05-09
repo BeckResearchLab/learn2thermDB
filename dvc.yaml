@@ -6,11 +6,12 @@ stages:
     outs:
     - ./data/taxa.parquet
     params:
-    - get_raw_data_taxa.min_16s_len
     - get_raw_data_taxa.max_16s_len
+    - get_raw_data_taxa.min_16s_len
     metrics:
     - ./data/metrics/s0.0_metrics.yaml:
         cache: false
+    frozen: true
   get_raw_data_proteins:
     cmd: python pipeline/s0.1_get_raw_data_proteins.py
     deps:
@@ -22,76 +23,82 @@ stages:
     metrics:
     - ./data/metrics/s0.1_metrics.yaml:
         cache: false
+    frozen: true
   get_proteome_mdata:
     cmd: python pipeline/s0.2_get_proteome_mdata.py
     deps:
     - pipeline/s0.2_get_proteome_mdata.py
     outs:
     - ./data/uniprot/proteome_metadata.csv
+    frozen: true
   parse_proteins:
     cmd: python pipeline/s0.3_parse_proteins.py
-    deps: 
-    - ./pipeline/s0.3_parse_proteins.py
-    - ./learn2therm/io.py
-    - ./data/uniprot/uniprot_pulled_timestamp
-    - ./data/uniprot/proteome_metadata.csv
+    deps:
     - ./data/taxa.parquet
+    - ./data/uniprot/proteome_metadata.csv
+    - ./data/uniprot/uniprot_pulled_timestamp
+    - ./learn2therm/io.py
+    - ./pipeline/s0.3_parse_proteins.py
     outs:
-    - ./data/proteins/
     - ./data/metrics/s0.3_protein_per_data_distr.csv
+    - ./data/proteins/
     params:
-    - parse_proteins.max_prot_per_file
     - parse_proteins.dev_only_one_uniprot_file
+    - parse_proteins.max_prot_per_file
     metrics:
     - ./data/metrics/s0.3_metrics.yaml:
         cache: false
+    frozen: true
   label_taxa:
-      cmd: python pipeline/s1.0_label_taxa.py
-      deps:
-      - pipeline/s1.0_label_taxa.py
-      - ./learn2therm/utils.py
-      - ./data/taxa.parquet
-      params:
-      - label_taxa.ogt_threshold
-      outs:
-      - ./data/taxa_thermophile_labels.parquet
-      metrics:
-      - ./data/metrics/s1.0_metrics.yaml:
-          cache: false
-      plots:
-      - ./data/plots/ogt_hist.png:
-          cache: false
+    cmd: python pipeline/s1.0_label_taxa.py
+    deps:
+    - ./data/taxa.parquet
+    - ./learn2therm/utils.py
+    - pipeline/s1.0_label_taxa.py
+    params:
+    - label_taxa.ogt_threshold
+    outs:
+    - ./data/taxa_thermophile_labels.parquet
+    metrics:
+    - ./data/metrics/s1.0_metrics.yaml:
+        cache: false
+    plots:
+    - ./data/plots/ogt_hist.png:
+        cache: false
+    frozen: true
   get_16s_blast_scores:
     cmd: python pipeline/s1.1_get_16s_blast_scores.py
     deps:
-    - ./pipeline/s1.1_get_16s_blast_scores.py
+    - ./data/metrics/s0.3_protein_per_data_distr.csv
+    - ./data/taxa.parquet
+    - ./data/taxa_thermophile_labels.parquet
+    - ./learn2therm/blast.py
     - ./learn2therm/io.py
     - ./learn2therm/utils.py
-    - ./learn2therm/blast.py
-    - ./data/taxa_thermophile_labels.parquet
-    - ./data/taxa.parquet
-    - ./data/metrics/s0.3_protein_per_data_distr.csv
+    - ./pipeline/s1.1_get_16s_blast_scores.py
     outs:
     - ./data/taxa_pairs/alignment/
     params:
-    - get_16s_blast_scores.num_threads
-    - get_16s_blast_scores.word_size
-    - get_16s_blast_scores.gapopen_penalty
-    - get_16s_blast_scores.gapextend_penalty
-    - get_16s_blast_scores.reward
-    - get_16s_blast_scores.penalty
-    - get_16s_blast_scores.ungapped
-    - get_16s_blast_scores.dev_n_sample
     - get_16s_blast_scores.blast_metrics
+    - get_16s_blast_scores.dev_n_sample
+    - get_16s_blast_scores.gapextend_penalty
+    - get_16s_blast_scores.gapopen_penalty
+    - get_16s_blast_scores.num_threads
+    - get_16s_blast_scores.penalty
+    - get_16s_blast_scores.reward
+    - get_16s_blast_scores.ungapped
+    - get_16s_blast_scores.word_size
     metrics:
     - ./data/metrics/s1.1_metrics.yaml:
         cache: false
+
+    frozen: true
   label_all_pairs:
     cmd: python pipeline/s1.2_label_all_pairs.py
     deps:
-    - ./pipeline/s1.2_label_all_pairs.py
-    - ./learn2therm/utils.py
     - ./data/taxa_pairs/alignment
+    - ./learn2therm/utils.py
+    - ./pipeline/s1.2_label_all_pairs.py
     outs:
     - ./data/taxa_pairs/pair_labels
     params:
@@ -100,6 +107,30 @@ stages:
     metrics:
     - ./data/metrics/s1.2_metrics.yaml:
         cache: false
+    frozen: true
+  protein_alignment:
+    cmd: python ./pipeline/s1.3_protein_alignment.py
+    deps:
+    - ./data/taxa_pairs/alignment
+    - ./data/taxa_pairs/pair_labels
+    - ./data/proteins
+    - ./pipeline/s1.3_protein_alignment.py
+    - ./learn2therm/blast.py
+    params:
+    - get_protein_blast_scores.dask_cluster_class
+    - get_protein_blast_scores.max_protein_length
+    - get_protein_blast_scores.n_jobs
+    - get_protein_blast_scores.save_frequency
+    - get_protein_blast_scores.dev_sample_pairs
+    - get_protein_blast_scores.method_blast_params
+    - get_protein_blast_scores.method_diamond_params
+    outs:
+    - ./data/protein_pairs/:
+        checkpoint: true
+    metrics:
+    - ./data/metrics/s1.3_metrics.yaml:
+        cache: false
+        persist: true
   # get_protein_blast_scores:
   #   cmd: python pipeline/s1.4_get_protein_blast_scores.py
   #   deps:
