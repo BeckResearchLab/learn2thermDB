@@ -564,7 +564,7 @@ class TaxaAlignmentWorker:
         else:
             # save empty file to indicate that we are working on this pair
             out_columns = ['thermo_pid', 'meso_pid'] + self.metrics + ['thermo_taxid', 'meso_taxid']
-            pd.DataFrame(columns=out_columns).to_parquet(self.output_dir+output_filename)
+            pd.DataFrame(columns=out_columns).astype(pd.StringDtype()).to_parquet(self.output_dir+output_filename)
 
             # connect to DB
             conn = ddb.connect(self.protein_database, read_only=True)
