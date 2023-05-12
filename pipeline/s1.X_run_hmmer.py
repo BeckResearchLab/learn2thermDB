@@ -1,10 +1,15 @@
 """
 {HA note: this needs updating}
 TODO:
-1. Create a PFAM downloading script
+1. Create a PFAM downloading script maybe press it in that script
 2. Figure out the best way to deal with paths in light of above
 3. Update run_pyhmmer function after step 1 & 2
 
+Old things:
+should contain:
+* parameters
+* metrics
+* worker state thing
 """
 # system dependecies
 import logging
@@ -28,7 +33,7 @@ import pyhmmer
 import learn2therm.utils
 
 ## Paths
-HMM_PATH = '/Users/humoodalanzi/pfam/Pfam-A.hmm'  # ./Pfam-A.hmm
+HMM_PATH = './data/Pfam-A.hmm'  # ./Pfam-A.hmm
 PROTEIN_SEQ_DIR = './data/taxa/proteins/'
 OUTPUT_DIR = './data/taxa_pairs/protein_pair_targets'
 WORKER_WAKE_UP_TIME = 25 # this is to ensure that if a worker that is about to be shut down due to previous task completetion doesn't actually start running
@@ -52,29 +57,21 @@ def load_protein_data():
       # Establishing a connection with Duck DB
       conn = ddb.connect(tmpdir+'proteins.db', read_only=False)
       # Making a SQL table
-      conn.execute(f"CREATE TABLE proteins AS SELECT * FROM read_parquet('../data/uniprot_chunk_0.parquet')")
+      conn.execute("CREATE TABLE proteins AS SELECT taxid AS taxid, pid AS pid, protein_seq AS sequence FROM read_parquet('./data/proteins/uniprot_chunk_0.parquet')") # changes
       # Committing DB
       conn.commit()
 
-      # get some test proteins to run resource test alignment on
-      # considering the max protein length
-      query_proteins = conn.execute(
-          """SELECT pid, protein_seq, LENGTH(protein_seq) AS len FROM proteins 
-          WHERE len<=250
-          ORDER BY RANDOM()
-          LIMIT 1000
-          """).df()
+      # Create table of taxa pairs
+      conn.execute("CREATE TEMP TABLE pair_labels AS SELECT * FROM read_parquet('./data/taxa_pairs/pair_labels/*.parquet')") # change
+      conn.execute("CREATE TEMP TABLE pair_scores AS SELECT * FROM read_parquet('./data/taxa_pairs/alignment/*.parquet')") # change
+      conn.execute("CREATE TABLE pairs AS SELECT * FROM pair_labels INNER JOIN pair_scores ON (pair_labels.__index_level_0__ = pair_scores.__index_level_0__) WHERE pair_labels.is_pair=True")
+      conn.commit()
+      conn.execute("CREATE INDEX meso_index ON pairs (subject_id)")
+      conn.execute("CREATE INDEX thermo_index ON pairs (query_id)")
+      conn.commit()
+      conn.close()
 
-      # get some metadata about taxa protein join
-      # protein total counts per organism was tracked in s0.3
-      # but lets recompute that data considering a max protien length
-      protein_counts = conn.execute(
-          """SELECT taxid, COUNT(*) AS n_proteins
-          FROM proteins
-          WHERE LENGTH(protein_seq)<=250
-          GROUP BY taxid""").df()
-    return query_proteins
-      
+    return tmpdir, tmpdir+'/proteins.db'
 
 def prefetch_targets(hmms_path: str):
     """
@@ -95,6 +92,38 @@ def prefetch_targets(hmms_path: str):
         amino_acids, optimized_profiles)
     return targets
 
+def save_to_digital_sequences(dataframe: pd.DataFrame):
+    """
+    TODO
+
+    Parameters
+    ----------
+    dataframe : pd.DataFrame
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
+    # Create empty list
+    seqlist = []
+
+    # Establish pyhmmer alphabet
+    amino_acids = pyhmmer.easel.Alphabet.amino()
+
+    # Convert proteins in dataframe to suitable format
+    for _, row in dataframe.iterrows():
+        pid = bytes(row['pid'], encoding='utf-8')
+        seq_str = row['protein_seq']
+        sequences = pyhmmer.easel.TextSequence(name=pid, sequence= seq_str)
+        sequences = sequences.digitize(amino_acids)
+        seqlist.append(sequences)
+    
+    # Convert so SequenceBlocks
+    seqblock = pyhmmer.easel.DigitalSequenceBlock(amino_acids, seqlist)
+
+    return seqblock
 
 def run_pyhmmer(
         seqs: str,
@@ -140,7 +169,7 @@ def run_pyhmmer(
     if prefetch:
         targets = prefetch_targets(hmms_path)
     else:
-        targets = pyhmmer.plan7.HMMFile("../data/pfam/.h3m")
+        targets = pyhmmer.plan7.HMMFile("../data/HMM")
 
     # HMMscan execution with or without saving output to file
     all_hits = list(pyhmmer.hmmer.hmmscan(seqs, targets, cpus=cpu, E=eval_con))
@@ -189,7 +218,7 @@ def parse_pyhmmer(all_hits):
     return df
 
 
-def worker_function(chunk_index, sequences, wakeup=None):
+def worker_function(chunk_index, dbpath, pid_inputs, wakeup=None):
     """
     A wrapping function that runs and parses pyhmmer in chunks
     Parameters
@@ -208,8 +237,14 @@ def worker_function(chunk_index, sequences, wakeup=None):
     input_file_path = f'../tmp/results/{chunk_index}_input'
     output_file_path = f'../tmp/results/{chunk_index}_output'
 
-    # convert sequences to FASTA files
-    save_sequences_to_fasta(sequences, input_file_path)
+    # query ID
+    conn = ddb.connect(dbpath, read_only=True)
+    query_db = conn.execute("SELECT pid, protein_seq FROM proteins WHERE pid = {pid_inputs}").df()
+
+
+
+    # convert string sequences to pyhmmer digital blocks
+    save_to_digital_sequences(query_db)
 
     # run HMMER via pyhmmer
     hits = run_pyhmmer(
@@ -225,17 +260,6 @@ def worker_function(chunk_index, sequences, wakeup=None):
     accessions_parsed.to_csv(
         f'../tmp/results/{chunk_index}_output.csv',
         index=False)
-    
-def main():
-  """
-  TODO:
-  should contain:
-  * parameters
-  * metrics
-  * worker state thing
-  """
-  #TODO
-  pass
 
 if __name__== "__main__":
     # start logger/connect to log file
@@ -243,22 +267,39 @@ if __name__== "__main__":
     
     logger.info("TEST LOG")
 
-    # Set up parallel processing and parsing
-    total_size = int(sys.argv[1])  # Number of total sequences read
-    # Number of sequences to process in each chunk
-    chunk_size = int(sys.argv[2])
-    njobs = int(sys.argv[3])  # Number of parallel processes to use
+    # create pfam HMM directory
+    if not os.path.exists('./data/HMM'):
+        os.mkdir('./data/HMM')
+
+    # # Set up parallel processing and parsing
+    # total_size = int(sys.argv[1])  # Number of total sequences read
+    # # Number of sequences to process in each chunk
+    # chunk_size = int(sys.argv[2])
+    # njobs = int(sys.argv[3])  # Number of parallel processes to use
 
     logger.info('Parallel processing parameters obtained')
 
-    # processing query proteins
-    query_test = load_protein_data()
-    logger.info('Sample loaded')
+    # setup the database and get some pairs to run
+    tmpdir_database, db_path = load_protein_data()
+
+    # prepare output file
+    if not os.path.exists(OUTPUT_DIR):
+        os.mkdir(OUTPUT_DIR)
+
+    logger.info(f"Directory of output: {OUTPUT_DIR}, path to database {db_path}")
+
+    conn = ddb.connect(db_path, read_only=True)
+    pairs = conn.execute("SELECT query_id, subject_id FROM pairs ORDER BY RANDOM()").fetchall()
+    logger.info(f"Total number of taxa pairs: {len(pairs)} in pipeline")
+
+    # # processing query proteins
+    # query_test = load_protein_data()
+    # logger.info('Sample loaded')
     
-    query_db = query_test[["pid", "protein_seq"]]
-    protein_list = query_test.set_index("pid").iloc[:total_size]
-    protein_list.index.name = None
-    logger.info('Sample preprocessed')
+    # query_db = query_test[["pid", "protein_seq"]]
+    # protein_list = query_test.set_index("pid").iloc[:total_size]
+    # protein_list.index.name = None
+    # logger.info('Sample preprocessed')
 
 
     # chunking the data to chunk_size sequence bits (change if sample or all

@@ -97,7 +97,7 @@ flowchart TD
   - "16s_len": length of 16s sequence
   - "temperature": OGT label
   - "superkingdom", "phylum", "class", "order", "family", "genus": taxonomy information
-- `data/uniprot/uniprot_pulled_timestamp`: In leu of DVC tracking the uniprot zipped files (>1000 GB), simply tracks when uniprot was pulled
+- `data/uniprot/uniprot_pulled_timestamp`: In lieu of DVC tracking the uniprot zipped files (>1000 GB), simply tracks when uniprot was pulled
 - `data/uniprot/proteome_metadata.csv`: Data table of proteomes in uniprot, ID, number of proteins, quality label (eg. representative, redundant, excluded, etc.). See uniprot docs for some fields: https://www.uniprot.org/help/proteome
   - "pid": uniprot proteome id
   - "species_taxid": ncbi taxid of species level for proteome
