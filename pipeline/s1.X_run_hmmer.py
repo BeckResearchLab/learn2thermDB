@@ -1,9 +1,10 @@
 """
 {HA note: this needs updating}
 TODO:
-1. Create a PFAM downloading script maybe press it in that script
+1. Create a PFAM downloading script maybe press it in that script (data/HMM)
 2. Figure out the best way to deal with paths in light of above
 3. Update run_pyhmmer function after step 1 & 2
+    a. Figure out output file in light of output dir 
 
 Old things:
 should contain:
@@ -49,27 +50,31 @@ LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 
 def load_protein_data():
     """
-    TODO:
-    check s1.3 for inspiration
+    Load protein data into a temporary database.
+    Returns
+    -------
+    tuple
+        A tuple containing the path to the temporary directory and the path to the temporary database file.
+    Notes
+    -----
+    This function performs the following steps:
+    1. Creates a temporary directory.
+    2. Establishes a connection with Duck DB using the temporary database file.
+    3. Creates SQL tables for proteins and protein_pairs based on Parquet files.
+    4. Commits the changes to the database.
+    5. Closes the database connection.
+    The temporary directory and database are returned as a tuple.
     """
-    # stolen from Evan's t1.0 scripts
-    with tempfile.TemporaryDirectory(dir='./tmp') as tmpdir:
-      # Establishing a connection with Duck DB
-      conn = ddb.connect(tmpdir+'proteins.db', read_only=False)
-      # Making a SQL table
-      conn.execute("CREATE TABLE proteins AS SELECT taxid AS taxid, pid AS pid, protein_seq AS sequence FROM read_parquet('./data/proteins/uniprot_chunk_0.parquet')") # changes
-      # Committing DB
-      conn.commit()
-
-      # Create table of taxa pairs
-      conn.execute("CREATE TEMP TABLE pair_labels AS SELECT * FROM read_parquet('./data/taxa_pairs/pair_labels/*.parquet')") # change
-      conn.execute("CREATE TEMP TABLE pair_scores AS SELECT * FROM read_parquet('./data/taxa_pairs/alignment/*.parquet')") # change
-      conn.execute("CREATE TABLE pairs AS SELECT * FROM pair_labels INNER JOIN pair_scores ON (pair_labels.__index_level_0__ = pair_scores.__index_level_0__) WHERE pair_labels.is_pair=True")
-      conn.commit()
-      conn.execute("CREATE INDEX meso_index ON pairs (subject_id)")
-      conn.execute("CREATE INDEX thermo_index ON pairs (query_id)")
-      conn.commit()
-      conn.close()
+    # Creating temporary dir
+    tmpdir = tempfile.mkdtemp(dir='./tmp', )
+    # Establishing a connection with Duck DB
+    conn = ddb.connect(tmpdir+'/proteins.db', read_only=False)
+    # Making a SQL table of proteins and protein_pairs
+    conn.execute("CREATE TABLE protein_pairs AS SELECT meso_pid As meso_pid, thermo_pid as thermo_pid FROM read_parquet('./data/protein_pairs/*.parquet')")
+    conn.execute("CREATE TABLE proteins AS SELECT taxid AS taxid, pid AS pid, protein_seq AS sequence FROM read_parquet('./data/proteins/uniprot_chunk_0.parquet')")
+    # Committing DB
+    conn.commit()
+    conn.close()
 
     return tmpdir, tmpdir+'/proteins.db'
 
@@ -94,17 +99,15 @@ def prefetch_targets(hmms_path: str):
 
 def save_to_digital_sequences(dataframe: pd.DataFrame):
     """
-    TODO
-
+    Save protein sequences from a DataFrame to a digital sequence block.
     Parameters
     ----------
     dataframe : pd.DataFrame
-        _description_
-
+        DataFrame containing PIDs (Protein IDs) and sequences.
     Returns
     -------
-    _type_
-        _description_
+    DigitalSequenceBlock
+        A digital sequence block containing the converted sequences.
     """
     # Create empty list
     seqlist = []
@@ -225,8 +228,7 @@ def worker_function(chunk_index, dbpath, pid_inputs, wakeup=None):
     ----------
     chunk_index : int
         number of sequences chunks
-    sequences : str
-        a list of dataframe containing protein sequences
+    TODO
     """
     # we want to wait for execution to see if this worker is actually being used
     # or if it is in the process of being killed
@@ -234,21 +236,23 @@ def worker_function(chunk_index, dbpath, pid_inputs, wakeup=None):
         time.sleep(wakeup)
     
     # define paths for input and output files
-    input_file_path = f'../tmp/results/{chunk_index}_input'
-    output_file_path = f'../tmp/results/{chunk_index}_output'
+    output_file_path = f'./tmp/results/{chunk_index}_output'
 
-    # query ID
+    # query the database to get sequences only from pid_inputs
     conn = ddb.connect(dbpath, read_only=True)
-    query_db = conn.execute("SELECT pid, protein_seq FROM proteins WHERE pid = {pid_inputs}").df()
+    
+    # Query the proteins table and join with the chunked pids DataFrame
+    query_db = pd.read_sql_query("SELECT pid, protein_seq FROM proteins", conn)
+    result_df = pid_inputs.merge(query_db, on='pid', how='left')
 
 
 
     # convert string sequences to pyhmmer digital blocks
-    save_to_digital_sequences(query_db)
+    sequences = save_to_digital_sequences(query_db)
 
     # run HMMER via pyhmmer
     hits = run_pyhmmer(
-        input_file=input_file_path,
+        seqs=sequences,
         hmms_path=HMM_PATH,
         prefetch=True,
         output_file=output_file_path,
@@ -258,7 +262,7 @@ def worker_function(chunk_index, dbpath, pid_inputs, wakeup=None):
     # Parse pyhmmer output and save to CSV file
     accessions_parsed = parse_pyhmmer(all_hits=hits)
     accessions_parsed.to_csv(
-        f'../tmp/results/{chunk_index}_output.csv',
+        f'./tmp/results/{chunk_index}_output.csv',
         index=False)
 
 if __name__== "__main__":
