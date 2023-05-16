@@ -194,17 +194,17 @@ if __name__ == '__main__':
     actual_protein_pairs = {}
     for T in temps:
         ids = con.execute(f"""
-            SELECT meso_pid, thermo_pid FROM protein_pairs
-            INNER JOIN taxa AS thermo_taxa ON protein_pairs.thermo_taxid = taxa.taxid
+            SELECT meso_pid, thermo_pid FROM pairs
+            INNER JOIN taxa AS thermo_taxa ON pairs.thermo_taxid = thermo_taxa.taxid
             WHERE thermo_taxa.temperature>={T}
         """).df()
         meso_sequences = con.execute(f"""
-            SELECT pid, protein_seq, temperature FROM protein_pairs
+            SELECT pid, protein_seq, temperature FROM proteins
             INNER JOIN taxa ON proteins.taxid = taxa.taxid
             WHERE pid IN {tuple(ids['meso_pid'])}
         """).df()
         thermo_sequences = con.execute(f"""
-            SELECT pid, protein_seq, temperature FROM protein_pairs
+            SELECT pid, protein_seq, temperature FROM proteins
             INNER JOIN taxa ON proteins.taxid = taxa.taxid
             WHERE pid IN {tuple(ids['thermo_pid'])}
         """).df()
