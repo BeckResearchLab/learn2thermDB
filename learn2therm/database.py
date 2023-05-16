@@ -36,12 +36,6 @@ class L2TDatabase:
         self.path = db_path
         self.conn = conn
         self.read_only = read_only
-
-        # create indexes
-        t1 = time.time()
-        self._create_indexes(conn)
-        t2 = time.time()
-        logger.info(f"Took {(t2-t1)/60}m to create speed indexes")
         
     @classmethod
     def from_files(
@@ -85,196 +79,140 @@ class L2TDatabase:
         cls._create_protein_pairs_table(conn, files_path)
         t2 = time.time()
         logger.info(f"Took {(t2-t1)/60}m to create protein pair table")
-    
+
+        # create indexes
+        t1 = time.time()
+        cls._create_indexes(conn)
+        t2 = time.time()
+        logger.info(f"Took {(t2-t1)/60}m to create speed indexes")
+
         conn.close()        
         return cls(db_path, read_only=read_only)
 
     @staticmethod
     def _create_taxa_table(conn, files_path):
         # schema for taxa
-        conn.execute("""
-            CREATE OR REPLACE TABLE taxa(
-                taxa_index INT PRIMARY KEY NOT NULL,
-                ncbi_taxid INT NOT NULL,
-                record_name STRING,
-                filepath STRING,
-                taxonomy STRING,
-                organism STRING,
-                bacdive_id INT,
-                ogt_scraped_string STRING,
-                seq_16srRNA STRING,
-                len_16s INT,
-                ogt FLOAT,
-                thermophile_label BOOL,
-            )""")
-        conn.execute(f"""CREATE OR REPLACE TEMP TABLE taxa_tmp AS 
-            SELECT
-                "column0"::INT AS taxa_index,
-                "taxid"::INT AS ncbi_taxid,
-                "record_name"::STRING AS record_name,
-                "filepath"::STRING AS filepath,
-                "taxonomy"::STRING AS taxonomy,
-                "organism"::STRING AS organism,
-                "bacdive_id"::INT AS bacdive_id,
-                "ogt_raw":: STRING AS ogt_scraped_string
-            FROM read_csv_auto('{files_path}taxa/taxa_info_and_ogt.csv', header=True)""")
-        conn.execute(f"""CREATE OR REPLACE TEMP TABLE taxa_16s_tmp AS 
-            SELECT 
-                "taxa_index"::INT AS taxa_index_1,
-                "seq_16srRNA"::STRING AS seq_16srRNA,
-                length(seq_16srRNA)::INT as len_16s
-            FROM read_csv_auto('{files_path}taxa/16s_rRNA.csv', header=True, nullstr='None')""")
-        conn.execute(f"""CREATE OR REPLACE TEMP TABLE taxa_labels_tmp AS 
+        conn.execute(f"""
+            CREATE OR REPLACE TEMP TABLE taxa_raw AS SELECT 
+                "taxid"::BIGINT AS taxid,
+                "16s_seq"::VARCHAR AS "16s_seq",
+                "16s_len"::BIGINT AS "16s_len",
+                "temperature"::FLOAT AS temperature,
+                "superkingdom"::DOUBLE AS superkingdom,
+                "phylum"::DOUBLE AS phylum,
+                "class"::DOUBLE AS class,
+                "order"::DOUBLE AS order,
+                "family"::DOUBLE AS family,
+                "genus"::DOUBLE AS genus,
+            FROM read_parquet('{files_path}taxa.parquet')""")
+        conn.execute(f"""CREATE OR REPLACE TEMP TABLE taxa_labels AS SELECT 
+            "taxid"::BIGINT AS taxid,
+            "thermophile_label"::BOOLEAN AS thermophile_label,
+        FROM read_parquet('{files_path}taxa_thermophile_labels.parquet')""")
+        conn.execute("""CREATE OR REPLACE TABLE taxa AS 
             SELECT *
-            FROM read_csv_auto('{files_path}taxa/labels.csv', header=True)""")
+            FROM taxa_raw
+            INNER JOIN taxa_labels ON (taxa_raw.taxid=taxa_labels.taxid)""")
         conn.execute("""
-            COPY (SELECT * EXCLUDE (column0, taxa_index_1) FROM taxa_tmp
-                INNER JOIN taxa_16s_tmp ON (taxa_tmp.taxa_index=taxa_16s_tmp.taxa_index_1)
-                INNER JOIN taxa_labels_tmp ON (taxa_tmp.taxa_index=taxa_labels_tmp.column0))
-            TO './taxa_joined.csv' WITH (HEADER 1, DELIMITER '|')
+            ALTER TABLE taxa DROP COLUMN "taxid:1"
         """)
-        conn.execute("""
-            COPY taxa FROM './taxa_joined.csv' ( HEADER, DELIMITER '|' )""")
-        os.remove('./taxa_joined.csv')
+        conn.commit()
     
     @staticmethod
     def _create_proteins_table(conn, files_path):
         # create table
         conn.execute(f"""
-            CREATE OR REPLACE TABLE proteins AS SELECT 
-                substr(seq_id, 0, strpos(seq_id, '.'))::INT AS taxa_index,
-                "seq_id"::STRING AS protein_index,
-                "protein_seq"::STRING AS protein_seq,
-                "protein_desc"::STRING AS protein_desc,
-                "protein_len"::INT AS protein_len
-            FROM read_csv("{files_path}taxa/proteins/taxa_*.csv", auto_detect=False, header=True, sep=';', columns={{'seq_id': 'STRING', 'protein_seq': 'STRING', 'protein_desc': 'STRING', 'protein_len': 'INT'}})
+            CREATE OR REPLACE TABLE proteins AS SELECT
+                "pid"::VARCHAR AS pid,
+                "taxid"::BIGINT AS taxid,
+                "pdb_id"::VARCHAR AS pdb_id,
+                "alphafold_id"::VARCHAR AS alphafold_id,
+                "proteome"::VARCHAR AS proteome,
+                "protein_seq"::VARCHAR AS protein_seq,
+            FROM read_parquet('{files_path}proteins/*.parquet')
             """)
-        
-        # at new integer index
-        conn.execute("CREATE SEQUENCE protein_int_index_seq START 1")
-        conn.execute("""
-            ALTER TABLE proteins ADD COLUMN protein_int_index INT DEFAULT nextval('protein_int_index_seq')-1
-        """)
 
     @staticmethod
     def _create_taxa_pairs_table(conn, files_path):
         conn.execute(f"""
-            CREATE OR REPLACE TEMP TABLE taxa_pairs_tmp AS SELECT 
-                *
-            FROM read_csv_auto('{files_path}taxa_pairs/pairwise_16s_blast.csv', header=True)
-        """)
-        # now get labels, we might as well make this one table now
-        conn.execute(f"""
-            CREATE OR REPLACE TEMP TABLE taxa_pair_labels_tmp AS SELECT 
-                column0:: INT AS taxa_pair_index,
-                is_pair:: BOOL AS is_pair
-            FROM read_csv_auto('{files_path}taxa_pairs/pair_labels.csv', header=True)
-        """)
-        # add new because it was only tracked in one of the files
-        conn.execute("CREATE SEQUENCE taxa_pair_id_seq START 1")
+            CREATE OR REPLACE TEMP TABLE taxa_alignment AS SELECT *
+            FROM read_parquet('{files_path}taxa_pairs/alignment/*.parquet')""")
+        conn.execute(f"""CREATE OR REPLACE TEMP TABLE taxa_pair_labels AS 
+            SELECT * FROM read_parquet('{files_path}taxa_pairs/pair_labels/*.parquet')""")
+        conn.execute(f"""CREATE OR REPLACE TABLE taxa_pairs AS 
+            SELECT * FROM taxa_alignment
+            INNER JOIN taxa_pair_labels ON (taxa_alignment.__index_level_0__=taxa_pair_labels.__index_level_0__)""")
+        conn.commit()
+        conn.execute("ALTER TABLE taxa_pairs RENAME COLUMN query_id TO thermo_taxid")
+        conn.execute("ALTER TABLE taxa_pairs RENAME COLUMN subject_id TO meso_taxid")
+        conn.commit
         conn.execute("""
-            ALTER TABLE taxa_pairs_tmp ADD COLUMN taxa_pair_index INT DEFAULT nextval('taxa_pair_id_seq')-1
+            ALTER TABLE taxa_pairs DROP COLUMN "__index_level_0__:1"
         """)
-        # join the two tables and create a true table
-        conn.execute("""
-            CREATE OR REPLACE TABLE taxa_pairs AS SELECT * FROM taxa_pairs_tmp
-                INNER JOIN taxa_pair_labels_tmp ON (taxa_pairs_tmp.taxa_pair_index=taxa_pair_labels_tmp.taxa_pair_index)
-        """)
-        conn.execute("""
-            ALTER TABLE taxa_pairs DROP "taxa_pair_index:1"
-        """).df()
+        conn.execute("ALTER TABLE taxa_pairs DROP COLUMN __index_level_0__")
+        conn.execute("ALTER TABLE taxa_pairs ALTER COLUMN thermo_taxid TYPE BIGINT")
+        conn.execute("ALTER TABLE taxa_pairs ALTER COLUMN meso_taxid TYPE BIGINT")
+        conn.commit()
     
     @staticmethod
     def _create_protein_pairs_table(conn, files_path):
-        conn.execute(f"""
-            CREATE OR REPLACE TABLE protein_pairs AS SELECT  
-                "thermo_protein_id"::STRING AS thermo_protein_index,
-                "meso_protein_id"::STRING AS meso_protein_index,
-                "local_gap_compressed_percent_id"::FLOAT AS local_gap_compressed_percent_id,
-                "scaled_local_query_percent_id"::FLOAT AS scaled_local_query_percent_id,
-                "scaled_local_symmetric_percent_id"::FLOAT AS scaled_local_symmetric_percent_id,
-                "local_E_value"::FLOAT AS local_E_value,
-                "query_align_start"::INT AS query_align_start,
-                "query_align_end"::INT AS query_align_end,
-                "subject_align_end"::INT AS subject_align_end,
-                "subject_align_start"::INT AS subject_align_start,
-                "query_align_len"::INT AS query_align_len,
-                "query_align_cov"::FLOAT AS query_align_cov,
-                "subject_align_len"::INT AS subject_align_len,
-                "subject_align_cov"::FLOAT AS subject_align_cov,
-                "bit_score"::INT AS bit_score,
-                substr(thermo_protein_id, 0, strpos(thermo_protein_id, '.'))::INT AS thermo_index,
-                substr(meso_protein_id, 0, strpos(meso_protein_id, '.'))::INT AS meso_index,
-            FROM read_csv('{files_path}taxa_pairs/protein_alignment/taxa_pair*.csv', auto_detect=False, header=True, sep=',', columns={{
-                'column0': 'INT',
-                'thermo_protein_id': 'STRING',
-                'meso_protein_id': 'STRING',
-                'local_gap_compressed_percent_id': 'FLOAT',
-                'scaled_local_query_percent_id': 'FLOAT',
-                'scaled_local_symmetric_percent_id': 'FLOAT',
-                'local_E_value': 'FLOAT',
-                'query_align_start': 'INT',
-                'query_align_end': 'INT',
-                'subject_align_end': 'INT',
-                'subject_align_start': 'INT',
-                'query_align_len': 'INT',
-                'query_align_cov': 'FLOAT',
-                'subject_align_len': 'INT',
-                'subject_align_cov': 'FLOAT',
-                'bit_score': 'INT',
-            }})""")
-        conn.execute("CREATE SEQUENCE protein_pair_id_seq START 1")
-        conn.execute("""
-            ALTER TABLE protein_pairs ADD COLUMN prot_pair_index INT DEFAULT nextval('protein_pair_id_seq')-1
-        """)
-        # need to add the integer ids of meso and thermo proteins instead of just the slow string ones
-        conn.execute("""
-            ALTER TABLE protein_pairs ADD COLUMN meso_protein_int_index INT;
-            ALTER TABLE protein_pairs ADD COLUMN thermo_protein_int_index INT;
-            ALTER TABLE protein_pairs ADD COLUMN taxa_pair_index INT;
-        """)
-        conn.execute("""
-            UPDATE protein_pairs SET meso_protein_int_index=(
-                SELECT proteins.protein_int_index
-                FROM proteins
-                WHERE protein_pairs.meso_protein_index=proteins.protein_index
-            )
-        """)
-        conn.execute("""
-            UPDATE protein_pairs SET thermo_protein_int_index=(
-                SELECT proteins.protein_int_index
-                FROM proteins
-                WHERE protein_pairs.thermo_protein_index=proteins.protein_index
-            )
-        """)
-        conn.execute("""
-            UPDATE protein_pairs SET taxa_pair_index=(
-                SELECT taxa_pairs.taxa_pair_index
-                FROM taxa_pairs
-                WHERE protein_pairs.thermo_index=taxa_pairs.thermo_index AND protein_pairs.meso_index=taxa_pairs.meso_index
-            )
-        """)
+        conn.execute(f"""CREATE OR REPLACE TABLE pairs AS SELECT 
+                meso_pid::VARCHAR AS meso_pid,
+                thermo_pid::VARCHAR AS thermo_pid,
+                meso_taxid::INT AS meso_taxid,
+                thermo_taxid::INT AS thermo_taxid,
+                local_gap_compressed_percent_id::FLOAT AS local_gap_compressed_percent_id,
+                scaled_local_query_percent_id::FLOAT AS scaled_local_query_percent_id,
+                scaled_local_symmetric_percent_id::FLOAT AS scaled_local_symmetric_percent_id,
+                local_E_value::FLOAT AS local_E_value,
+                query_align_start::INT AS query_align_start,
+                query_align_end::INT AS query_align_end,
+                subject_align_end::INT AS subject_align_end,
+                subject_align_start::INT AS subject_align_start,
+                query_align_len::INT AS query_align_len,
+                query_align_cov::FLOAT AS query_align_cov,
+                subject_align_len::INT AS subject_align_len,
+                subject_align_cov::FLOAT AS subject_align_cov,
+                bit_score::INT AS bit_score,  
+            FROM read_parquet('{files_path}/protein_pairs/*.parquet')""")
+        conn.commit()
 
     @staticmethod
     def _create_indexes(conn):
+
+        # drop existing indexes
+        conn.execute("DROP INDEX IF EXISTS taxa_primary")
+        conn.execute("DROP INDEX IF EXISTS protein_primary")
+        conn.execute("DROP INDEX IF EXISTS protein_to_taxa")
+        conn.execute("DROP INDEX IF EXISTS taxa_pairs_to_taxa_meso")
+        conn.execute("DROP INDEX IF EXISTS taxa_pairs_to_taxa_thermo")
+        conn.execute("DROP INDEX IF EXISTS protein_pairs_to_proteins_meso")
+        conn.execute("DROP INDEX IF EXISTS protein_pairs_to_proteins_thermo")
+        conn.execute("DROP INDEX IF EXISTS protein_pairs_to_taxa_meso")
+        conn.execute("DROP INDEX IF EXISTS protein_pairs_to_taxa_thermo")
+
         # primary indexes
-        conn.execute("CREATE UNIQUE INDEX taxa_primary ON taxa (taxa_index)")
-        conn.execute("CREATE UNIQUE INDEX protein_primary ON proteins (protein_int_index)")
-        conn.execute("CREATE UNIQUE INDEX taxa_pair_primary ON taxa_pairs (taxa_pair_index)")
-        conn.execute("CREATE UNIQUE INDEX prot_pair_primary ON protein_pairs (prot_pair_index)")
+        conn.execute("CREATE UNIQUE INDEX taxa_primary ON taxa (taxid)")
+        logger.debug("Created taxa primary index")
+        conn.execute("CREATE UNIQUE INDEX protein_primary ON proteins (pid)")
+        logger.debug("Created protein primary index")
 
         # foreign indexes
-        conn.execute("CREATE INDEX protein_to_taxa ON proteins (taxa_index)")
-        conn.execute("CREATE INDEX taxa_pair_to_meso ON taxa_pairs (meso_index)")
-        conn.execute("CREATE INDEX taxa_pair_to_thermo ON taxa_pairs (thermo_index)")
-        conn.execute("CREATE INDEX taxa_pair_both ON taxa_pairs (meso_index, thermo_index)")
-        conn.execute("CREATE INDEX prot_pair_to_meso ON protein_pairs (meso_index)")
-        conn.execute("CREATE INDEX prot_pair_to_thermo ON protein_pairs (thermo_index)")
-        conn.execute("CREATE INDEX prot_pair_both ON protein_pairs (meso_index, thermo_index)")
-        conn.execute("CREATE INDEX prot_pair_to_meso_prot ON protein_pairs (meso_protein_int_index)")
-        conn.execute("CREATE INDEX prot_pair_to_thermo_prot ON protein_pairs (thermo_protein_int_index)")
-        conn.execute("CREATE INDEX prot_pair_to_taxa_pair ON protein_pairs (taxa_pair_index)")
-        conn.execute("CHECKPOINT")
+        conn.execute("CREATE INDEX protein_to_taxa ON proteins (taxid)")
+        logger.debug("Created protein to taxa index")
+        conn.execute("CREATE INDEX taxa_pairs_to_taxa_meso ON taxa_pairs (meso_taxid)")
+        logger.debug("Created taxa pairs to taxa meso index")
+        conn.execute("CREATE INDEX taxa_pairs_to_taxa_thermo ON taxa_pairs (thermo_taxid)")
+        logger.debug("Created taxa pairs to taxa thermo index")
+        conn.execute("CREATE INDEX protein_pairs_to_proteins_meso ON pairs (meso_pid)")
+        logger.debug("Created protein pairs to proteins meso index")
+        conn.execute("CREATE INDEX protein_pairs_to_proteins_thermo ON pairs (thermo_pid)")
+        logger.debug("Created protein pairs to proteins thermo index")
+        conn.execute("CREATE INDEX protein_pairs_to_taxa_meso ON pairs (meso_taxid)")
+        logger.debug("Created protein pairs to taxa pairs meso index")
+        conn.execute("CREATE INDEX protein_pairs_to_taxa_thermo ON pairs (thermo_taxid)")
+        logger.debug("Created protein pairs to taxa pairs thermo index")
+        conn.commit()
 
     def execute(self, sql_statement: str):
         """Execute a sql statement on the database.
@@ -290,7 +228,6 @@ class L2TDatabase:
         """
         return self.conn.execute(sql_statement).df()
 
-
     @property
     def table_schema(self):
         """View of tables in the schema"""
@@ -304,11 +241,11 @@ class L2TDatabase:
     def print_metadata(self):
         output = f"Metadata for Learn2Therm database at: {self.path}"
         # get number of datapoints
-        n_taxa = self.execute("SELECT COUNT(taxa_index) FROM taxa").iloc[0,0]
-        n_taxa_with_OGT = self.execute("SELECT COUNT(taxa_index) FROM taxa WHERE ogt IS NOT NULL").iloc[0,0]
-        n_proteins = self.execute("SELECT COUNT(proteins.protein_index) FROM proteins INNER JOIN taxa ON (proteins.taxa_index=taxa.taxa_index) WHERE taxa.ogt IS NOT NULL").iloc[0,0]
-        n_taxa_pairs = self.execute("SELECT COUNT(taxa_pair_index) FROM taxa_pairs WHERE is_pair").iloc[0,0]
-        n_protein_pairs = self.execute("SELECT COUNT(prot_pair_index) FROM protein_pairs").iloc[0,0]
+        n_taxa = self.execute("SELECT COUNT(taxid) FROM taxa").iloc[0,0]
+        n_taxa_with_OGT = self.execute("SELECT COUNT(taxid) FROM taxa WHERE temperature IS NOT NULL").iloc[0,0]
+        n_proteins = self.execute("SELECT COUNT(proteins.pid) FROM proteins INNER JOIN taxa ON (proteins.taxid=taxa.taxid) WHERE taxa.temperature IS NOT NULL").iloc[0,0]
+        n_taxa_pairs = self.execute("SELECT COUNT(*) FROM taxa_pairs WHERE is_pair").iloc[0,0]
+        n_protein_pairs = self.execute("SELECT COUNT(*) FROM protein_pairs").iloc[0,0]
 
         # add to output string
         output = output+f"\nNumber of taxa: {n_taxa}"
