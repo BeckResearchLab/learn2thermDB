@@ -31,11 +31,12 @@ import pandas as pd
 import pyhmmer
 
 # local dependencies
+import learn2therm.database
 import learn2therm.utils
 
 ## Paths
-HMM_PATH = './data/Pfam-A.hmm'  # ./Pfam-A.hmm
-PROTEIN_SEQ_DIR = './data/taxa/proteins/'
+HMM_PATH = './data/HMM/Pfam-A.hmm'  # ./Pfam-A.hmm
+PRESS_PATH = './data/HMM'
 OUTPUT_DIR = './data/taxa_pairs/protein_pair_targets'
 WORKER_WAKE_UP_TIME = 25 # this is to ensure that if a worker that is about to be shut down due to previous task completetion doesn't actually start running
 
@@ -70,13 +71,38 @@ def load_protein_data():
     # Establishing a connection with Duck DB
     conn = ddb.connect(tmpdir+'/proteins.db', read_only=False)
     # Making a SQL table of proteins and protein_pairs
-    conn.execute("CREATE TABLE protein_pairs AS SELECT meso_pid As meso_pid, thermo_pid as thermo_pid FROM read_parquet('./data/protein_pairs/*.parquet')")
-    conn.execute("CREATE TABLE proteins AS SELECT taxid AS taxid, pid AS pid, protein_seq AS sequence FROM read_parquet('./data/proteins/uniprot_chunk_0.parquet')")
+    learn2therm.database.L2TDatabase._create_protein_pairs_table(conn, './data/')
+    conn.execute("CREATE TABLE proteins AS SELECT pid AS pid, protein_seq AS protein_seq FROM read_parquet('./data/proteins/uniprot_chunk_0.parquet')") #purely for testing
+    # learn2therm.database.L2TDatabase._create_proteins_table(conn, './data/')
     # Committing DB
     conn.commit()
     conn.close()
 
     return tmpdir, tmpdir+'/proteins.db'
+
+def hmmpress_hmms(hmms_path, pfam_data_folder):
+    """
+    Presses the HMMs in the given HMM database and stores the resulting files in a specified directory.
+
+    Parameters
+    ----------
+    hmmdb_path : str
+        Path to the HMM database.
+    pfam_data_folder : str, optional
+        Path to the directory where the HMMs should be stored.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    This function uses HMMER's hmmpress program to compress the HMMs in the given HMM database and
+    stores the resulting files in the specified directory for faster access during future HMMER runs.
+    If the specified directory does not exist, it will be created.
+    """
+    hmms = pyhmmer.plan7.HMMFile(hmms_path)
+    pyhmmer.hmmer.hmmpress(hmms, pfam_data_folder)
 
 def prefetch_targets(hmms_path: str):
     """
@@ -84,7 +110,7 @@ def prefetch_targets(hmms_path: str):
     Parameters
     ----------
     hmms_path : str
-        Path to the HMM database.
+        Path to the pressed HMM database.
     Returns
     -------
     targets : pyhmmer.plan7.OptimizedProfileBlock
@@ -129,7 +155,7 @@ def save_to_digital_sequences(dataframe: pd.DataFrame):
     return seqblock
 
 def run_pyhmmer(
-        seqs: str,
+        seqs: pyhmmer.easel.DigitalSequenceBlock,
         hmms_path: str,
         prefetch: bool = False,
         output_file: str = None,
@@ -172,7 +198,7 @@ def run_pyhmmer(
     if prefetch:
         targets = prefetch_targets(hmms_path)
     else:
-        targets = pyhmmer.plan7.HMMFile("../data/HMM")
+        targets = pyhmmer.plan7.HMMFile(PRESS_PATH)
 
     # HMMscan execution with or without saving output to file
     all_hits = list(pyhmmer.hmmer.hmmscan(seqs, targets, cpus=cpu, E=eval_con))
@@ -221,7 +247,7 @@ def parse_pyhmmer(all_hits):
     return df
 
 
-def worker_function(chunk_index, dbpath, pid_inputs, wakeup=None):
+def worker_function(chunk_index, dbpath, chunked_pid_inputs, wakeup=None):
     """
     A wrapping function that runs and parses pyhmmer in chunks
     Parameters
@@ -238,22 +264,30 @@ def worker_function(chunk_index, dbpath, pid_inputs, wakeup=None):
     # define paths for input and output files
     output_file_path = f'./tmp/results/{chunk_index}_output'
 
-    # query the database to get sequences only from pid_inputs
+    # query the database to get sequences only from chunked_pid_inputs
     conn = ddb.connect(dbpath, read_only=True)
     
-    # Query the proteins table and join with the chunked pids DataFrame
-    query_db = pd.read_sql_query("SELECT pid, protein_seq FROM proteins", conn)
-    result_df = pid_inputs.merge(query_db, on='pid', how='left')
+    # get the unique pids from the chunked_pid_inputs
+    pids = set(chunked_pid_inputs["meso_pid"]).union(chunked_pid_inputs["thermo_pid"])
 
+    # Only extract protein_seqs from the list of PID inputs
+    placeholders = ', '.join(['?'] * len(pids))
+    query = f"SELECT pid, protein_seq FROM proteins WHERE pid IN ({placeholders})"
+    query_db = conn.execute(query, list(pids)).fetchall()
 
+    # close db connection
+    conn.close()
+
+    # convert the query db to a dataframe
+    result_df = pd.DataFrame(query_db, columns=['pid', 'protein_seq'])
 
     # convert string sequences to pyhmmer digital blocks
-    sequences = save_to_digital_sequences(query_db)
+    sequences = save_to_digital_sequences(result_df)
 
     # run HMMER via pyhmmer
     hits = run_pyhmmer(
         seqs=sequences,
-        hmms_path=HMM_PATH,
+        hmms_path=PRESS_PATH,
         prefetch=True,
         output_file=output_file_path,
         cpu=1,
@@ -271,15 +305,18 @@ if __name__== "__main__":
     
     logger.info("TEST LOG")
 
-    # create pfam HMM directory
+    # create pfam HMM directory (this was before HMM download script)
     if not os.path.exists('./data/HMM'):
         os.mkdir('./data/HMM')
 
-    # # Set up parallel processing and parsing
-    # total_size = int(sys.argv[1])  # Number of total sequences read
-    # # Number of sequences to process in each chunk
-    # chunk_size = int(sys.argv[2])
-    # njobs = int(sys.argv[3])  # Number of parallel processes to use
+    # press the HMM db
+    hmmpress_hmms(HMM_PATH, PRESS_PATH)
+
+    logger.info(f'Pressed HMM DB: {PRESS_PATH}')
+
+    # Set up parallel processing and parsing
+    chunk_size = int(sys.argv[1]) # Number of sequences to process in each chunk
+    njobs = int(sys.argv[2])  # Number of parallel processes to use
 
     logger.info('Parallel processing parameters obtained')
 
@@ -293,23 +330,14 @@ if __name__== "__main__":
     logger.info(f"Directory of output: {OUTPUT_DIR}, path to database {db_path}")
 
     conn = ddb.connect(db_path, read_only=True)
-    pairs = conn.execute("SELECT query_id, subject_id FROM pairs ORDER BY RANDOM()").fetchall()
-    logger.info(f"Total number of taxa pairs: {len(pairs)} in pipeline")
+    protein_pair_pids = conn.execute("SELECT meso_pid, thermo_pid FROM pairs ORDER BY RANDOM()").fetchall()
+    protein_pair_pids_df = pd.DataFrame(protein_pair_pids, columns=['meso_pid','thermo_pid'])
+    logger.info("Create PID dataframe from learn2therm database")
+    logger.debug(f"Total number of protein pairs: {len(protein_pair_pids)} in pipeline")
 
-    # # processing query proteins
-    # query_test = load_protein_data()
-    # logger.info('Sample loaded')
-    
-    # query_db = query_test[["pid", "protein_seq"]]
-    # protein_list = query_test.set_index("pid").iloc[:total_size]
-    # protein_list.index.name = None
-    # logger.info('Sample preprocessed')
-
-
-    # chunking the data to chunk_size sequence bits (change if sample or all
-    # proteins)
-    test_chunks = [protein_list[i:i + chunk_size]
-                   for i in range(0, len(protein_list), chunk_size)]
+    # chunking the PID so the worker function queries
+    test_chunks = [protein_pair_pids_df[i:i + chunk_size]
+                   for i in range(0, len(protein_pair_pids_df), chunk_size)]
     
     # parallel computing on how many CPUs (n_jobs=)
     logger.info('Running pyhmmer in parallel on all chunks')
@@ -318,8 +346,9 @@ if __name__== "__main__":
         n_jobs=njobs)(
         delayed(worker_function)(
             chunk_index,
-            sequences,
-            "test") for chunk_index,
-        sequences in enumerate(test_chunks))
+            db_path,
+            test_chunks,
+            None) for chunk_index,
+        test_chunks in enumerate(test_chunks))
     
     logger.info('Parallelization complete')
