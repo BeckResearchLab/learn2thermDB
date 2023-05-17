@@ -47,19 +47,20 @@ if __name__ == "__main__":
     content = response.content.decode('utf-8')
 
     tm_df = pd.read_csv(io.StringIO(content))[['uniprot_id', 'tm', 'dTm']]
-    logger.info(f"{len(tm_df)} raw data points from meltome atlas")
+    logger.info(f"{len(tm_df)} raw data points from FireProtDB")
 
     # clean up the data  abit
     tm_df.dropna(inplace=True)
     logger.info(f"{len(tm_df)} data points after dropping NaNs")
     tm_df = tm_df.drop_duplicates(subset=['uniprot_id'])
-    logger.info(f"{len(tm_df)} data points after dropping uniprot ids")
+    logger.info(f"{len(tm_df)} data points after dropping duplicate uniprot ids")
     tm_df['wTm'] = tm_df['tm'] - tm_df['dTm']
     logger.info(f"Tm data: {tm_df['wTm'].describe()}")
 
     # spin up database
     tmpfile = tempfile.NamedTemporaryFile(dir='./tmp', mode='w+b', delete = True)
     tmpfile.close()
+    logger.info("Creating database referencing 3rd party data at %s", tmpfile.name)
     con = ddb.connect(database=tmpfile.name, read_only=False)
     learn2therm.database.L2TDatabase._create_taxa_table(con, './data/')
     learn2therm.database.L2TDatabase._create_proteins_table(con, './data/')
@@ -74,6 +75,10 @@ if __name__ == "__main__":
     logger.info("Created indexes")
 
     # run a join on data to get ogt vs meting temp
+    tm_data_not_present = con.execute("""
+        SELECT tm.uniprot_id FROM tm LEFT JOIN proteins ON tm.uniprot_id = proteins.pid WHERE proteins.pid IS NULL
+    """).df()
+    logger.info(f"3rd part uniprot proteins not in our data: {tm_data_not_present}")
     data = con.execute("""
         SELECT tm.wTm, taxa.temperature FROM taxa
         INNER JOIN proteins ON proteins.taxid = taxa.taxid
