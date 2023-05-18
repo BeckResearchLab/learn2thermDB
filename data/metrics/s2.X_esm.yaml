@@ -1,0 +1,9 @@
+40.0:
+  our_pairs_p_value: 0.9999995158087511
+  random_pairs_p_value: 3.0169201529404495e-07
+57.5:
+  our_pairs_p_value: 0.9988503777341904
+  random_pairs_p_value: 6.825454247771661e-14
+75.0:
+  our_pairs_p_value: 0.9999945250950715
+  random_pairs_p_value: 1.9427477978008232e-20

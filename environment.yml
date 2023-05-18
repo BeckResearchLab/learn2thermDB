@@ -15,6 +15,8 @@ dependencies:
   - matplotlib
   - pandas
   - python=3.9
+  - pytorch
+  - cudatoolkit
   - pyyaml
   - seaborn
   - matplotlib
@@ -22,9 +24,12 @@ dependencies:
   - diamond
   - pyarrow
   - fastparquet
+  - tqdm
   - pip
   - pip:
     - duckdb==0.7.1
     - codecarbon==2.1.4
     - dvclive==0.11.0
+    - fair-esm
+    - openpyxl
 
