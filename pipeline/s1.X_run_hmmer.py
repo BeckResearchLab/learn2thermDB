@@ -268,7 +268,7 @@ def worker_function(chunk_index, dbpath, chunked_pid_inputs, wakeup=None):
     conn = ddb.connect(dbpath, read_only=True)
     
     # get the unique pids from the chunked_pid_inputs
-    pids = set(chunked_pid_inputs["meso_pid"]).union(chunked_pid_inputs["thermo_pid"])
+    pids = set(chunked_pid_inputs["pid"])
 
     # Only extract protein_seqs from the list of PID inputs
     placeholders = ', '.join(['?'] * len(pids))
@@ -330,14 +330,15 @@ if __name__== "__main__":
     logger.info(f"Directory of output: {OUTPUT_DIR}, path to database {db_path}")
 
     conn = ddb.connect(db_path, read_only=True)
-    protein_pair_pids = conn.execute("SELECT meso_pid, thermo_pid FROM pairs ORDER BY RANDOM()").fetchall()
-    protein_pair_pids_df = pd.DataFrame(protein_pair_pids, columns=['meso_pid','thermo_pid'])
     logger.info("Create PID dataframe from learn2therm database")
-    logger.debug(f"Total number of protein pairs: {len(protein_pair_pids)} in pipeline")
+    proteins_in_pair_pids = conn.execute("SELECT pid FROM proteins WHERE proteins.pid IN (SELECT DISTINCT(pairs.meso_pid) FROM pairs) OR proteins.pid IN (SELECT DISTINCT(pairs.thermo_pid) FROM pairs)").df()
+    logger.debug(f"Total number of protein pairs: {len(proteins_in_pair_pids)} in pipeline")
 
     # chunking the PID so the worker function queries
-    test_chunks = [protein_pair_pids_df[i:i + chunk_size]
-                   for i in range(0, len(protein_pair_pids_df), chunk_size)]
+    protein_pair_pid_chunks = [proteins_in_pair_pids[i:i + chunk_size]
+                   for i in range(0, len(proteins_in_pair_pids), chunk_size)]
+    
+    logger.debug(f"number of protein chunks: {len(protein_pair_pid_chunks)}")
     
     # parallel computing on how many CPUs (n_jobs=)
     logger.info('Running pyhmmer in parallel on all chunks')
@@ -347,8 +348,8 @@ if __name__== "__main__":
         delayed(worker_function)(
             chunk_index,
             db_path,
-            test_chunks,
+            protein_pair_pid_chunks,
             None) for chunk_index,
-        test_chunks in enumerate(test_chunks))
+        protein_pair_pid_chunks in enumerate(protein_pair_pid_chunks))
     
     logger.info('Parallelization complete')

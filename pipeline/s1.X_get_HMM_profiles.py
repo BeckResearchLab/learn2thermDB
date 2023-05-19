@@ -1,4 +1,5 @@
 """Ingest raw PFAM HMMs
+TODO: how to unzip
 
 Sources
 -------
@@ -11,10 +12,7 @@ Nucleic Acids Research, vol. 51, no. D1, pp. D418–D427, Jan. 2023, doi: 10.109
 
 Notes
 -----
-TODO:
-Edit __name__: "__main__" with Evan
-
-https://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/
+TODO
 """
 # system dependecies
 import datetime
@@ -31,10 +29,7 @@ from yaml import safe_load as yaml_load
 import learn2therm.database
 import learn2therm.utils
 
-try:
-    EMAIL = os.environ['ENV_EMAIL']
-except KeyError:
-    raise KeyError('Must set environmental variables `ENV_EMAIL`')
+## get environmental variables
 if 'LOGLEVEL' in os.environ:
     LOGLEVEL = os.environ['LOGLEVEL']
     LOGLEVEL = getattr(logging, LOGLEVEL)
@@ -42,6 +37,7 @@ else:
     LOGLEVEL = logging.INFO
 LOGNAME = __file__
 LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
+
 # get the logger in subprocesses
 logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
 
@@ -49,21 +45,15 @@ logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL,
 FTP_ADDRESS = 'ftp.ebi.ac.uk'
 FTP_DIR = '/pub/databases/Pfam/current_release/'
 
-def ftp_get_file_progress_bar(filename, endpoint_dir):
-    ftp = FTP(FTP_ADDRESS)
-    ftp.login(user="anonymous", passwd=EMAIL)
-    ftp.cwd(FTP_DIR) 
+def download_ftp_file(server, remote_file, local_file):
+    ftp = FTP(server)
+    ftp.login(user="anonymous", passwd='')
+    ftp.cwd('/')  # Set the current directory (if needed)
 
-    file_size = ftp.size(filename)
-    with open(endpoint_dir+f'{filename}', 'wb') as file:
-        pbar = tqdm(range(file_size))
-        def write_file(data):
-            file.write(data)
-            pbar.n += len(data)
-            pbar.refresh()
+    with open(local_file, 'wb') as file:
+        ftp.retrbinary('RETR ' + remote_file, file.write)
 
-        ftp.retrbinary(f"RETR {filename}", write_file, blocksize=262144)
-    ftp.close()
+    ftp.quit()
 
 if __name__ == "__main__":
     # DVC tracked parameters
@@ -74,20 +64,12 @@ if __name__ == "__main__":
     if not os.path.exists('./data/HMM'):
         os.mkdir('./data/HMM')
 
-    # download the raw data into temporary files
-    dir = './data/HMM'
-    addresses = ['Pfam-A.hmm.gz']
-    if params['dev_only_one_uniprot_file']:
-        addresses = addresses[:1]
-        logger.info(f"Downloading only {addresses}")
-
-    # download each file from uniprot
-    for i, address in enumerate(addresses):
-        if address in os.listdir(dir):
-            logger.info(f"Address exists, skipping: {address}")
-            continue
-        ftp_get_file_progress_bar(address, endpoint_dir='./data/HMM/')
-        logger.info(f"Completed download of {address}")
+    # download the raw data into temporary files 
+    local_dir = './data/HMM/Pfam-A.hmm.gz'
+    remote_file = '/pub/databases/Pfam/current_release/Pfam-A.hmm.gz'
+    
+    download_ftp_file(FTP_ADDRESS, remote_file, local_dir)
+    logger.info("download from FTP")
 
     # save metrics
     date_pulled = str(datetime.datetime.now().strftime("%m/%d/%Y"))
