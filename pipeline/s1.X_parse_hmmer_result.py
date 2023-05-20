@@ -31,6 +31,9 @@ import pyhmmer
 import learn2therm.database
 import learn2therm.utils
 
+## Paths
+OUTPUT_DIR = './data/protein_pairs/protein_pair_HMM_label'
+
 ## get environmental variables
 if 'LOGLEVEL' in os.environ:
     LOGLEVEL = os.environ['LOGLEVEL']
@@ -44,7 +47,16 @@ def create_accession_table():
     """
     TODO
     """
-    pass
+    # Creating temporary dir
+    tmpdir = tempfile.mkdtemp(dir='./tmp', )
+    # Establishing a connection with Duck DB
+    conn = ddb.connect(tmpdir+'/proteins_from_pairs.db', read_only=False)
+    learn2therm.database.L2TDatabase._create_protein_pairs_table(conn, './data/')
+    conn.execute("CREATE TABLE proteins_from_pairs AS SELECT query_id AS pid, accession_id AS accession_id FROM read_parquet('./data/protein_pairs/protein_pair_targets/uniprot_chunk_0.parquet')")
+    # Committing DB
+    conn.commit()
+    conn.close()
+    return tmpdir, tmpdir+'/proteins_from_pairs.db'
 
 
 def find_jaccard_similarity(set1: set, set2: set) -> float:
@@ -62,19 +74,10 @@ def calculate_similarity():
     """
     TODO
     """
-    # Read the CSV files and create dictionaries with query IDs and accession IDs
-    dict1 = parse_function_csv(file1)
-    dict2 = parse_function_csv(file2)
-    
     # Create a dictionary to store the Jaccard similarity scores
     scores = defaultdict(float)
     
-    # Calculate the Jaccard similarity score between each protein in file1 and file2
-    for query1, accs1 in dict1.items():
-        for query2, accs2 in dict2.items():
-            if query1 == query2:
-                score = find_jaccard_similarity(set(accs1), set(accs2))
-                scores[(query1, query2)] = score
+    # Calculate the Jaccard similarity score between each paired protein 
     
     # Create a dictionary to store the functional tuple values
     functional = {}
@@ -89,31 +92,29 @@ def calculate_similarity():
     return functional
 
 
-def write_function_output():
+def worker_function():
     """
-    Writes a dictionary of protein query IDs and functional tuple values to a CSV file.
+    A wrapping function that is able to link the chunked pairs table with the protein_from_pairs table
+    To create a dictionary that has meso_pid, thermo_pid, Functional?, and Jaccard score, and 
+    write that dictionary to file as CSV.
 
-    Parameters
-    ----------
-    output_dict : Dict[str, Tuple[str, float]]
-        A dictionary of protein query IDs and functional tuple values
-    output_file : str
-        File path to write the output CSV file
+    The Jaccard score is calculated from the meso_pid and thermo_pid which are paired by looking at their accessions.
     """
-    with open(output_file, 'w', newline='') as csvfile:
-        fieldnames = ['File1', 'File2', 'Functional?', 'Jaccard Score']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        
-        for query, (functional, score) in output_dict.items():
-            writer.writerow({
-                'File1': query[0],
-                'File2': query[1],
-                'Functional?': functional,
-                'Jaccard Score': score
-            })
+    pass
+
 
 
 if __name__ == '__main__':
     # start logger/connect to log file
     logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
+
+    logger.info("TEST LOG")
+
+    # setup the database and get some pairs to run
+    tmpdir_database, db_path = create_accession_table()
+
+    # prepare output file
+    if not os.path.exists(OUTPUT_DIR):
+        os.mkdir(OUTPUT_DIR)
+
+    logger.info(f"Directory of output: {OUTPUT_DIR}, path to database {db_path}")

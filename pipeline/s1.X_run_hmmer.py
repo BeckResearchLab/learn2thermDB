@@ -1,10 +1,12 @@
 """
 {HA note: this needs updating}
 TODO:
-1. Create a PFAM downloading script maybe press it in that script (data/HMM)
-2. Figure out the best way to deal with paths in light of above
+1. Create a PFAM downloading script maybe press it in that script (data/HMM) [x]
+2. Figure out the best way to deal with paths in light of above [~]
 3. Update run_pyhmmer function after step 1 & 2
-    a. Figure out output file in light of output dir 
+    a. Figure out output file in light of output dir [~]
+4. Switch everything to parque
+5. Re-run after protein PIDs are all available in pairs?
 
 Old things:
 should contain:
@@ -37,7 +39,7 @@ import learn2therm.utils
 ## Paths
 HMM_PATH = './data/HMM/Pfam-A.hmm'  # ./Pfam-A.hmm
 PRESS_PATH = './data/HMM'
-OUTPUT_DIR = './data/taxa_pairs/protein_pair_targets'
+OUTPUT_DIR = './data/protein_pairs/protein_pair_targets'
 WORKER_WAKE_UP_TIME = 25 # this is to ensure that if a worker that is about to be shut down due to previous task completetion doesn't actually start running
 
 ## get environmental variables
@@ -52,10 +54,12 @@ LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 def load_protein_data():
     """
     Load protein data into a temporary database.
+
     Returns
     -------
     tuple
         A tuple containing the path to the temporary directory and the path to the temporary database file.
+
     Notes
     -----
     This function performs the following steps:
@@ -80,6 +84,7 @@ def load_protein_data():
 
     return tmpdir, tmpdir+'/proteins.db'
 
+
 def hmmpress_hmms(hmms_path, pfam_data_folder):
     """
     Presses the HMMs in the given HMM database and stores the resulting files in a specified directory.
@@ -88,6 +93,7 @@ def hmmpress_hmms(hmms_path, pfam_data_folder):
     ----------
     hmmdb_path : str
         Path to the HMM database.
+
     pfam_data_folder : str, optional
         Path to the directory where the HMMs should be stored.
 
@@ -104,13 +110,16 @@ def hmmpress_hmms(hmms_path, pfam_data_folder):
     hmms = pyhmmer.plan7.HMMFile(hmms_path)
     pyhmmer.hmmer.hmmpress(hmms, pfam_data_folder)
 
+
 def prefetch_targets(hmms_path: str):
     """
     Prefetch HMM profiles from a given HMM database.
+
     Parameters
     ----------
     hmms_path : str
         Path to the pressed HMM database.
+
     Returns
     -------
     targets : pyhmmer.plan7.OptimizedProfileBlock
@@ -123,13 +132,16 @@ def prefetch_targets(hmms_path: str):
         amino_acids, optimized_profiles)
     return targets
 
+
 def save_to_digital_sequences(dataframe: pd.DataFrame):
     """
     Save protein sequences from a DataFrame to a digital sequence block.
+
     Parameters
     ----------
     dataframe : pd.DataFrame
         DataFrame containing PIDs (Protein IDs) and sequences.
+
     Returns
     -------
     DigitalSequenceBlock
@@ -154,6 +166,7 @@ def save_to_digital_sequences(dataframe: pd.DataFrame):
 
     return seqblock
 
+
 def run_pyhmmer(
         seqs: pyhmmer.easel.DigitalSequenceBlock,
         hmms_path: str,
@@ -167,21 +180,28 @@ def run_pyhmmer(
     ----------
     seqs : pyhmmer.easel.DigitalSequenceBlock
         Path to the input sequence file.
+
     hmms_path : str
         Path to the HMM database.
+
     prefetch : bool, optional
         Specifies how the HMM are stored in meomry.
+
     output_file : str, optional
         Path to the output file if the users wants to write the file.
+
     cpu : int, optional
         The number of CPUs to use. Default is 4.
+
     eval_con : float, optional
         E-value threshold for domain reporting. Default is 1e-10.
+
     Returns
     -------
     all_hits : pyhmmer.plan7.TopHits or domtblout file
         If the output_file has a name, it will be written to a domtblout file.
         Otherwise, the user will get a list of pyhmmeer TopHits objects.
+
     Notes
     -----
     This function runs HMMER's hmmscan program on a set of input sequences
@@ -191,8 +211,9 @@ def run_pyhmmer(
     In prefetching mode, the HMMs are kept in memory for faster search.
     """
     # ensure output_file has .domtblout extension
-    if not output_file.endswith('.domtblout'):
+    if output_file is not None and not output_file.endswith('.domtblout'):
         output_file = f"{os.path.splitext(output_file)[0]}.domtblout"
+
 
     # HMM profile modes
     if prefetch:
@@ -210,13 +231,17 @@ def run_pyhmmer(
     return all_hits
 
 
-def parse_pyhmmer(all_hits):
+def parse_pyhmmer(all_hits, chunk_query_ids):
     """
     Parses the TopHit pyhmmer object getting the query and accession IDs and saves to a DataFrame
+
     Parameters
     ----------
     all_hits : list
         A list of TopHit objects from pyhmmer.
+    chunk_query_ids : list
+        A list of query IDs from the chunk.
+
     Returns
     -------
     pandas.DataFrame
@@ -240,6 +265,13 @@ def parse_pyhmmer(all_hits):
             else:
                 parsed_hits[query_id] = [accession_id]
 
+    # find the query IDs that are missing from the parsed hits
+    missing_query_ids = set(chunk_query_ids) - set(parsed_hits.keys())
+
+    # add the missing query IDs with a placeholder value to indicate no accession information
+    for missing_query_id in missing_query_ids:
+        parsed_hits[missing_query_id] = ['No Accession Information']
+
     # create the DataFrame from the dictionary and convert list of accession IDs to string
     df = pd.DataFrame(parsed_hits.items(), columns=["query_id", "accession_id"])
     df["accession_id"] = df["accession_id"].apply(lambda x: ';'.join(x))
@@ -249,12 +281,39 @@ def parse_pyhmmer(all_hits):
 
 def worker_function(chunk_index, dbpath, chunked_pid_inputs, wakeup=None):
     """
-    A wrapping function that runs and parses pyhmmer in chunks
+    A wrapping function that runs and parses pyhmmer in chunks.
+
     Parameters
     ----------
     chunk_index : int
-        number of sequences chunks
-    TODO
+        Number of sequence chunks.
+
+    dbpath : str
+        Path to the database.
+
+    chunked_pid_inputs : pandas.DataFrame
+        Dataframe containing chunked PID inputs.
+
+    wakeup : int or None, optional
+        Delay in seconds before starting the execution, by default None.
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    This function performs the following steps:
+    1. Queries the database to get sequences only from chunked_pid_inputs.
+    2. Converts the query result to a dataframe.
+    3. Converts string sequences to pyhmmer digital blocks.
+    4. Runs HMMER via pyhmmer with the provided sequences.
+    5. Parses the pyhmmer output and saves it to a CSV file.
+
+    The parsed pyhmmer output is saved in the directory specified by OUTPUT_DIR,
+    with each chunk having its own separate output file named '{chunk_index}_output.csv'.
+
+    If the wakeup parameter is specified, the function will wait for the specified
+    number of seconds before starting the execution.
     """
     # we want to wait for execution to see if this worker is actually being used
     # or if it is in the process of being killed
@@ -262,7 +321,7 @@ def worker_function(chunk_index, dbpath, chunked_pid_inputs, wakeup=None):
         time.sleep(wakeup)
     
     # define paths for input and output files
-    output_file_path = f'./tmp/results/{chunk_index}_output'
+    # output_file_path = f'./tmp/results/{chunk_index}_output'
 
     # query the database to get sequences only from chunked_pid_inputs
     conn = ddb.connect(dbpath, read_only=True)
@@ -289,14 +348,16 @@ def worker_function(chunk_index, dbpath, chunked_pid_inputs, wakeup=None):
         seqs=sequences,
         hmms_path=PRESS_PATH,
         prefetch=True,
-        output_file=output_file_path,
         cpu=1,
         eval_con=1e-5)
+    
+    # get the query IDs from the chunked_pid_inputs
+    chunk_query_ids = chunked_pid_inputs["pid"].tolist()
 
     # Parse pyhmmer output and save to CSV file
-    accessions_parsed = parse_pyhmmer(all_hits=hits)
+    accessions_parsed = parse_pyhmmer(all_hits=hits, chunk_query_ids=chunk_query_ids)
     accessions_parsed.to_csv(
-        f'./tmp/results/{chunk_index}_output.csv',
+        f'{OUTPUT_DIR}/{chunk_index}_output.csv',
         index=False)
 
 if __name__== "__main__":
