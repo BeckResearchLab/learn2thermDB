@@ -39,3 +39,7 @@ Installable, importable code is found in `learn2therm` and should be installed g
 -environment.yml                            # Conda dependancies
 -docs/                                      # repository documentation
 ```
+
+## TODO
+
+- t1.1 add to dvc
