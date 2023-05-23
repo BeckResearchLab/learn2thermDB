@@ -175,8 +175,8 @@ stages:
     params:
       params.yaml:
         label_all_pairs.blast_metric_thresholds:
-          scaled_local_symmetric_percent_id:
-            thresh: 0.85
+          scaled_local_query_percent_id:
+            thresh: 0.82
             greater: true
           query_align_cov:
             thresh: 0.9
@@ -187,11 +187,11 @@ stages:
         label_all_pairs.dev_only_one_file: false
     outs:
     - path: ./data/metrics/s1.2_metrics.yaml
-      md5: 18466601d8fcf363f24b57ab214b367d
+      md5: eb40990137b181e1b61b5668e2b09333
       size: 79
     - path: ./data/taxa_pairs/pair_labels
-      md5: e39d13aa8604fb9c713b0895cb197258.dir
-      size: 16176756
+      md5: 9db2b5ea688ced9dd37f82c2a84037f4.dir
+      size: 16210411
       nfiles: 26
   get_protein_blast_scores:
     cmd: python pipeline/s1.4_get_protein_blast_scores.py
@@ -386,8 +386,8 @@ stages:
       size: 90778197
       nfiles: 26
     - path: ./data/taxa_pairs/pair_labels
-      md5: e39d13aa8604fb9c713b0895cb197258.dir
-      size: 16176756
+      md5: 9db2b5ea688ced9dd37f82c2a84037f4.dir
+      size: 16210411
       nfiles: 26
     - path: ./learn2therm/blast.py
       md5: 5ff28b0ed3bce21e5af9af91785f3a1a
@@ -424,9 +424,9 @@ stages:
         get_protein_blast_scores.save_frequency: 25000
     outs:
     - path: ./data/metrics/s1.3_metrics.yaml
-      md5: c6e702e9cbcb8a879b5f5b60a2f935f4
-      size: 154
+      md5: 70993534f764bfc4b5e2708abca25c64
+      size: 158
     - path: ./data/protein_pairs/
-      md5: 44f1a16cda599db2c26907d5aefe1b60.dir
-      size: 6151440172
-      nfiles: 89900
+      md5: c57e80914c1c3340ac4627eaf9b7fee7.dir
+      size: 8626624617
+      nfiles: 139910
