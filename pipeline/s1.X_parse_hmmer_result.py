@@ -3,7 +3,7 @@ TODO
 Overall
 -------
 Inputs:
-CSV chunks
+CSV chunks TODO: parquet
 protien pair list
 
 outputs:
@@ -52,7 +52,7 @@ def create_accession_table():
     # Establishing a connection with Duck DB
     conn = ddb.connect(tmpdir+'/proteins_from_pairs.db', read_only=False)
     learn2therm.database.L2TDatabase._create_protein_pairs_table(conn, './data/')
-    conn.execute("CREATE TABLE proteins_from_pairs AS SELECT query_id AS pid, accession_id AS accession_id FROM read_parquet('./data/protein_pairs/protein_pair_targets/uniprot_chunk_0.parquet')")
+    conn.execute("CREATE TABLE proteins_from_pairs AS SELECT query_id AS pid, accession_id AS accession_id FROM read_csv('./data/protein_pairs/protein_pair_targets/*.csv')")
     # Committing DB
     conn.commit()
     conn.close()
@@ -70,6 +70,7 @@ def find_jaccard_similarity(set1: set, set2: set) -> float:
     else:
         return intersection / union
     
+
 def calculate_similarity():
     """
     TODO
@@ -94,11 +95,7 @@ def calculate_similarity():
 
 def worker_function():
     """
-    A wrapping function that is able to link the chunked pairs table with the protein_from_pairs table
-    To create a dictionary that has meso_pid, thermo_pid, Functional?, and Jaccard score, and 
-    write that dictionary to file as CSV.
-
-    The Jaccard score is calculated from the meso_pid and thermo_pid which are paired by looking at their accessions.
+    A wrapping function. Still trying to understand how to use it.
     """
     pass
 
@@ -113,8 +110,10 @@ if __name__ == '__main__':
     # setup the database and get some pairs to run
     tmpdir_database, db_path = create_accession_table()
 
-    # prepare output file
-    if not os.path.exists(OUTPUT_DIR):
-        os.mkdir(OUTPUT_DIR)
+   # prepare output file
+    try:
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
+    except OSError as e:
+        logger.error(f'Error creating directory: {e}')
 
     logger.info(f"Directory of output: {OUTPUT_DIR}, path to database {db_path}")

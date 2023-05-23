@@ -61,8 +61,11 @@ if __name__ == "__main__":
         params = yaml_load(stream)['get_raw_data_HMM']
     logger.info(f"Loaded parameters: {params}")
 
-    if not os.path.exists('./data/HMM'):
-        os.mkdir('./data/HMM')
+
+    try:
+        os.makedirs('./data/HMM', exist_ok=True)
+    except OSError as e:
+        logger.error(f'Error creating directory: {e}')
 
     # download the raw data into temporary files 
     local_dir = './data/HMM/Pfam-A.hmm.gz'
@@ -78,5 +81,5 @@ if __name__ == "__main__":
                       
     metrics = {}
     metrics['HMM_pulled_date'] = date_pulled
-    with open('./data/metrics/s0.1_metrics.yaml', "w") as stream:
+    with open('./data/metrics/s1.X_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)

@@ -356,8 +356,8 @@ def worker_function(chunk_index, dbpath, chunked_pid_inputs, wakeup=None):
 
     # Parse pyhmmer output and save to CSV file
     accessions_parsed = parse_pyhmmer(all_hits=hits, chunk_query_ids=chunk_query_ids)
-    accessions_parsed.to_csv(
-        f'{OUTPUT_DIR}/{chunk_index}_output.csv',
+    accessions_parsed.to_parquet(
+        f'{OUTPUT_DIR}/{chunk_index}_output.parquet',
         index=False)
 
 if __name__== "__main__":
@@ -367,8 +367,10 @@ if __name__== "__main__":
     logger.info("TEST LOG")
 
     # create pfam HMM directory (this was before HMM download script)
-    if not os.path.exists('./data/HMM'):
-        os.mkdir('./data/HMM')
+    try:
+        os.makedirs('./data/HMM', exist_ok=True)
+    except OSError as e:
+        logger.error(f'Error creating directory: {e}')
 
     # press the HMM db
     hmmpress_hmms(HMM_PATH, PRESS_PATH)
@@ -385,8 +387,10 @@ if __name__== "__main__":
     tmpdir_database, db_path = load_protein_data()
 
     # prepare output file
-    if not os.path.exists(OUTPUT_DIR):
-        os.mkdir(OUTPUT_DIR)
+    try:
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
+    except OSError as e:
+        logger.error(f'Error creating directory: {e}')
 
     logger.info(f"Directory of output: {OUTPUT_DIR}, path to database {db_path}")
 
