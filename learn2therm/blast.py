@@ -585,17 +585,8 @@ class TaxaAlignmentWorker:
                 alignment_params=self.alignment_params,
                 metrics=self.metrics)
             # run handler, get output
-            for i in range(0, self.retry_counter):
-                try:
-                    results, run_metadata = handler.run()
-                    break
-                except:
-                    logger.error(f"Alignment failed for pair {self.pair_indexes}, retrying.")
-                    if i == self.retry_counter - 1:
-                        raise
-                    else:
-                        continue
-            # save output
+            results, run_metadata = handler.run()
+
             # if we got none, skip this part
             if results.empty:
                 logger.info(f"No results for pair {self.pair_indexes}")
@@ -782,8 +773,8 @@ class TaxaAlignmentClusterState:
     def _close(self):
         self.client.cancel(self._futures, force=True)
         time.sleep(15)
-        self.client.restart(timeout=15)
-        logger.info(f"Canceled futures. Worker futures: {self.client.has_what()}")
+        self.client.close(timeout=15)
+        logger.info(f"Canceled futures.")
 
 
     def __enter__(self):

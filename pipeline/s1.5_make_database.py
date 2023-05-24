@@ -19,4 +19,4 @@ LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 if __name__ == "__main__":
     logger = learn2therm.utils.start_logger_if_necessary("", LOGFILE, LOGLEVEL, filemode='w')
 
-    db = learn2therm.database.L2TDatabase.from_files(files_path='./data/', db_path='./data/database')
+    db = learn2therm.database.L2TDatabase.from_files(files_path='./data/', db_path='./tmp/database')

@@ -223,8 +223,8 @@ stages:
       size: 90778197
       nfiles: 26
     - path: ./data/taxa_pairs/pair_labels
-      md5: e39d13aa8604fb9c713b0895cb197258.dir
-      size: 16176756
+      md5: 9db2b5ea688ced9dd37f82c2a84037f4.dir
+      size: 16210411
       nfiles: 26
     params:
       params.yaml:
