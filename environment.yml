@@ -27,9 +27,10 @@ dependencies:
   - tqdm
   - pip
   - pip:
-    - duckdb==0.7.1
+    - duckdb==0.8.0
     - codecarbon==2.1.4
     - dvclive==0.11.0
     - fair-esm
     - openpyxl
+    - pyhmmer==0.8.1
 
