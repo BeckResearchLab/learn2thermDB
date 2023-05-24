@@ -21,6 +21,7 @@ from typing import Union
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+from collections import defaultdict
 from codecarbon import OfflineEmissionsTracker
 import duckdb as ddb
 from joblib import Parallel, delayed

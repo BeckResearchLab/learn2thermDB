@@ -2,11 +2,11 @@
 {HA note: this needs updating}
 TODO:
 1. Create a PFAM downloading script maybe press it in that script (data/HMM) [x]
-2. Figure out the best way to deal with paths in light of above [~]
+2. Figure out the best way to deal with paths in light of above [x]
 3. Update run_pyhmmer function after step 1 & 2
-    a. Figure out output file in light of output dir [~]
-4. Switch everything to parque
-5. Re-run after protein PIDs are all available in pairs?
+    a. Figure out output file in light of output dir [x]
+4. Switch everything to parque [x]
+5. Re-run after protein PIDs are all available in pairs? [~]
 
 Old things:
 should contain:

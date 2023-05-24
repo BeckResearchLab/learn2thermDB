@@ -47,8 +47,14 @@ def create_accession_table():
     tmpdir = tempfile.mkdtemp(dir='./tmp', )
     # Establishing a connection with Duck DB
     conn = ddb.connect(tmpdir+'/proteins_from_pairs.db', read_only=False)
+    # Create pairs table
     learn2therm.database.L2TDatabase._create_protein_pairs_table(conn, './data/')
-    conn.execute("CREATE TABLE proteins_from_pairs AS SELECT query_id AS pid, accession_id AS accession_id FROM read_csv_auto('./data/protein_pairs/protein_pair_targets/*.csv')")
+    # Create the proteins_from_pairs table
+    conn.execute("""
+        CREATE TABLE proteins_from_pairs AS
+        SELECT query_id AS pid, accession_id AS accession
+        FROM read_csv_auto('./data/protein_pairs/protein_pair_targets/*.csv', HEADER=TRUE)
+    """)
     # Committing DB
     conn.commit()
     conn.close()
@@ -66,14 +72,24 @@ def find_jaccard_similarity(set1: set, set2: set) -> float:
 
 
 
-def calculate_similarity(pid_pairs, accessions1, accessions2):
+def calculate_similarity(pid_pairs, accessions1, accessions2, threshold):
     """
     Calculates the Jaccard similarity score for a pair of proteins.
     """
-    set1 = set(accessions1.split(','))
-    set2 = set(accessions2.split(','))
+    print("pid_pairs:", pid_pairs)
+    print("accessions1:", accessions1)
+    print("accessions2:", accessions2)
+    set1 = set(accessions1.split(';')) if accessions1 and accessions1 != 'No Accession Information' else set()
+    set2 = set(accessions2.split(';')) if accessions2 and accessions2 != 'No Accession Information' else set()
     score = find_jaccard_similarity(set1, set2)
-    return pid_pairs, score
+    
+    # if isinstance(pid_pairs, str):
+    #     # If pid_pairs is a string, convert it to a tuple
+    #     pid_pairs = tuple(pid_pairs.split(','))
+    
+    return (pid_pairs[0], pid_pairs[1], score)
+
+
 
 
 def worker_function(db_path, threshold):
@@ -87,37 +103,46 @@ def worker_function(db_path, threshold):
         SELECT 
             pairs.meso_pid, 
             pairs.thermo_pid, 
-            group_concat(proteins_from_pairs.accession_id) as accessions
+            group_concat(proteins_from_pairs_meso.accession) as meso_accessions,
+            group_concat(proteins_from_pairs_thermo.accession) as thermo_accessions
         FROM pairs
-        LEFT JOIN proteins_from_pairs ON pairs.meso_pid = proteins_from_pairs.pid
+        LEFT JOIN proteins_from_pairs AS proteins_from_pairs_meso ON pairs.meso_pid = proteins_from_pairs_meso.pid
+        LEFT JOIN proteins_from_pairs AS proteins_from_pairs_thermo ON pairs.thermo_pid = proteins_from_pairs_thermo.pid
         GROUP BY pairs.meso_pid, pairs.thermo_pid
     """)
 
     chunk_size = 10000  # You can adjust the chunk size
-    njobs = 4 # you can adjust jobs
+    njobs = 4  # You can adjust the number of jobs
     scores = {}
 
     while True:
         rows = cursor.fetchmany(chunk_size)
         if not rows:
             break
-        results = Parallel(n_jobs=njobs)(delayed(calculate_similarity)(*row) for row in rows)
-        for (meso_pid, thermo_pid, _), score in results:
+        results = Parallel(n_jobs=njobs)(delayed(calculate_similarity)(meso_pid, thermo_pid, meso_accessions, thermo_accessions) for meso_pid, thermo_pid, meso_accessions, thermo_accessions in rows)
+        for result in results:
+            (pid_pairs, thermo_pid, score) = result
             functional = 'Yes' if score >= threshold else 'No'
-            scores[(meso_pid, thermo_pid)] = (functional, score)
+            scores[(pid_pairs[0], pid_pairs[1])] = (functional, score)
 
     return scores
+
+
 
 
 def write_to_csv(scores, filename):
     """
     Writes the scores to a CSV file.
     """
-    with open(filename, 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(['meso_pid', 'thermo_pid', 'functional?', 'Jaccard Score'])
-        for (meso_pid, thermo_pid), (functional, score) in scores.items():
-            writer.writerow([meso_pid, thermo_pid, functional, score])
+    try:
+        with open(filename, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['meso_pid', 'thermo_pid', 'functional?', 'Jaccard Score'])
+            for (meso_pid, thermo_pid), (functional, score) in scores.items():
+                writer.writerow([meso_pid, thermo_pid, functional, score])
+    except IOError as e:
+        print(f"Error writing to CSV file: {e}")
+
 
 if __name__ == '__main__':
     # start logger/connect to log file
