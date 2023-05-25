@@ -131,8 +131,7 @@ stages:
     - ./data/metrics/s1.3_metrics.yaml:
         cache: false
         persist: true
-  make_database:
-  
+
   get_hait_pairs:
     cmd: python ./pipeline/s2.1_get_hait_pairs.py
     outs: 
