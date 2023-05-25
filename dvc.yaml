@@ -131,42 +131,9 @@ stages:
     - ./data/metrics/s1.3_metrics.yaml:
         cache: false
         persist: true
-  # get_protein_blast_scores:
-  #   cmd: python pipeline/s1.4_get_protein_blast_scores.py
-  #   deps:
-  #   - ./pipeline/s1.4_get_protein_blast_scores.py
-  #   - ./learn2therm/blast.py
-  #   - ./learn2therm/utils.py
-  #   - ./data/taxa_pairs/pair_labels.csv
-  #   - ./data/taxa/proteins
-  #   - ./data/taxa_pairs/pairwise_16s_blast.csv
-  #   outs:
-  #   - ./data/taxa_pairs/protein_alignment/
-  #   params:
-  #   - get_protein_blast_scores.dask_cluster_class
-  #   - get_protein_blast_scores.max_protein_length
-  #   - get_protein_blast_scores.method
-  #   - get_protein_blast_scores.method_blast_params
-  #   - get_protein_blast_scores.method_diamond_params
-  #   - get_protein_blast_scores.blast_metrics
-  #   - get_protein_blast_scores.restart
-  #   - get_protein_blast_scores.n_jobs
-  #   - get_protein_blast_scores.checkpoint
-  #   - get_protein_blast_scores.primary_sweep
-  #   metrics:
-  #   - ./data/metrics/s1.4_metrics.yaml:
-  #       cache: false
-  # make_database:
-  #   cmd: python pipeline/s1.5_make_database.py
-  #   deps:
-  #   - ./pipeline/s1.5_make_database.py
-  #   - ./learn2therm/database.py
-  #   - ./data/taxa_pairs/protein_alignment/
-  #   - ./data/taxa_pairs/pair_labels.csv
-  #   - ./data/taxa_pairs/pairwise_16s_blast.csv
-  #   - ./data/taxa/proteins
-  #   - ./data/taxa/16s_rRNA.csv
-  #   - ./data/taxa/labels.csv
-  #   - ./data/taxa/taxa_info_and_ogt.csv
-  #   outs:
-  #   - ./data/database
+  make_database:
+  
+  get_hait_pairs:
+    cmd: python ./pipeline/s2.1_get_hait_pairs.py
+    outs: 
+    - ./data/hait_pairs.csv

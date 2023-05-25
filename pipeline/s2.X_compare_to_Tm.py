@@ -123,7 +123,7 @@ if __name__ == "__main__":
         seqs_B = our_proteins,
         metrics = ['scaled_local_query_percent_id'],
         alignment_params = {
-            'num_threads': 12,
+            'num_threads': 6,
             'sensitivity': 'fast',
             'iterate': False,              
             'global_ranking': None,           
@@ -212,7 +212,7 @@ if __name__ == "__main__":
         seqs_B = our_proteins,
         metrics = ['scaled_local_query_percent_id'],
         alignment_params = {
-            'num_threads': 12,
+            'num_threads': 6,
             'sensitivity': 'fast',
             'iterate': False,              
             'global_ranking': None,           
