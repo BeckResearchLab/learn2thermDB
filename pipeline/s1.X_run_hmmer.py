@@ -397,7 +397,7 @@ if __name__== "__main__":
     conn = ddb.connect(db_path, read_only=True)
     logger.info("Create PID dataframe from learn2therm database")
     proteins_in_pair_pids = conn.execute("SELECT pid FROM proteins WHERE proteins.pid IN (SELECT DISTINCT(pairs.meso_pid) FROM pairs) OR proteins.pid IN (SELECT DISTINCT(pairs.thermo_pid) FROM pairs)").df()
-    logger.debug(f"Total number of protein pairs: {len(proteins_in_pair_pids)} in pipeline")
+    logger.debug(f"Total number of protein in pairs: {len(proteins_in_pair_pids)} in pipeline")
 
     # chunking the PID so the worker function queries
     protein_pair_pid_chunks = [proteins_in_pair_pids[i:i + chunk_size]

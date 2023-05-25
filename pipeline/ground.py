@@ -1,5 +1,8 @@
 """
 This script is just for testing stuff
+
+TODO:
+You could use df.apply() as a way to create the two columns. It is also vectorized; much quicker.
 """
 # system dependecies
 import logging
@@ -62,86 +65,87 @@ def create_accession_table():
 
 
 
-def find_jaccard_similarity(set1: set, set2: set) -> float:
+def calculate_jaccard_similarity(pair):
     """
-    Calculates the Jaccard similarity score between two sets.
+    Calculates Jaccard similarity between meso_pid and thermo_pid pairs via their accessions.
     """
-    intersection = len(set1.intersection(set2))
-    union = len(set1.union(set2))
-    return 0.0 if union == 0 else intersection / union
+    meso_pid, thermo_pid, meso_accession, thermo_accession = pair
+
+    # Print input pairs for debugging
+    logger.debug("Meso PID:", meso_pid)
+    logger.debug("Thermo PID:", thermo_pid)
+    logger.debug("Meso Accession:", meso_accession)
+    logger.debug("Thermo Accession:", thermo_accession)
+
+    # Check if both pairs have "No accession Information"
+    if meso_accession == "No accession Information" and thermo_accession == "No accession Information":
+        return 0
+
+    # Convert accessions to sets
+    meso_accession_set = set(meso_accession.split(';'))
+    thermo_accession_set = set(thermo_accession.split(';'))
+
+    # print accession sets
+    logger.debug("Meso Accession set:", meso_accession_set)
+    logger.debug("Thermo Accession set:", thermo_accession_set)
+
+    # Calculate Jaccard similarity
+    intersection = len(meso_accession_set.intersection(thermo_accession_set))
+    union = len(meso_accession_set.union(thermo_accession_set))
+    jaccard_similarity = intersection / union if union > 0 else 0
+
+    return jaccard_similarity
 
 
 
-def calculate_similarity(pid_pairs, accessions1, accessions2, threshold):
+def process_pairs_table(dbpath, jaccard_threshold):
     """
-    Calculates the Jaccard similarity score for a pair of proteins.
+    Processes the pairs table, calculates Jaccard similarity, and generates output CSV.
     """
-    print("pid_pairs:", pid_pairs)
-    print("accessions1:", accessions1)
-    print("accessions2:", accessions2)
-    set1 = set(accessions1.split(';')) if accessions1 and accessions1 != 'No Accession Information' else set()
-    set2 = set(accessions2.split(';')) if accessions2 and accessions2 != 'No Accession Information' else set()
-    score = find_jaccard_similarity(set1, set2)
-    
-    # if isinstance(pid_pairs, str):
-    #     # If pid_pairs is a string, convert it to a tuple
-    #     pid_pairs = tuple(pid_pairs.split(','))
-    
-    return (pid_pairs[0], pid_pairs[1], score)
+    # Establish a connection with DuckDB
+    conn = ddb.connect(dbpath, read_only=False)
 
-
-
-
-def worker_function(db_path, threshold):
+    # Perform inner join to get relevant information
+    query1 = """
+        CREATE OR REPLACE TABLE joined_pairs AS 
+        SELECT p.meso_pid, p.thermo_pid, pr.accession AS meso_accession, pr2.accession AS thermo_accession
+        FROM pairs AS p
+        RIGHT JOIN proteins_from_pairs AS pr ON (p.meso_pid = pr.pid)
+        RIGHT JOIN proteins_from_pairs AS pr2 ON (p.thermo_pid = pr2.pid)
     """
-    Query the database in chunks and calculate Jaccard similarity using joblib.
-    """
-    conn = ddb.connect(db_path, read_only=True)
-    cursor = conn.cursor()
+    conn.execute(query1)
 
-    cursor.execute("""
-        SELECT 
-            pairs.meso_pid, 
-            pairs.thermo_pid, 
-            group_concat(proteins_from_pairs_meso.accession) as meso_accessions,
-            group_concat(proteins_from_pairs_thermo.accession) as thermo_accessions
-        FROM pairs
-        LEFT JOIN proteins_from_pairs AS proteins_from_pairs_meso ON pairs.meso_pid = proteins_from_pairs_meso.pid
-        LEFT JOIN proteins_from_pairs AS proteins_from_pairs_thermo ON pairs.thermo_pid = proteins_from_pairs_thermo.pid
-        GROUP BY pairs.meso_pid, pairs.thermo_pid
-    """)
+    # Fetch all rows from the query result
+    number_of_joined_pairs = conn.execute("SELECT COUNT(*) FROM joined_pairs").df()
+    logger.debug(f'number of rows inside the joined_pairs table:{number_of_joined_pairs}')
+    query_result = conn.execute("SELECT * FROM joined_pairs")
+    rows = query_result.fetchall()
 
-    chunk_size = 10000  # You can adjust the chunk size
-    njobs = 4  # You can adjust the number of jobs
-    scores = {}
-
-    while True:
-        rows = cursor.fetchmany(chunk_size)
-        if not rows:
-            break
-        results = Parallel(n_jobs=njobs)(delayed(calculate_similarity)(meso_pid, thermo_pid, meso_accessions, thermo_accessions) for meso_pid, thermo_pid, meso_accessions, thermo_accessions in rows)
-        for result in results:
-            (pid_pairs, thermo_pid, score) = result
-            functional = 'Yes' if score >= threshold else 'No'
-            scores[(pid_pairs[0], pid_pairs[1])] = (functional, score)
-
-    return scores
-
-
-
-
-def write_to_csv(scores, filename):
-    """
-    Writes the scores to a CSV file.
-    """
+    # Generate output CSV file
     try:
-        with open(filename, 'w', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(['meso_pid', 'thermo_pid', 'functional?', 'Jaccard Score'])
-            for (meso_pid, thermo_pid), (functional, score) in scores.items():
-                writer.writerow([meso_pid, thermo_pid, functional, score])
+        with open(f'{OUTPUT_DIR}output.csv', 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['meso_pid', 'thermo_pid', 'functional?', 'score'])
+
+            # Iterate over joined pairs
+            for row in rows:
+                meso_pid = row[0]
+                thermo_pid = row[1]
+                meso_accession = row[2]
+                thermo_accession = row[3]
+
+                # Calculate Jaccard similarity
+                jaccard_similarity = calculate_jaccard_similarity(row)
+
+                # Determine if it meets the Jaccard threshold
+                meets_threshold = jaccard_similarity >= jaccard_threshold
+
+                # Write row to CSV
+                writer.writerow([meso_pid, thermo_pid, 'yes' if meets_threshold else 'no', jaccard_similarity])
     except IOError as e:
-        print(f"Error writing to CSV file: {e}")
+        logger.warning(f"Error writing to CSV file: {e}")    
+    conn.close()
+
 
 
 if __name__ == '__main__':
@@ -161,11 +165,27 @@ if __name__ == '__main__':
 
     logger.info(f"Directory of output: {OUTPUT_DIR}, path to database {db_path}")
 
-    threshold = 0.5  # Set your own threshold
-    scores = worker_function(db_path, threshold)
-    logger.info(f"Jaccard scores: {scores}")  
 
-    # Write scores to a CSV file
-    csv_filename = os.path.join(OUTPUT_DIR, 'scores.csv')
-    write_to_csv(scores, csv_filename)
-    logger.info(f"Scores written to {csv_filename}")
+
+    logger.info('Creating process pair table') 
+    threshold = 0.5  # Set your own threshold
+    process_pairs_table(db_path, threshold)
+    logger.info('Script done') 
+
+    conn = ddb.connect(db_path, read_only=False)
+    logger.info("Connected to DB")
+
+    # Check if all pids in proteins table exist in pairs table
+    query2 = """
+        SELECT COUNT(*) 
+        FROM proteins_from_pairs
+        WHERE pid NOT IN (
+        SELECT DISTINCT(meso_pid) FROM pairs
+        UNION
+        SELECT DISTINCT(thermo_pid) FROM pairs
+        )
+        """
+    result = conn.execute(query2).fetchone()
+    missing_count = result[0]
+
+    logger.debug(f"Number of missing pids: {missing_count}")
