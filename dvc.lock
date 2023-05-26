@@ -453,3 +453,9 @@ stages:
     - path: ./data/validation/tm/ogt_vs_tm_check.png
       md5: adf2de79b83baecbc9fa975b08eba5ab
       size: 208886
+  get_hait_pairs:
+    cmd: python ./pipeline/s2.1_get_hait_pairs.py
+    outs:
+    - path: ./data/validation/hait_pairs.csv
+      md5: 5d5073c759df83df500d9dfa136acf54
+      size: 472009
