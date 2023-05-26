@@ -451,7 +451,11 @@ stages:
       size: 208886
   get_hait_pairs:
     cmd: python ./pipeline/s2.1_get_hait_pairs.py
+    deps:
+    - path: ./pipeline/s2.1_get_hait_pairs.py
+      md5: 8a04d81f8a3c6ab7099407c7db892a17
+      size: 4100
     outs:
     - path: ./data/validation/hait_pairs.csv
-      md5: 5d5073c759df83df500d9dfa136acf54
-      size: 472009
+      md5: a40fd24b027407ade78599adfeb94428
+      size: 939959

@@ -53,36 +53,58 @@ if __name__ == '__main__':
     pdbs = list(hait_pairs['M'].values.reshape(-1))
     pdbs.extend(list(hait_pairs['T'].values.reshape(-1)))
     pdbs = list(set(pdbs))
+    logger.info(f"{len(pdbs)} unique PDB ids in HAIT data")
     # programatic access in chunks
     n = 50
-    pdb_chunks = [pdbs[i * n:(i + 1) * n] for i in range((len(pdbs) + n - 1) // n )]
     pdb_to_seq = {}
     pdb_to_pid = {}
-    for chunk in pdb_chunks:
-        q = [f'(xref:pdb-{p})OR' for p in chunk]
-        q = ''.join(q)[:-2]
-        q = base_q+q
-        r = requests.get(q)
-        r.raise_for_status()
-        logger.info(f"Got response from UniProt for a chunk of HAIT data")
-        results = r.json()
-        results = results['results']
-        # map pdb id to seq
-        for result in results:
-            seq = result['sequence']['value']
-            xrefs = result['uniProtKBCrossReferences']
-            id_ = result['primaryAccession']
-            for xref in xrefs:
-                if xref['database'] == 'PDB':
-                    pdb_to_seq[xref['id']] = seq
-                    pdb_to_pid[xref['id']] = id_
-        time.sleep(3)
+    complete = False
+    count_done = 0
+    timeout_counter = 0
+    with tqdm.tqdm(total=len(pdbs)) as pbar:
+        while not complete:
+            not_done = [p for p in pdbs if p not in pdb_to_seq]
+            if len(not_done) == 0:
+                complete = True
+                break
+            chunk = not_done[:n]
+            q = [f'(xref:pdb-{p})OR' for p in chunk]
+            q = ''.join(q)[:-2]
+            q = base_q+q
+            print(q)
+            r = requests.get(q)
+            r.raise_for_status()
+            results = r.json()
+            results = results['results']
+            # map pdb id to seq
+            for result in results:
+                seq = result['sequence']['value']
+                xrefs = result['uniProtKBCrossReferences']
+                id_ = result['primaryAccession']
+                for xref in xrefs:
+                    if xref['database'] == 'PDB':
+                        if not xref['id'] in chunk:
+                            continue
+                        pdb_to_seq[xref['id']] = seq
+                        pdb_to_pid[xref['id']] = id_
+            if len(pdb_to_seq) == count_done:
+                timeout_counter += 1
+                if timeout_counter > 5:
+                    logger.info(f"Timeout counter exceeded. Exiting.")
+                    break
+                logger.info(f"Timeout counter: {timeout_counter}")
+            pbar.update(len(pdb_to_seq) - count_done)
+            count_done = len(pdb_to_seq)
+            logger.info(f"Number retrieved: {len(pdb_to_seq)}")
+            time.sleep(3)
     # create dataframe with seqs
+    # assert len(pdb_to_seq) == len(pdbs)
+    # assert len(pdb_to_pid) == len(pdbs)
     hait_pairs.rename(columns={'M': 'meso_pdb', 'T': 'thermo_pdb'}, inplace=True)
     hait_pairs['meso_seq'] = hait_pairs['meso_pdb'].map(pdb_to_seq)
     hait_pairs['thermo_seq'] = hait_pairs['thermo_pdb'].map(pdb_to_seq)
     hait_pairs['meso_pid'] = hait_pairs['meso_pdb'].map(pdb_to_pid)
     hait_pairs['thermo_pid'] = hait_pairs['thermo_pdb'].map(pdb_to_pid)
-    hait_pairs.to_csv('./data/validation/hait_pairs.csv')
     hait_pairs.dropna(inplace=True)
+    hait_pairs.to_csv('./data/validation/hait_pairs.csv')
     logger.info(f"Got HAIT data with {len(hait_pairs)} pairs after dropping NA")
