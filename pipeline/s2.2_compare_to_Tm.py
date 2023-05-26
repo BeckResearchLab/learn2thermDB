@@ -115,7 +115,7 @@ if __name__ == "__main__":
     # need to search out dataset of proteins for matches
     # since uniprot ids are not necessarily non redundant for >99% identity
     # we need to search by sequence
-    our_proteins = con.execute("SELECT pid, protein_seq AS sequence FROM proteins ORDER BY RANDOM() LIMIT 100000").df()
+    our_proteins = con.execute("SELECT pid, protein_seq AS sequence FROM proteins").df()
     logger.info(f"Got {len(our_proteins)} proteins from our dataset")
     
     handler = learn2therm.blast.DiamondAlignmentHandler(
@@ -217,7 +217,7 @@ if __name__ == "__main__":
         unknown_meltome_seqs = pd.read_csv("./tmp/unknown_meltome_seqs.csv")
 
     # run diamond to find near identical sequences
-    our_proteins = con.execute("SELECT pid, protein_seq AS sequence FROM proteins ORDER BY RANDOM() LIMIT 100000").df()
+    our_proteins = con.execute("SELECT pid, protein_seq AS sequence FROM proteins").df()
     logger.info(f"Got {len(our_proteins)} proteins from our dataset")
     
     handler = learn2therm.blast.DiamondAlignmentHandler(

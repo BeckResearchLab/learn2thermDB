@@ -430,3 +430,26 @@ stages:
       md5: 73cf6e77d7f10409bf53eeb4b988f9af.dir
       size: 11067131857
       nfiles: 189392
+  compare_to_Tm:
+    cmd: python ./pipeline/s2.2_compare_to_Tm.py
+    deps:
+    - path: ./data/proteins
+      md5: 57724bc351619b85c205a65f2f7bfd73.dir
+      size: 7997391585
+      nfiles: 239
+    - path: ./data/taxa.parquet
+      md5: e62b6a3fbb8232e4dfeca04c863ba761
+      size: 6487331
+    - path: ./pipeline/s2.2_compare_to_Tm.py
+      md5: 3ebee8865063b4dae40499076c34439b
+      size: 12891
+    outs:
+    - path: ./data/validation/tm/metrics.yaml
+      md5: 126e0016299dfb134476be3f63c61a2c
+      size: 93
+    - path: ./data/validation/tm/ogt_vs_tm.csv
+      md5: 91980e6f94a53a394c3bd968addcd640
+      size: 166177
+    - path: ./data/validation/tm/ogt_vs_tm_check.png
+      md5: adf2de79b83baecbc9fa975b08eba5ab
+      size: 208886
