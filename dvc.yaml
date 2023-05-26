@@ -146,6 +146,8 @@ stages:
     - ./data/database.ddb
   get_hait_pairs:
     cmd: python ./pipeline/s2.1_get_hait_pairs.py
+    deps:
+    - ./pipeline/s2.1_get_hait_pairs.py
     outs:
     - ./data/validation/hait_pairs.csv
   compare_to_Tm:
