@@ -70,39 +70,19 @@ def create_accession_table():
     conn.close()
     return tmpdir, tmpdir+'/proteins_from_pairs.db'
 
+def preprocess_accessions(meso_acession, thermo_accession):
+    """
+    TODO
+    """
+    # Convert accessions to sets
+    meso_accession_set = set(meso_acession.split(';'))
+    thermo_accession_set = set(thermo_accession.split(';'))
+    return meso_accession_set, thermo_accession_set
 
-
-def calculate_jaccard_similarity(pair):
+def calculate_jaccard_similarity(meso_accession_set, thermo_accession_set):
     """
     Calculates Jaccard similarity between meso_pid and thermo_pid pairs via their accessions.
     """
-    meso_pid, thermo_pid, meso_accession, thermo_accession = pair
-
-    # Print input pairs for debugging
-    logger.debug("Meso PID:", meso_pid)
-    logger.debug("Thermo PID:", thermo_pid)
-    logger.debug("Meso Accession:", meso_accession)
-    logger.debug("Thermo Accession:", thermo_accession)
-
-    # Check if both pairs have "No accession Information"
-    if meso_accession == "No accession Information" and thermo_accession == "No accession Information":
-        return 0
-
-    # Convert accessions to sets
-    if isinstance(meso_accession, str):
-        meso_accession_set = set(meso_accession.split(';'))
-    else:
-        meso_accession_set = set()
-
-    if isinstance(thermo_accession, str):
-        thermo_accession_set = set(thermo_accession.split(';'))
-    else:
-        thermo_accession_set = set()
-
-    # print accession sets
-    logger.debug("Meso Accession set:", meso_accession_set)
-    logger.debug("Thermo Accession set:", thermo_accession_set)
-
     # Calculate Jaccard similarity
     intersection = len(meso_accession_set.intersection(thermo_accession_set))
     union = len(meso_accession_set.union(thermo_accession_set))
@@ -130,6 +110,32 @@ def process_pairs_table(dbpath, chunk_size:int, jaccard_threshold):
     """
     conn.execute(query1)
 
+    # apply function (whiteboard)
+    def evaulation_function(row):
+        """TODO
+        """
+        # Get the accessions
+        meso_acc = row['meso_accession']
+        thermo_acc = row['thermo_accession']
+
+        # Preprocess the accessions 
+        meso_acc, thermo_acc = preprocess_accessions(meso_acc, thermo_acc)
+
+        # Check if both pairs have "No accession Information"
+        if meso_acc == "No accession Information" and thermo_acc == "No accession Information":
+            score = None
+            functional = None
+        # Check if both pairs contain something
+        elif meso_acc and thermo_acc:
+            score = calculate_jaccard_similarity(meso_acc, thermo_acc)
+            functional = score > threshold
+        else: # check for edge-cases
+            score = None
+            functional = False
+        return {'functional?': functional, 'score': score}
+            
+
+        
     # Generate output CSV file
     try:
         data_remaining = True
