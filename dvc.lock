@@ -116,8 +116,8 @@ stages:
       md5: 68b6dc086ee2d5f8e71373522e43f64a
       size: 120740
     - path: ./learn2therm/blast.py
-      md5: 40a2771d35f6bd36c1b422d79279dc84
-      size: 31919
+      md5: 1c6615ca330b018de6a9f022adceb84f
+      size: 31878
     - path: ./learn2therm/io.py
       md5: 4f49985e8dcfb88d2c4504744e05d96a
       size: 4031
@@ -263,41 +263,37 @@ stages:
       size: 27915017520
       nfiles: 13796
   make_database:
-    cmd: python pipeline/s1.5_make_database.py
+    cmd: python ./pipeline/s1.4_make_database.py
     deps:
-    - path: ./data/taxa/16s_rRNA.csv
-      md5: 1b0a6d0685ebb0e678b72cb3b57ae8a4
-      size: 21316764
-    - path: ./data/taxa/labels.csv
-      md5: 22b516c22355a1697527f0099c5b8075
-      size: 161752
-    - path: ./data/taxa/proteins
-      md5: d1c8cfa94113ff9ac352fd400f543432.dir
-      size: 24260213045
-      nfiles: 16665
-    - path: ./data/taxa/taxa_info_and_ogt.csv
-      md5: a5bb1873b2aeac4026516a91dd94c3e1
-      size: 3826414
-    - path: ./data/taxa_pairs/pair_labels.csv
-      md5: 93559135b6d41a9a510a775e0236ecfc
-      size: 9633344
-    - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: aa98b55fec7d0b5a937376b14e094864
-      size: 105641139
-    - path: ./data/taxa_pairs/protein_alignment/
-      md5: 4ed01b2ae1248d722a86353e0534d16f.dir
-      size: 27915017520
-      nfiles: 13796
+    - path: ./data/protein_pairs
+      md5: 73cf6e77d7f10409bf53eeb4b988f9af.dir
+      size: 11067131857
+      nfiles: 189392
+    - path: ./data/proteins
+      md5: 57724bc351619b85c205a65f2f7bfd73.dir
+      size: 7997391585
+      nfiles: 239
+    - path: ./data/taxa.parquet
+      md5: e62b6a3fbb8232e4dfeca04c863ba761
+      size: 6487331
+    - path: ./data/taxa_pairs/alignment
+      md5: 40439dc256528d3c1e71b68d53f55ab1.dir
+      size: 90778197
+      nfiles: 26
+    - path: ./data/taxa_pairs/pair_labels
+      md5: 9db2b5ea688ced9dd37f82c2a84037f4.dir
+      size: 16210411
+      nfiles: 26
+    - path: ./data/taxa_thermophile_labels.parquet
+      md5: 68b6dc086ee2d5f8e71373522e43f64a
+      size: 120740
     - path: ./learn2therm/database.py
-      md5: 8559ad4a1a140274284bcc0674facf40
-      size: 13962
-    - path: ./pipeline/s1.5_make_database.py
-      md5: 9c1b0c6a2ec7453968d84d8a22b7078d
-      size: 671
+      md5: be73ec0820c7fc7151a2f1ed88d1460a
+      size: 10739
     outs:
-    - path: ./data/database
-      md5: a893878e4fb7d693f3cdb8f889d0ecbb
-      size: 34233659392
+    - path: ./data/database.ddb
+      md5: 394a55dd7601e1a190826f9789ce08ec
+      size: 10875580416
   get_raw_data_taxa:
     cmd: python pipeline/s0.0_get_raw_data_taxa.py
     deps:

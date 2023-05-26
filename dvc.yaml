@@ -131,8 +131,35 @@ stages:
     - ./data/metrics/s1.3_metrics.yaml:
         cache: false
         persist: true
-
+    frozen: true
+  make_database:
+    cmd: python ./pipeline/s1.4_make_database.py
+    deps:
+    - ./data/proteins
+    - ./data/taxa.parquet
+    - ./data/taxa_thermophile_labels.parquet
+    - ./data/taxa_pairs/alignment
+    - ./data/taxa_pairs/pair_labels
+    - ./data/protein_pairs
+    - ./learn2therm/database.py
+    outs:
+    - ./data/database.ddb
   get_hait_pairs:
     cmd: python ./pipeline/s2.1_get_hait_pairs.py
-    outs: 
-    - ./data/hait_pairs.csv
+    outs:
+    - ./data/validation/hait_pairs.csv
+  compare_to_Tm:
+    cmd: python ./pipeline/s2.2_compare_to_Tm.py
+    deps:
+    - ./data/proteins
+    - ./data/taxa.parquet
+    - ./pipeline/s2.2_compare_to_Tm.py
+    outs:
+    - ./data/validation/tm/ogt_vs_tm.csv
+    metrics:
+    - ./data/validation/tm/metrics.yaml:
+        cache: false
+    plots:
+    - ./data/validation/tm/ogt_vs_tm_check.png:
+        cache: false
+
