@@ -79,6 +79,7 @@ def preprocess_accessions(meso_acession, thermo_accession):
     thermo_accession_set = set(thermo_accession.split(';'))
     return meso_accession_set, thermo_accession_set
 
+
 def calculate_jaccard_similarity(meso_accession_set, thermo_accession_set):
     """
     Calculates Jaccard similarity between meso_pid and thermo_pid pairs via their accessions.
@@ -110,52 +111,61 @@ def process_pairs_table(dbpath, chunk_size:int, jaccard_threshold):
     """
     conn.execute(query1)
 
-    # apply function (whiteboard)
-    def evaulation_function(row):
+    # Define the evaluation function for the apply function
+    def evaluation_function(row, jaccard_threshold):
         """TODO
         """
         # Get the accessions
         meso_acc = row['meso_accession']
         thermo_acc = row['thermo_accession']
 
-        # Preprocess the accessions 
-        meso_acc, thermo_acc = preprocess_accessions(meso_acc, thermo_acc)
-
-        # Check if both pairs have "No accession Information"
-        if meso_acc == "No accession Information" and thermo_acc == "No accession Information":
+        # parsing accessions logic
+        # Handle NULL values
+        if pd.isnull(meso_acc) and pd.isnull(thermo_acc):
             score = None
             functional = None
-        # Check if both pairs contain something
-        elif meso_acc and thermo_acc:
-            score = calculate_jaccard_similarity(meso_acc, thermo_acc)
-            functional = score > threshold
-        else: # check for edge-cases
+        elif pd.notnull(meso_acc) and pd.notnull(thermo_acc):
+            # Preprocess the accessions
+            meso_acc_set, thermo_acc_set = preprocess_accessions(meso_acc, thermo_acc)
+
+            if meso_acc_set == {"No accession Information"} and thermo_acc_set == {"No accession Information"}:
+                score = None
+                functional = None
+            else:
+                score = calculate_jaccard_similarity(meso_acc_set, thermo_acc_set)
+                functional = score > jaccard_threshold
+        else:
+            # Handle unmatched rows
             score = None
             functional = False
+        
         return {'functional?': functional, 'score': score}
             
 
         
     # Generate output CSV file
     try:
+        # Execute the query
+        query = conn.execute("SELECT * FROM joined_pairs")
         data_remaining = True
         chunk_counter = 0  # Initialize the chunk counter
         while data_remaining:
             # Fetch the query result in chunks
-            query_result = conn.execute("SELECT * FROM joined_pairs").fetch_df_chunk(chunk_size)
+            query_chunk = query.fetch_df_chunk(chunk_size)
 
             # Check if there is data remaining
-            if query_result.empty:
+            if query_chunk.empty:
                 data_remaining = False
                 break
 
+
             # Calculate Jaccard similarity and determine functional status using apply function
-            query_result['score'] = query_result.apply(calculate_jaccard_similarity, axis=1)
-            query_result['functional?'] = query_result['score'].apply(lambda x: 'yes' if x >= jaccard_threshold else 'no')
+            query_chunk[['functional?', 'score']] = query_chunk.apply(evaluation_function, axis=1, args=(jaccard_threshold,), result_type='expand')
+
 
             # Write DataFrame to CSV
             chunk_counter += 1  # Increment the chunk counter
-            query_result.to_csv(f'{OUTPUT_DIR}{chunk_counter}_output.csv', index=False, columns=['meso_pid', 'thermo_pid', 'functional?', 'score'])
+            query_chunk.to_csv(f'{OUTPUT_DIR}{chunk_counter}_output.csv', index=False, columns=['meso_pid', 'thermo_pid', 'functional?', 'score'])
 
     except IOError as e:
         logger.warning(f"Error writing to CSV file: {e}")
@@ -187,8 +197,9 @@ if __name__ == '__main__':
     logger.info('Creating process pair table') 
     threshold = 0.5  # Set your own threshold
     chunksize = 5 # Vector size (2048 by default) * vector_multiple (we specify).
-    process_pairs_table(db_path, chunksize ,threshold)
-    logger.info('Script done') 
+    process_pairs_table(db_path, chunksize, threshold)
+    logger.info('Pairs table processing completed')
+
 
     conn = ddb.connect(db_path, read_only=False)
     logger.info("Connected to DB")
