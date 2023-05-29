@@ -1,5 +1,5 @@
 """Ingest raw PFAM HMMs
-TODO: how to unzip
+
 
 Sources
 -------
@@ -17,8 +17,11 @@ TODO
 # system dependecies
 import datetime
 from ftplib import FTP
+import gzip
 import logging
 import os
+import shutil
+import tarfile
 from tqdm import tqdm
 
 # library dependecies
@@ -73,6 +76,16 @@ if __name__ == "__main__":
     
     download_ftp_file(FTP_ADDRESS, remote_file, local_dir)
     logger.info("download from FTP")
+
+    # unzip the files
+    extracted_file = './data/HMM/Pfam-A.hmm'
+
+    with gzip.open(local_dir, 'rb') as f_in:
+        with open(extracted_file, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
+    logger.info(f'Extracted the file can be found in: {extracted_file}')
+
 
     # save metrics
     date_pulled = str(datetime.datetime.now().strftime("%m/%d/%Y"))
