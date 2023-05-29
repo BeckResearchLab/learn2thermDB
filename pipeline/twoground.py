@@ -196,7 +196,7 @@ if __name__ == '__main__':
 
     logger.info('Creating process pair table') 
     threshold = 0.5  # Set your own threshold
-    chunksize = 5 # Vector size (2048 by default) * vector_multiple (we specify).
+    chunksize = 5 # Vector size (2048 by default) * vector_multiple (we specify this).
     process_pairs_table(db_path, chunksize, threshold)
     logger.info('Pairs table processing completed')
 
