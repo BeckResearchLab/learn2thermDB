@@ -120,6 +120,7 @@ stages:
     - get_protein_blast_scores.dask_cluster_class
     - get_protein_blast_scores.dev_sample_pairs
     - get_protein_blast_scores.max_protein_length
+    - get_protein_blast_scores.method
     - get_protein_blast_scores.method_blast_params
     - get_protein_blast_scores.method_diamond_params
     - get_protein_blast_scores.n_jobs
@@ -131,7 +132,6 @@ stages:
     - ./data/metrics/s1.3_metrics.yaml:
         cache: false
         persist: true
-    frozen: true
   make_database:
     cmd: python ./pipeline/s1.4_make_database.py
     deps:
@@ -164,4 +164,15 @@ stages:
     plots:
     - ./data/validation/tm/ogt_vs_tm_check.png:
         cache: false
-
+  run_hait_alignment:
+    cmd: python ./pipeline/s2.3_run_hait_alignment.py
+    deps:
+    - ./pipeline/s2.3_run_hait_alignment.py
+    - ./learn2therm/blast.py
+    - ./data/validation/hait_pairs.csv
+    outs:
+    - ./data/validation/hait_aligned_scores.csv
+    params:
+    - get_protein_blast_scores.method
+    - get_protein_blast_scores.method_blast_params
+    - get_protein_blast_scores.method_diamond_params

@@ -209,7 +209,11 @@ def main():
                         if i >= params['save_frequency']:
                             break
         # close the cluster while we compute metrics and DVC does its thing
-        cluster.close()
+        try:
+            cluster.close()
+            time.sleep(15)
+        except:
+            pass
         logger.info("Cluster closed, DVC checkpoint")
 
         # give a second for the client to close

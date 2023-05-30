@@ -116,8 +116,8 @@ stages:
       md5: 68b6dc086ee2d5f8e71373522e43f64a
       size: 120740
     - path: ./learn2therm/blast.py
-      md5: 1c6615ca330b018de6a9f022adceb84f
-      size: 31878
+      md5: 291c944230b3579e5013a4477797edd8
+      size: 33342
     - path: ./learn2therm/io.py
       md5: 4f49985e8dcfb88d2c4504744e05d96a
       size: 4031
@@ -266,9 +266,9 @@ stages:
     cmd: python ./pipeline/s1.4_make_database.py
     deps:
     - path: ./data/protein_pairs
-      md5: 73cf6e77d7f10409bf53eeb4b988f9af.dir
-      size: 11067131857
-      nfiles: 189392
+      md5: edf6d331dc1de4968a7b50d836bcfbb8.dir
+      size: 3772595241
+      nfiles: 333
     - path: ./data/proteins
       md5: 57724bc351619b85c205a65f2f7bfd73.dir
       size: 7997391585
@@ -386,16 +386,17 @@ stages:
       size: 16210411
       nfiles: 26
     - path: ./learn2therm/blast.py
-      md5: 1c6615ca330b018de6a9f022adceb84f
-      size: 31878
+      md5: 291c944230b3579e5013a4477797edd8
+      size: 33342
     - path: ./pipeline/s1.3_protein_alignment.py
-      md5: ec15996e32a44c64091faf29b149fe3a
-      size: 10251
+      md5: 4f6c06a72ee0e9546aef7a50b62fa0c5
+      size: 10328
     params:
       params.yaml:
         get_protein_blast_scores.dask_cluster_class: SLURMCluster
         get_protein_blast_scores.dev_sample_pairs:
         get_protein_blast_scores.max_protein_length: 250
+        get_protein_blast_scores.method: diamond
         get_protein_blast_scores.method_blast_params:
           num_threads: 6
           word_size: 3
@@ -423,9 +424,9 @@ stages:
       md5: e75d542e5159fe907e82697f486ba236
       size: 159
     - path: ./data/protein_pairs/
-      md5: 73cf6e77d7f10409bf53eeb4b988f9af.dir
-      size: 11067131857
-      nfiles: 189392
+      md5: edf6d331dc1de4968a7b50d836bcfbb8.dir
+      size: 3772595241
+      nfiles: 333
   compare_to_Tm:
     cmd: python ./pipeline/s2.2_compare_to_Tm.py
     deps:
@@ -459,3 +460,42 @@ stages:
     - path: ./data/validation/hait_pairs.csv
       md5: a40fd24b027407ade78599adfeb94428
       size: 939959
+  run_hait_alignment:
+    cmd: python ./pipeline/s2.3_run_hait_alignment.py
+    deps:
+    - path: ./data/validation/hait_pairs.csv
+      md5: a40fd24b027407ade78599adfeb94428
+      size: 939959
+    - path: ./learn2therm/blast.py
+      md5: 291c944230b3579e5013a4477797edd8
+      size: 33342
+    - path: ./pipeline/s2.3_run_hait_alignment.py
+      md5: adb29e20850fdc605e978a29d0926533
+      size: 3252
+    params:
+      params.yaml:
+        get_protein_blast_scores.method: diamond
+        get_protein_blast_scores.method_blast_params:
+          num_threads: 6
+          word_size: 3
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          threshold: 11
+          ungapped: false
+          evalue: 1e-05
+          qcov_hsp_perc: 75
+        get_protein_blast_scores.method_diamond_params:
+          num_threads: 6
+          sensitivity: ultra-sensitive
+          iterate: false
+          global_ranking:
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          evalue: 1e-05
+          hsp_cov: 75
+    outs:
+    - path: ./data/validation/hait_aligned_scores.csv
+      md5: 560d53ffe1ac2bd32d89169d148ec584
+      size: 1154438
