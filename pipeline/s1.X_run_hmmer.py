@@ -38,7 +38,7 @@ import learn2therm.utils
 
 ## Paths
 HMM_PATH = './data/HMM/Pfam-A.hmm'  # ./Pfam-A.hmm
-PRESS_PATH = './data/HMM'
+PRESS_PATH = './data/HMM/'
 OUTPUT_DIR = './data/protein_pairs/protein_pair_targets'
 WORKER_WAKE_UP_TIME = 25 # this is to ensure that if a worker that is about to be shut down due to previous task completetion doesn't actually start running
 
@@ -270,11 +270,13 @@ def parse_pyhmmer(all_hits, chunk_query_ids):
 
     # add the missing query IDs with a placeholder value to indicate no accession information
     for missing_query_id in missing_query_ids:
-        parsed_hits[missing_query_id] = ['No Accession Information']
+        parsed_hits[missing_query_id] = [""]
 
-    # create the DataFrame from the dictionary and convert list of accession IDs to string
+    # create the DataFrame from the dictionary 
     df = pd.DataFrame(parsed_hits.items(), columns=["query_id", "accession_id"])
-    df["accession_id"] = df["accession_id"].apply(lambda x: ';'.join(x))
+
+    # convert list of accession IDs to string
+    df["accession_id"] = df["accession_id"].apply(lambda x: ";".join(x) if x else "")
 
     return df
 
@@ -364,7 +366,7 @@ if __name__== "__main__":
     # start logger/connect to log file
     logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
     
-    logger.info("TEST LOG")
+    logger.info(f"Running script:{__file__}")
 
     # create pfam HMM directory (this was before HMM download script)
     try:

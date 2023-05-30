@@ -106,11 +106,11 @@ def process_pairs_table(dbpath, chunk_size:int, jaccard_threshold):
         CREATE OR REPLACE TABLE joined_pairs AS 
         SELECT p.meso_pid, p.thermo_pid, pr.accession AS meso_accession, pr2.accession AS thermo_accession
         FROM pairs AS p
-        RIGHT JOIN proteins_from_pairs AS pr ON (p.meso_pid = pr.pid)
-        RIGHT JOIN proteins_from_pairs AS pr2 ON (p.thermo_pid = pr2.pid)
+        INNER JOIN proteins_from_pairs AS pr ON (p.meso_pid = pr.pid)
+        INNER JOIN proteins_from_pairs AS pr2 ON (p.thermo_pid = pr2.pid)
     """
     conn.execute(query1)
-
+    
     # Define the evaluation function for the apply function
     def evaluation_function(row, jaccard_threshold):
         """TODO
@@ -179,7 +179,7 @@ if __name__ == '__main__':
     # start logger/connect to log file
     logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
 
-    logger.info("TEST LOG")
+    logger.info(f"Running {__file__}")
 
     # setup the database and get some pairs to run
     tmpdir_database, db_path = create_accession_table()
