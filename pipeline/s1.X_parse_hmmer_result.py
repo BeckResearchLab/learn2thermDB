@@ -128,7 +128,7 @@ def process_pairs_table(dbpath, chunk_size:int, jaccard_threshold):
             score = None
             functional = False
         
-        return {'functional?': functional, 'score': score}
+        return {'functional': functional, 'score': score}
             
 
         
@@ -149,12 +149,12 @@ def process_pairs_table(dbpath, chunk_size:int, jaccard_threshold):
 
 
             # Calculate Jaccard similarity and determine functional status using apply function
-            query_chunk[['functional?', 'score']] = query_chunk.apply(evaluation_function, axis=1, args=(jaccard_threshold,), result_type='expand')
+            query_chunk[['functional', 'score']] = query_chunk.apply(evaluation_function, axis=1, args=(jaccard_threshold,), result_type='expand')
 
 
             # Write DataFrame to parquet
             chunk_counter += 1  # Increment the chunk counter
-            query_chunk = query_chunk[['meso_pid', 'thermo_pid', 'functional?', 'score']]
+            query_chunk = query_chunk[['meso_pid', 'thermo_pid', 'functional', 'score']]
             query_chunk.to_parquet(f'{OUTPUT_DIR}{chunk_counter}_output.parquet')
 
     except IOError as e:

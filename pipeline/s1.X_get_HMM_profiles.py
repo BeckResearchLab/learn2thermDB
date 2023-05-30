@@ -12,7 +12,8 @@ Nucleic Acids Research, vol. 51, no. D1, pp. D418–D427, Jan. 2023, doi: 10.109
 
 Notes
 -----
-TODO
+TODO:
+- delete gz file after unzipping
 """
 # system dependecies
 import datetime
