@@ -132,6 +132,7 @@ stages:
     - ./data/metrics/s1.3_metrics.yaml:
         cache: false
         persist: true
+    frozen: true
   make_database:
     cmd: python ./pipeline/s1.4_make_database.py
     deps:

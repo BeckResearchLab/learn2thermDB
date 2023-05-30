@@ -288,12 +288,12 @@ stages:
       md5: 68b6dc086ee2d5f8e71373522e43f64a
       size: 120740
     - path: ./learn2therm/database.py
-      md5: be73ec0820c7fc7151a2f1ed88d1460a
-      size: 10739
+      md5: 5ad33a5edd188e88941ed05780f64a3b
+      size: 10769
     outs:
     - path: ./data/database.ddb
-      md5: 394a55dd7601e1a190826f9789ce08ec
-      size: 10875580416
+      md5: c4dcb2c41d125677901a6a5d985cd136
+      size: 16853250048
   get_raw_data_taxa:
     cmd: python pipeline/s0.0_get_raw_data_taxa.py
     deps:
