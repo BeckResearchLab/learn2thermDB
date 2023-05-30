@@ -273,10 +273,10 @@ class AlignmentHandler:
     ----------
     seqs_A : DataFrame
         DataFrame containing protein sequences for the first set
-        Must have columns 'id' and 'seq'
+        Must have columns 'pid' and 'sequence'
     seqs_B : DataFrame
         DataFrame containing protein sequences for the second set
-        Must have columns 'id' and 'seq'
+        Must have columns 'pid' and 'sequence'
     alignment_params : dict
         parameters to pass to alignment method
     metrics: dict
@@ -585,17 +585,8 @@ class TaxaAlignmentWorker:
                 alignment_params=self.alignment_params,
                 metrics=self.metrics)
             # run handler, get output
-            for i in range(0, self.retry_counter):
-                try:
-                    results, run_metadata = handler.run()
-                    break
-                except:
-                    logger.error(f"Alignment failed for pair {self.pair_indexes}, retrying.")
-                    if i == self.retry_counter - 1:
-                        raise
-                    else:
-                        continue
-            # save output
+            results, run_metadata = handler.run()
+
             # if we got none, skip this part
             if results.empty:
                 logger.info(f"No results for pair {self.pair_indexes}")
@@ -681,10 +672,12 @@ class TaxaAlignmentClusterState:
         metrics: list = ['scaled_local_symmetric_percent_id'],
         restart: bool = True,
         killer_workers: bool = True,
+        aggregate_outputs: bool = True,
         worker_function: Callable = lambda aligner: aligner.run()
     ):
         self.killer_workers = killer_workers
         self.worker_function = worker_function
+        self.aggregate_outputs = aggregate_outputs
 
         if not output_dir.endswith('/'):
             output_dir = output_dir + '/'
@@ -779,12 +772,41 @@ class TaxaAlignmentClusterState:
         else:
             self.futures_modified = None
 
+    def _aggregate_output_files(self):
+        """Aggregate files of distinct taxa pair files into larger chunks.
+        
+        We lose the file viewable information about which taxa re contained, but
+        too many distinct files is cumbersome for DVC and duckdb, so we aggregate
+        into files of size 500000 pairs.
+        """
+        unaggregated_files = os.listdir(self.output_dir)
+        unaggregated_files = [f for f in unaggregated_files if f.startswith('align_taxa')]
+        aggregate_files = os.listdir(self.output_dir)
+        aggregate_files = [f for f in aggregate_files if f.startswith('agg_chunk')]
+        dfs = []
+        file_size = 0
+        i = len(aggregate_files)
+        for f in unaggregated_files:
+            df = pd.read_parquet(self.output_dir+f)
+            dfs.append(df)
+            file_size += len(df)
+            if file_size >= 500000:
+                agg = pd.concat(dfs, axis=0, ignore_index=True)
+                agg.to_parquet(self.output_dir+f'agg_chunk_{i}.parquet')
+                logger.info(f"Saved chuck composed of {len(dfs)} taxa pairs.")
+                i += 1
+                file_size = 0
+                dfs = []
+            os.remove(self.output_dir+f)
+        logger.info("Aggregated protein pair files into chunks.")
+
     def _close(self):
         self.client.cancel(self._futures, force=True)
         time.sleep(15)
-        self.client.restart(timeout=15)
-        logger.info(f"Canceled futures. Worker futures: {self.client.has_what()}")
-
+        self.client.close(timeout=15)
+        logger.info(f"Canceled futures.")
+        if self.aggregate_outputs:
+            self._aggregate_output_files()
 
     def __enter__(self):
         return self.futures_modified

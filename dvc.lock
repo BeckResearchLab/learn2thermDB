@@ -85,8 +85,8 @@ stages:
       md5: e62b6a3fbb8232e4dfeca04c863ba761
       size: 6487331
     - path: ./learn2therm/utils.py
-      md5: 4845b20446345d469e7eae2a6968e962
-      size: 1766
+      md5: 1af0c5553052e207597404ab2f583de3
+      size: 1767
     - path: pipeline/s1.0_label_taxa.py
       md5: 25490ac9fbdb57c0499c5ea44346157d
       size: 2151
@@ -116,14 +116,14 @@ stages:
       md5: 68b6dc086ee2d5f8e71373522e43f64a
       size: 120740
     - path: ./learn2therm/blast.py
-      md5: 5ff28b0ed3bce21e5af9af91785f3a1a
-      size: 32311
+      md5: 291c944230b3579e5013a4477797edd8
+      size: 33342
     - path: ./learn2therm/io.py
       md5: 4f49985e8dcfb88d2c4504744e05d96a
       size: 4031
     - path: ./learn2therm/utils.py
-      md5: 4845b20446345d469e7eae2a6968e962
-      size: 1766
+      md5: 1af0c5553052e207597404ab2f583de3
+      size: 1767
     - path: ./pipeline/s1.1_get_16s_blast_scores.py
       md5: e9d8f7a007ac0ab03207bc6b4ce55e56
       size: 6693
@@ -167,16 +167,16 @@ stages:
       size: 90778197
       nfiles: 26
     - path: ./learn2therm/utils.py
-      md5: 4845b20446345d469e7eae2a6968e962
-      size: 1766
+      md5: 1af0c5553052e207597404ab2f583de3
+      size: 1767
     - path: ./pipeline/s1.2_label_all_pairs.py
       md5: 69e76dece66806d59790fd1a399c8f83
       size: 4026
     params:
       params.yaml:
         label_all_pairs.blast_metric_thresholds:
-          scaled_local_symmetric_percent_id:
-            thresh: 0.85
+          scaled_local_query_percent_id:
+            thresh: 0.82
             greater: true
           query_align_cov:
             thresh: 0.9
@@ -187,11 +187,11 @@ stages:
         label_all_pairs.dev_only_one_file: false
     outs:
     - path: ./data/metrics/s1.2_metrics.yaml
-      md5: 18466601d8fcf363f24b57ab214b367d
+      md5: eb40990137b181e1b61b5668e2b09333
       size: 79
     - path: ./data/taxa_pairs/pair_labels
-      md5: e39d13aa8604fb9c713b0895cb197258.dir
-      size: 16176756
+      md5: 9db2b5ea688ced9dd37f82c2a84037f4.dir
+      size: 16210411
       nfiles: 26
   get_protein_blast_scores:
     cmd: python pipeline/s1.4_get_protein_blast_scores.py
@@ -263,41 +263,37 @@ stages:
       size: 27915017520
       nfiles: 13796
   make_database:
-    cmd: python pipeline/s1.5_make_database.py
+    cmd: python ./pipeline/s1.4_make_database.py
     deps:
-    - path: ./data/taxa/16s_rRNA.csv
-      md5: 1b0a6d0685ebb0e678b72cb3b57ae8a4
-      size: 21316764
-    - path: ./data/taxa/labels.csv
-      md5: 22b516c22355a1697527f0099c5b8075
-      size: 161752
-    - path: ./data/taxa/proteins
-      md5: d1c8cfa94113ff9ac352fd400f543432.dir
-      size: 24260213045
-      nfiles: 16665
-    - path: ./data/taxa/taxa_info_and_ogt.csv
-      md5: a5bb1873b2aeac4026516a91dd94c3e1
-      size: 3826414
-    - path: ./data/taxa_pairs/pair_labels.csv
-      md5: 93559135b6d41a9a510a775e0236ecfc
-      size: 9633344
-    - path: ./data/taxa_pairs/pairwise_16s_blast.csv
-      md5: aa98b55fec7d0b5a937376b14e094864
-      size: 105641139
-    - path: ./data/taxa_pairs/protein_alignment/
-      md5: 4ed01b2ae1248d722a86353e0534d16f.dir
-      size: 27915017520
-      nfiles: 13796
+    - path: ./data/protein_pairs
+      md5: edf6d331dc1de4968a7b50d836bcfbb8.dir
+      size: 3772595241
+      nfiles: 333
+    - path: ./data/proteins
+      md5: 57724bc351619b85c205a65f2f7bfd73.dir
+      size: 7997391585
+      nfiles: 239
+    - path: ./data/taxa.parquet
+      md5: e62b6a3fbb8232e4dfeca04c863ba761
+      size: 6487331
+    - path: ./data/taxa_pairs/alignment
+      md5: 40439dc256528d3c1e71b68d53f55ab1.dir
+      size: 90778197
+      nfiles: 26
+    - path: ./data/taxa_pairs/pair_labels
+      md5: 9db2b5ea688ced9dd37f82c2a84037f4.dir
+      size: 16210411
+      nfiles: 26
+    - path: ./data/taxa_thermophile_labels.parquet
+      md5: 68b6dc086ee2d5f8e71373522e43f64a
+      size: 120740
     - path: ./learn2therm/database.py
-      md5: 8559ad4a1a140274284bcc0674facf40
-      size: 13962
-    - path: ./pipeline/s1.5_make_database.py
-      md5: 9c1b0c6a2ec7453968d84d8a22b7078d
-      size: 671
+      md5: 5ad33a5edd188e88941ed05780f64a3b
+      size: 10769
     outs:
-    - path: ./data/database
-      md5: a893878e4fb7d693f3cdb8f889d0ecbb
-      size: 34233659392
+    - path: ./data/database.ddb
+      md5: c4dcb2c41d125677901a6a5d985cd136
+      size: 16853250048
   get_raw_data_taxa:
     cmd: python pipeline/s0.0_get_raw_data_taxa.py
     deps:
@@ -386,20 +382,21 @@ stages:
       size: 90778197
       nfiles: 26
     - path: ./data/taxa_pairs/pair_labels
-      md5: e39d13aa8604fb9c713b0895cb197258.dir
-      size: 16176756
+      md5: 9db2b5ea688ced9dd37f82c2a84037f4.dir
+      size: 16210411
       nfiles: 26
     - path: ./learn2therm/blast.py
-      md5: 5ff28b0ed3bce21e5af9af91785f3a1a
-      size: 32311
+      md5: 291c944230b3579e5013a4477797edd8
+      size: 33342
     - path: ./pipeline/s1.3_protein_alignment.py
-      md5: ea35dfeaf16eda52795292314414d420
-      size: 10209
+      md5: 4f6c06a72ee0e9546aef7a50b62fa0c5
+      size: 10328
     params:
       params.yaml:
         get_protein_blast_scores.dask_cluster_class: SLURMCluster
         get_protein_blast_scores.dev_sample_pairs:
         get_protein_blast_scores.max_protein_length: 250
+        get_protein_blast_scores.method: diamond
         get_protein_blast_scores.method_blast_params:
           num_threads: 6
           word_size: 3
@@ -424,9 +421,81 @@ stages:
         get_protein_blast_scores.save_frequency: 25000
     outs:
     - path: ./data/metrics/s1.3_metrics.yaml
-      md5: c6e702e9cbcb8a879b5f5b60a2f935f4
-      size: 154
+      md5: e75d542e5159fe907e82697f486ba236
+      size: 159
     - path: ./data/protein_pairs/
-      md5: 44f1a16cda599db2c26907d5aefe1b60.dir
-      size: 6151440172
-      nfiles: 89900
+      md5: edf6d331dc1de4968a7b50d836bcfbb8.dir
+      size: 3772595241
+      nfiles: 333
+  compare_to_Tm:
+    cmd: python ./pipeline/s2.2_compare_to_Tm.py
+    deps:
+    - path: ./data/proteins
+      md5: 57724bc351619b85c205a65f2f7bfd73.dir
+      size: 7997391585
+      nfiles: 239
+    - path: ./data/taxa.parquet
+      md5: e62b6a3fbb8232e4dfeca04c863ba761
+      size: 6487331
+    - path: ./pipeline/s2.2_compare_to_Tm.py
+      md5: 3ebee8865063b4dae40499076c34439b
+      size: 12891
+    outs:
+    - path: ./data/validation/tm/metrics.yaml
+      md5: 126e0016299dfb134476be3f63c61a2c
+      size: 93
+    - path: ./data/validation/tm/ogt_vs_tm.csv
+      md5: 91980e6f94a53a394c3bd968addcd640
+      size: 166177
+    - path: ./data/validation/tm/ogt_vs_tm_check.png
+      md5: adf2de79b83baecbc9fa975b08eba5ab
+      size: 208886
+  get_hait_pairs:
+    cmd: python ./pipeline/s2.1_get_hait_pairs.py
+    deps:
+    - path: ./pipeline/s2.1_get_hait_pairs.py
+      md5: 8a04d81f8a3c6ab7099407c7db892a17
+      size: 4100
+    outs:
+    - path: ./data/validation/hait_pairs.csv
+      md5: a40fd24b027407ade78599adfeb94428
+      size: 939959
+  run_hait_alignment:
+    cmd: python ./pipeline/s2.3_run_hait_alignment.py
+    deps:
+    - path: ./data/validation/hait_pairs.csv
+      md5: a40fd24b027407ade78599adfeb94428
+      size: 939959
+    - path: ./learn2therm/blast.py
+      md5: 291c944230b3579e5013a4477797edd8
+      size: 33342
+    - path: ./pipeline/s2.3_run_hait_alignment.py
+      md5: adb29e20850fdc605e978a29d0926533
+      size: 3252
+    params:
+      params.yaml:
+        get_protein_blast_scores.method: diamond
+        get_protein_blast_scores.method_blast_params:
+          num_threads: 6
+          word_size: 3
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          threshold: 11
+          ungapped: false
+          evalue: 1e-05
+          qcov_hsp_perc: 75
+        get_protein_blast_scores.method_diamond_params:
+          num_threads: 6
+          sensitivity: ultra-sensitive
+          iterate: false
+          global_ranking:
+          gapopen: 11
+          gapextend: 1
+          matrix: BLOSUM62
+          evalue: 1e-05
+          hsp_cov: 75
+    outs:
+    - path: ./data/validation/hait_aligned_scores.csv
+      md5: 560d53ffe1ac2bd32d89169d148ec584
+      size: 1154438

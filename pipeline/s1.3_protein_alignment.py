@@ -202,13 +202,18 @@ def main():
             ) as futures:
                 if futures is None:
                     complete = True
-                # otherwise get back calculations
-                for i, future in enumerate(futures):
-                    logger.debug(f"Ran {i} futures")
-                    if i >= params['save_frequency']:
-                        break
+                else:
+                    # otherwise get back calculations
+                    for i, future in enumerate(futures):
+                        logger.debug(f"Ran {i} futures")
+                        if i >= params['save_frequency']:
+                            break
         # close the cluster while we compute metrics and DVC does its thing
-        cluster.close()
+        try:
+            cluster.close()
+            time.sleep(15)
+        except:
+            pass
         logger.info("Cluster closed, DVC checkpoint")
 
         # give a second for the client to close

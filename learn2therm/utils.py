@@ -2,7 +2,6 @@
 import logging
 import distributed
 
-
 class WorkerLogger(logging.Logger):
     """Logger that will supply worker name when logging."""
     def _log(self, level, msg, args, exc_info=None, extra=None):
@@ -48,3 +47,4 @@ def start_logger_if_necessary(logger_name: str, log_file: str, log_level, filemo
         else:
             logger.handlers[-1] = fh
     return logger
+
