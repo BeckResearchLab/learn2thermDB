@@ -499,3 +499,17 @@ stages:
     - path: ./data/validation/hait_aligned_scores.csv
       md5: 560d53ffe1ac2bd32d89169d148ec584
       size: 1154438
+  compare_hait_alignment:
+    cmd: python ./pipeline/s2.4_compare_hait_alignment.py
+    deps:
+    - path: ./data/validation/hait_aligned_scores.csv
+      md5: 560d53ffe1ac2bd32d89169d148ec584
+      size: 1154438
+    - path: ./pipeline/s2.4_compare_hait_alignment.py
+      md5: 9742eb743b1869f3d7db386f7c956ab3
+      size: 4580
+    outs:
+    - path: ./data/validation/hait_alignment/
+      md5: c8079ea00f45f1656ca24bd5d332ccbe.dir
+      size: 297866
+      nfiles: 4
