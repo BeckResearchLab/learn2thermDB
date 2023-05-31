@@ -186,3 +186,11 @@ stages:
     plots:
     - ./data/validation/hait_alignment/:
         cache: false
+  
+  get_HMM_profiles:
+    cmd: python ./pipeline/s2.5_get_HMM_profiles.py
+    outs:
+    - ./data/validation/hmmer/Pfam-A.hmm
+    metrics:
+    - ./data/validation/hmmer/metrics.yaml:
+        cache: false
