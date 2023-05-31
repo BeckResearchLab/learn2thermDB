@@ -506,10 +506,10 @@ stages:
       md5: 560d53ffe1ac2bd32d89169d148ec584
       size: 1154438
     - path: ./pipeline/s2.4_compare_hait_alignment.py
-      md5: 9742eb743b1869f3d7db386f7c956ab3
-      size: 4580
+      md5: e152f95ff177f72fc3b717d8d0dae241
+      size: 4582
     outs:
     - path: ./data/validation/hait_alignment/
-      md5: c8079ea00f45f1656ca24bd5d332ccbe.dir
-      size: 297866
+      md5: 94fd345812f657646e16e9a1c7e3388e.dir
+      size: 416548
       nfiles: 4
