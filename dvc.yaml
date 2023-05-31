@@ -182,6 +182,7 @@ stages:
     deps:
     - ./pipeline/s2.4_compare_hait_alignment.py
     - ./data/validation/hait_aligned_scores.csv
+    - ./data/database.ddb
     plots:
     - ./data/validation/hait_alignment/:
         cache: false
