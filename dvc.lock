@@ -502,6 +502,9 @@ stages:
   compare_hait_alignment:
     cmd: python ./pipeline/s2.4_compare_hait_alignment.py
     deps:
+    - path: ./data/database.ddb
+      md5: c4dcb2c41d125677901a6a5d985cd136
+      size: 16853250048
     - path: ./data/validation/hait_aligned_scores.csv
       md5: 560d53ffe1ac2bd32d89169d148ec584
       size: 1154438
