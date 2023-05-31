@@ -60,26 +60,23 @@ def download_ftp_file(server, remote_file, local_file):
     ftp.quit()
 
 if __name__ == "__main__":
-    # DVC tracked parameters
-    with open("./params.yaml", "r") as stream:
-        params = yaml_load(stream)['get_raw_data_HMM']
-    logger.info(f"Loaded parameters: {params}")
-
-
     try:
         os.makedirs('./data/HMM', exist_ok=True)
     except OSError as e:
         logger.error(f'Error creating directory: {e}')
 
+    # make the output directory
+    os.makedirs('./data/validation/hmmer', exist_ok=True)
+
     # download the raw data into temporary files 
-    local_dir = './data/HMM/Pfam-A.hmm.gz'
+    local_dir = './data/validation/hmmer/Pfam-A.hmm.gz'
     remote_file = '/pub/databases/Pfam/current_release/Pfam-A.hmm.gz'
     
     download_ftp_file(FTP_ADDRESS, remote_file, local_dir)
     logger.info("download from FTP")
 
     # unzip the files
-    extracted_file = './data/HMM/Pfam-A.hmm'
+    extracted_file = './data/validation/hmmer/Pfam-A.hmm'
 
     with gzip.open(local_dir, 'rb') as f_in:
         with open(extracted_file, 'wb') as f_out:
@@ -87,13 +84,10 @@ if __name__ == "__main__":
 
     logger.info(f'Extracted the file can be found in: {extracted_file}')
 
-
     # save metrics
     date_pulled = str(datetime.datetime.now().strftime("%m/%d/%Y"))
-    with open('./data/HMM/HMM_pulled_timestamp', 'w') as file:
-        file.write(date_pulled)
                       
     metrics = {}
-    metrics['HMM_pulled_date'] = date_pulled
-    with open('./data/metrics/s1.X_metrics.yaml', "w") as stream:
+    metrics['HMM_pulled_date'] = str(date_pulled)
+    with open('./data/validation/hmmer/metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)
