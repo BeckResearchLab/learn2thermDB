@@ -192,5 +192,5 @@ stages:
     outs:
     - ./data/validation/hmmer/Pfam-A.hmm
     metrics:
-    - ./data/validation/hmmer/metrics.yaml:
+    - ./data/validation/hmmer/s2.5_metrics.yaml:
         cache: false

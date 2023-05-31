@@ -522,6 +522,6 @@ stages:
     - path: ./data/validation/hmmer/Pfam-A.hmm
       md5: eb895a2152c0e977cb6cf1fee27e3003
       size: 1572192814
-    - path: ./data/validation/hmmer/metrics.yaml
+    - path: ./data/validation/hmmer/s2.5_metrics.yaml
       md5: 118fa7426d2980e00004767d9f855821
       size: 28

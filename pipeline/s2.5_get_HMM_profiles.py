@@ -89,5 +89,5 @@ if __name__ == "__main__":
                       
     metrics = {}
     metrics['HMM_pulled_date'] = str(date_pulled)
-    with open('./data/validation/hmmer/metrics.yaml', "w") as stream:
+    with open('./data/validation/hmmer/s2.5_metrics.yaml', "w") as stream:
         yaml_dump(metrics, stream)
