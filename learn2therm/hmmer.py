@@ -34,13 +34,13 @@ def hmmpress_hmms(hmms_path, pfam_data_folder):
     hmms = pyhmmer.plan7.HMMFile(hmms_path)
     pyhmmer.hmmer.hmmpress(hmms, pfam_data_folder)
 
-def prefetch_targets(hmms_path: str):
+def prefetch_targets(pressed_path: str):
     """
     Prefetch HMM profiles from a given HMM database.
 
     Parameters
     ----------
-    hmms_path : str
+    pressed_path : str
         Path to the pressed HMM database.
 
     Returns
@@ -50,7 +50,7 @@ def prefetch_targets(hmms_path: str):
     """
     # amino acid alphabet and prefetched inputs
     amino_acids = pyhmmer.easel.Alphabet.amino()
-    optimized_profiles = list(pyhmmer.plan7.HMMPressedFile(hmms_path))
+    optimized_profiles = list(pyhmmer.plan7.HMMPressedFile(pressed_path))
     targets = pyhmmer.plan7.OptimizedProfileBlock(
         amino_acids, optimized_profiles)
     return targets

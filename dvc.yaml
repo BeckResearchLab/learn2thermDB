@@ -212,4 +212,23 @@ stages:
     metrics:
     - ./data/validation/hmmer/s2.6_metrics.yaml:
         cache: false
+  run_hmmer:
+    cmd: python ./pipeline/s2.7_run_hmmer.py
+    deps:
+    - ./pipeline/s2.7_run_hmmer.py
+    - ./data/validation/hmmer/Pfam-A.hmm
+    - ./data/databse.ddb
+    outs:
+    - ./data/validation/hmmer/hmmer_output/
+    params:
+    - run_hmmer.e_value
+    - run_hmmer.njobs
+    - run_hmmer.jaccard_threshold
+    - run_hmmer.chunk_size
+    - run_hmmer.dev_sample_data
+    - run_hmmer.prefetch
+    metrics:
+    - ./data/validation/hmmer/s2.7_metrics.yaml:
+        cache: false
+
   
