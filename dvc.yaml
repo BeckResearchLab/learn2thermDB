@@ -194,3 +194,22 @@ stages:
     metrics:
     - ./data/validation/hmmer/s2.5_metrics.yaml:
         cache: false
+  hmmer_hait:
+    cmd: python ./pipeline/s2.6_hmmer_hait.py
+    deps:
+    - ./pipeline/s2.6_hmmer_hait.py
+    - ./data/validation/hmmer/Pfam-A.hmm
+    - ./data/validation/hait_pairs.csv
+    outs:
+    - ./data/validation/hmmer/hait_scores.csv
+    params:
+    - run_hmmer.e_value
+    - run_hmmer.njobs
+    - run_hmmer.jaccard_threshold
+    plots:
+    - ./data/validation/hmmer/hait_jaccard.png:
+        cache: false
+    metrics:
+    - ./data/validation/hmmer/s2.6_metrics.yaml:
+        cache: false
+  

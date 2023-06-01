@@ -525,3 +525,30 @@ stages:
     - path: ./data/validation/hmmer/s2.5_metrics.yaml
       md5: 118fa7426d2980e00004767d9f855821
       size: 28
+  hmmer_hait:
+    cmd: python ./pipeline/s2.6_hmmer_hait.py
+    deps:
+    - path: ./data/validation/hait_pairs.csv
+      md5: a40fd24b027407ade78599adfeb94428
+      size: 939959
+    - path: ./data/validation/hmmer/Pfam-A.hmm
+      md5: eb895a2152c0e977cb6cf1fee27e3003
+      size: 1572192814
+    - path: ./pipeline/s2.6_hmmer_hait.py
+      md5: 2ff1d360940f185288b3874776045646
+      size: 4559
+    params:
+      params.yaml:
+        run_hmmer.e_value: 1e-07
+        run_hmmer.jaccard_threshold: 0.79
+        run_hmmer.njobs: 8
+    outs:
+    - path: ./data/validation/hmmer/hait_jaccard.png
+      md5: 2965697cabf31f1f9047a65b13d428ec
+      size: 44789
+    - path: ./data/validation/hmmer/hait_scores.csv
+      md5: d2d83d8063150c72a3643448d98b7a2c
+      size: 127097
+    - path: ./data/validation/hmmer/s2.6_metrics.yaml
+      md5: 58575b315af5958b852a328bff98aa09
+      size: 140

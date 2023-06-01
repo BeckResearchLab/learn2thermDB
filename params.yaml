@@ -17,14 +17,14 @@ parse_proteins:
 label_taxa:
   ogt_threshold: 40.0                # binary threshold to consider something as thermophilic
 get_16s_blast_scores:
-  num_threads: 20                        # number of cpus to run in parallel
-  word_size: 28                    # size of words for initial exact matching of nucleotides
-  gapopen_penalty: 2               # cost to open a gap
-  gapextend_penalty: 1             # cost to extend gap
-  reward: 1                        # reward for nucleotide match
-  penalty: -2                       # cost of nucleotide mismatch
-  ungapped: false                  # whether to do ungapped alignment
-  dev_n_sample: null                     # number of thermophiles and mesophiles to sample for testing
+  num_threads: 20                    # number of cpus to run in parallel
+  word_size: 28                      # size of words for initial exact matching of nucleotides
+  gapopen_penalty: 2                 # cost to open a gap
+  gapextend_penalty: 1               # cost to extend gap
+  reward: 1                          # reward for nucleotide match
+  penalty: -2                        # cost of nucleotide mismatch
+  ungapped: false                    # whether to do ungapped alignment
+  dev_n_sample: null                     
   blast_metrics:
     - local_gap_compressed_percent_id
     - scaled_local_query_percent_id
@@ -41,9 +41,9 @@ get_16s_blast_scores:
     - bit_score
 label_all_pairs:
   blast_metric_thresholds:                  # define which metrics to use to label a taxa pair 
-    scaled_local_query_percent_id:    # metric name
-      thresh: 0.82                            # float threshold
-      greater: true                         # greater than threshold is good
+    scaled_local_query_percent_id:          # metric name
+      thresh: 0.82                          # float threshold
+      greater: true                         # greater than threshold is kept
     query_align_cov:
       thresh: 0.9
       greater: true
@@ -52,32 +52,32 @@ label_all_pairs:
       greater: true
   dev_only_one_file: false
 get_protein_blast_scores:
-  dask_cluster_class: 'SLURMCluster'
-  max_protein_length: 250            # only consider proteins with length less than number
-  method: 'diamond'
+  dask_cluster_class: 'SLURMCluster'        # dask cluster class used to distribute workers. Update .config/dask as well
+  max_protein_length: 250                   # only consider proteins with length less than number
+  method: 'diamond'                         # which alighern (blast or diamond) to use
   n_jobs: 80
-  save_frequency: 25000
+  save_frequency: 25000                     # how many taxa pairs to finish aligning between dvc checkpoints
   dev_sample_pairs: null
-  method_blast_params:
-    num_threads: 6                        # number of cpus to run in parallel         
-    word_size: 3                    # size of words for initial exact matching of nucleotides
-    gapopen: 11               # cost to open a gap
-    gapextend: 1             # cost to extend gap
+  method_blast_params:                      # see https://biopython.org/docs/1.76/api/Bio.Blast.Applications.html
+    num_threads: 6                          # number of threads to run on alignment worker         
+    word_size: 3                            # size of words for initial exact matching of nucleotides
+    gapopen: 11                             # cost to open a gap
+    gapextend: 1                            # cost to extend gap
     matrix: 'BLOSUM62'
-    threshold: 11          # minumum score for word to be added to blast lookup table
-    ungapped: false                  # whether to do ungapped alignment
-    evalue: .00001               # minimum evalue
-    qcov_hsp_perc: 75            # minimum percent query coverage
-  method_diamond_params:
+    threshold: 11                           # minumum score for word to be added to blast lookup table
+    ungapped: false                         # whether to do ungapped alignment
+    evalue: .00001                          # minimum evalue
+    qcov_hsp_perc: 75                       # minimum percent query coverage
+  method_diamond_params:                    # see https://github.com/bbuchfink/diamond
     num_threads: 6
     sensitivity: 'ultra-sensitive'
-    iterate: false                  # start with low sensitivity and only go lower towards target sensitivity for failure
-    global_ranking: null           # hard limit on the number of Smith Waterman extensions that will be computed for each query.
+    iterate: false                          # start with low sensitivity and only go lower towards target sensitivity for failure
+    global_ranking: null                    # hard limit on the number of Smith Waterman extensions that will be computed for each query.
     gapopen: 11
     gapextend: 1
     matrix: 'BLOSUM62'
     evalue: .00001
-    hsp_cov: 75                    # minumum coverage of alignment  
+    hsp_cov: 75                             # minumum coverage of both strands  
   blast_metrics:
     - local_gap_compressed_percent_id
     - scaled_local_query_percent_id
@@ -92,3 +92,8 @@ get_protein_blast_scores:
     - subject_align_len
     - subject_align_cov
     - bit_score
+run_hmmer:
+  e_value: .0000001
+  chunk_size: 10000
+  njobs: 8
+  jaccard_threshold: 0.79
