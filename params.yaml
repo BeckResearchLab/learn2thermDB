@@ -94,8 +94,9 @@ get_protein_blast_scores:
     - bit_score
 run_hmmer:
   e_value: .0000001
-  chunk_size: 5000
+  chunk_size: 100
   prefetch: true
-  njobs: 1
+  njobs: 32
+  scan: false
   jaccard_threshold: 0.79
-  dev_sample_data: 10000
+  dev_sample_data: 200000
