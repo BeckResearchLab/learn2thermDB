@@ -9,6 +9,10 @@ from joblib import Parallel, delayed
 import pandas as pd
 import pyhmmer
 
+from typing import Union
+import logging
+logger = logging.getLogger(__name__)
+
 def hmmpress_hmms(hmms_path, pfam_data_folder):
     """
     Presses the HMMs in the given HMM database and stores the resulting files in a specified directory.
@@ -90,12 +94,13 @@ def save_to_digital_sequences(dataframe: pd.DataFrame):
     return seqblock
 
 def run_pyhmmer(
-        seqs: pyhmmer.easel.DigitalSequenceBlock,
+        seqs: Union[pyhmmer.easel.DigitalSequenceBlock, str],
         hmms_path: str = None,
         pressed_path: str = None,
-        prefetch: bool = False,
+        prefetch: Union[bool, pyhmmer.plan7.OptimizedProfileBlock] = False,
         output_file: str = None,
         cpu: int = 4,
+        scan: bool=True,
         eval_con: float = 1e-10):
     """
     Run HMMER's hmmscan program on a set of input sequences using with HMMs from a database.
@@ -109,12 +114,17 @@ def run_pyhmmer(
 
     prefetch : bool, optional
         Specifies how the HMM are stored in meomry.
+        Also, can be a pyhmmer.plan7.OptimizedProfileBlock object.
+
 
     output_file : str, optional
         Path to the output file if the users wants to write the file.
 
     cpu : int, optional
         The number of CPUs to use. Default is 4.
+    
+    scan: bool, optional
+        Whether to run hmmscan or hmmsearch. Default is True (hmmscan).
 
     eval_con : float, optional
         E-value threshold for domain reporting. Default is 1e-10.
@@ -140,17 +150,32 @@ def run_pyhmmer(
     if output_file is not None and not output_file.endswith('.domtblout'):
         output_file = f"{os.path.splitext(output_file)[0]}.domtblout"
 
-
     # HMM profile modes
     if prefetch:
-        if pressed_path is None:
-            raise ValueError("Spcified prefetch but did not pass a path to the .hmm file")
-        targets = prefetch_targets(pressed_path)
+        if isinstance(prefetch, pyhmmer.plan7.OptimizedProfileBlock):
+            targets = prefetch
+        elif pressed_path is None:
+            raise ValueError("Spcified prefetch but did not pass a path to pressef iles")
+        else:
+            targets = prefetch_targets(pressed_path)
     else:
+        if hmms_path is None:
+            raise ValueError("Spcified prefetch but did not pass a path to the .hmm file")
         targets = pyhmmer.plan7.HMMFile(hmms_path)
 
+    # are the sequences preloaded?
+    if isinstance(seqs, str):
+        seqs = pyhmmer.easel.SequenceFile(seqs, format='fasta', digital=True, alphabet=pyhmmer.easel.Alphabet.amino())
+    else:
+        pass
+
     # HMMscan execution with or without saving output to file
-    all_hits = list(pyhmmer.hmmer.hmmscan(seqs, targets, cpus=cpu, E=eval_con))
+    if scan:
+        logger.info(f"Running hmmscan... {len(seqs)} sequences against {len(targets)} HMMs, using {cpu} CPUs")
+        all_hits = pyhmmer.hmmer.hmmscan(seqs, targets, cpus=cpu, E=eval_con)
+    else:
+        logger.info(f"Running hmmsearch... {len(targets)} HMMs against {len(seqs)} seqs, using {cpu} CPUs")
+        all_hits = pyhmmer.hmmer.hmmsearch(targets, seqs, cpus=cpu, E=eval_con)
     # check if we should save the output
     if output_file is not None:
         with open(output_file, "wb") as dst:
@@ -158,7 +183,7 @@ def run_pyhmmer(
                 hits.write(dst, format="domains", header=i == 0)
     return all_hits
 
-def parse_pyhmmer(all_hits, chunk_query_ids):
+def parse_pyhmmer(all_hits, chunk_query_ids, scanned: bool = True):
     """
     Parses the TopHit pyhmmer object getting the query and accession IDs and saves to a DataFrame
 
@@ -181,8 +206,12 @@ def parse_pyhmmer(all_hits, chunk_query_ids):
     for top_hits in all_hits:
         for hit in top_hits:
             # extract the query and accession IDs and decode the query ID
-            query_id = hit.hits.query_name.decode('utf-8')
-            accession_id = hit.accession.decode('utf-8')
+            if scanned:
+                query_id = hit.hits.query_name.decode('utf-8')
+                accession_id = hit.accession.decode('utf-8')
+            else:
+                query_id = hit.name.decode('utf-8')
+                accession_id = hit.hits.query_accession.decode('utf-8')
 
             # if the query_id already exists in the dictionary, append the accession_id
             # to the existing value

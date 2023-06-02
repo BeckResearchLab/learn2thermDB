@@ -552,3 +552,32 @@ stages:
     - path: ./data/validation/hmmer/s2.6_metrics.yaml
       md5: 58575b315af5958b852a328bff98aa09
       size: 140
+  run_hmmer:
+    cmd: python ./pipeline/s2.7_run_hmmer.py
+    deps:
+    - path: ./data/database.ddb
+      md5: c4dcb2c41d125677901a6a5d985cd136
+      size: 16853250048
+    - path: ./data/validation/hmmer/Pfam-A.hmm
+      md5: eb895a2152c0e977cb6cf1fee27e3003
+      size: 1572192814
+    - path: ./pipeline/s2.7_run_hmmer.py
+      md5: cdc8a993cab59c8422081aabf0a5426d
+      size: 7573
+    params:
+      params.yaml:
+        run_hmmer.chunk_size: 2000
+        run_hmmer.dev_sample_data:
+        run_hmmer.e_value: 1e-07
+        run_hmmer.jaccard_threshold: 0.79
+        run_hmmer.njobs: 32
+        run_hmmer.prefetch: true
+        run_hmmer.scan: false
+    outs:
+    - path: ./data/validation/hmmer/hmmer_outputs/
+      md5: 9253a6e84e9af423db7fc976b89a0b0d.dir
+      size: 46762601
+      nfiles: 6
+    - path: ./data/validation/hmmer/s2.7_metrics.yaml
+      md5: d8f1372462b53ff147e28d216bf7deac
+      size: 127

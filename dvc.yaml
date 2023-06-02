@@ -217,14 +217,15 @@ stages:
     deps:
     - ./pipeline/s2.7_run_hmmer.py
     - ./data/validation/hmmer/Pfam-A.hmm
-    - ./data/databse.ddb
+    - ./data/database.ddb
     outs:
-    - ./data/validation/hmmer/hmmer_output/
+    - ./data/validation/hmmer/hmmer_outputs/
     params:
     - run_hmmer.e_value
     - run_hmmer.njobs
     - run_hmmer.jaccard_threshold
     - run_hmmer.chunk_size
+    - run_hmmer.scan
     - run_hmmer.dev_sample_data
     - run_hmmer.prefetch
     metrics:
