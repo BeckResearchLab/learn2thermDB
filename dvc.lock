@@ -464,8 +464,8 @@ stages:
     cmd: python ./pipeline/s2.3_run_hait_alignment.py
     deps:
     - path: ./data/validation/hait_pairs.csv
-      md5: a40fd24b027407ade78599adfeb94428
-      size: 939959
+      md5: da510eb88db40cbc95b514fd10fd90bd
+      size: 1030184
     - path: ./learn2therm/blast.py
       md5: 291c944230b3579e5013a4477797edd8
       size: 33342
@@ -497,8 +497,8 @@ stages:
           hsp_cov: 75
     outs:
     - path: ./data/validation/hait_aligned_scores.csv
-      md5: 560d53ffe1ac2bd32d89169d148ec584
-      size: 1154438
+      md5: 0008a3ee3cec87307c5085bad9c85819
+      size: 1261616
   compare_hait_alignment:
     cmd: python ./pipeline/s2.4_compare_hait_alignment.py
     deps:
@@ -506,15 +506,15 @@ stages:
       md5: c4dcb2c41d125677901a6a5d985cd136
       size: 16853250048
     - path: ./data/validation/hait_aligned_scores.csv
-      md5: 560d53ffe1ac2bd32d89169d148ec584
-      size: 1154438
+      md5: 0008a3ee3cec87307c5085bad9c85819
+      size: 1261616
     - path: ./pipeline/s2.4_compare_hait_alignment.py
-      md5: e152f95ff177f72fc3b717d8d0dae241
-      size: 4582
+      md5: 88709a87998b4ca7d946a6b37d170c4d
+      size: 4617
     outs:
     - path: ./data/validation/hait_alignment/
-      md5: 94fd345812f657646e16e9a1c7e3388e.dir
-      size: 416548
+      md5: 91689607b18f0eee2b03359714a23d2a.dir
+      size: 407683
       nfiles: 4
   get_HMM_profiles:
     cmd: python ./pipeline/s2.5_get_HMM_profiles.py

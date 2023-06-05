@@ -92,6 +92,7 @@ if __name__ == '__main__':
         else:
             x = list(hait_percentiles[metric].values())
         y = list(remaining_data_subdict.values())
+        ax.set_ylim(0, 1.1*max(y))
         logger.info(f"{x}, {y}")
         sns.lineplot(x=x, y=y, ax=ax, label=metric)
         if metric == 'all':
