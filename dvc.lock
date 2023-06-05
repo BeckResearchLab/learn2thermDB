@@ -454,12 +454,12 @@ stages:
     cmd: python ./pipeline/s2.1_get_hait_pairs.py
     deps:
     - path: ./pipeline/s2.1_get_hait_pairs.py
-      md5: 8a04d81f8a3c6ab7099407c7db892a17
-      size: 4100
+      md5: 95c0502ea5adb068797b8a152b936978
+      size: 4646
     outs:
     - path: ./data/validation/hait_pairs.csv
-      md5: a40fd24b027407ade78599adfeb94428
-      size: 939959
+      md5: da510eb88db40cbc95b514fd10fd90bd
+      size: 1030184
   run_hait_alignment:
     cmd: python ./pipeline/s2.3_run_hait_alignment.py
     deps:
