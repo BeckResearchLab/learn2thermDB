@@ -31,9 +31,10 @@ import pyhmmer
 # local dependencies
 import learn2therm.database
 import learn2therm.utils
+import learn2therm.hmmer
 
 ## Paths
-OUTPUT_DIR = './data/protein_pairs/protein_pair_HMM_label/'
+OUTPUT_DIR = './data/validation/hmmer/'
 
 ## get environmental variables
 if 'LOGLEVEL' in os.environ:
@@ -43,6 +44,9 @@ else:
     LOGLEVEL = logging.INFO
 LOGNAME = __file__
 LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
+
+# start logger/connect to log file
+logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
 
 
 def create_accession_table():
@@ -57,36 +61,14 @@ def create_accession_table():
     learn2therm.database.L2TDatabase._create_protein_pairs_table(conn, './data/')
     # Create the proteins_from_pairs table
     conn.execute("""
-        CREATE TABLE proteins_from_pairs AS
+        CREATE TABLE pfam_mapping AS
         SELECT query_id AS pid, accession_id AS accession
-        FROM read_parquet('./data/protein_pairs/protein_pair_targets/*.parquet', binary_as_string=True)
+        FROM read_parquet('./data/validation/hmmer/hmmer_outputs/*.parquet', binary_as_string=True)
     """)
     # Committing DB
     conn.commit()
     conn.close()
-    return tmpdir, tmpdir+'/proteins_from_pairs.db'
-
-
-def preprocess_accessions(meso_acession, thermo_accession):
-    """
-    TODO
-    """
-    # Convert accessions to sets
-    meso_accession_set = set(meso_acession.split(';'))
-    thermo_accession_set = set(thermo_accession.split(';'))
-    return meso_accession_set, thermo_accession_set
-
-
-def calculate_jaccard_similarity(meso_accession_set, thermo_accession_set):
-    """
-    Calculates Jaccard similarity between meso_pid and thermo_pid pairs via their accessions.
-    """
-    # Calculate Jaccard similarity
-    intersection = len(meso_accession_set.intersection(thermo_accession_set))
-    union = len(meso_accession_set.union(thermo_accession_set))
-    jaccard_similarity = intersection / union if union > 0 else 0
-
-    return jaccard_similarity
+    return tmpdir, tmpdir+'/pfam_mapping.db'
 
 
 def process_pairs_table(dbpath, chunk_size:int, jaccard_threshold):
@@ -97,76 +79,61 @@ def process_pairs_table(dbpath, chunk_size:int, jaccard_threshold):
     conn = ddb.connect(dbpath, read_only=False)
 
     # Perform a join to get relevant information from the two tables
-    query1 = """
-        CREATE OR REPLACE TABLE joined_pairs AS 
-        SELECT p.meso_pid, p.thermo_pid, pr.accession AS meso_accession, pr2.accession AS thermo_accession
-        FROM pairs AS p
-        INNER JOIN proteins_from_pairs AS pr ON (p.meso_pid = pr.pid)
-        INNER JOIN proteins_from_pairs AS pr2 ON (p.thermo_pid = pr2.pid)
+    query_string = """
+        SELECT pairs.meso_pid, pairs.thermo_pid, mapping_meso.accession AS meso_accession, mapping_thermo.accession AS thermo_accession
+        FROM pairs
+        INNER JOIN pfam_mapping AS mapping_meso ON (pairs.meso_pid = mapping_meso.pid)
+        INNER JOIN pfam_mapping AS mapping_thermo ON (pairs.thermo_pid = mapping_thermo.pid)
     """
-    conn.execute(query1)
-    
-    # Define the evaluation function for the apply function
-    def evaluation_function(row, jaccard_threshold):
-        """TODO
-        """
-        # Get the accessions
-        meso_acc = row['meso_accession']
-        thermo_acc = row['thermo_accession']
-
-        # parsing accessions logic
-        if meso_acc == None and thermo_acc == None:
-            score = None
-            functional = None
-        elif meso_acc and thermo_acc:
-            # Preprocess the accessions
-            meso_acc_set, thermo_acc_set = preprocess_accessions(meso_acc, thermo_acc)
-            score = calculate_jaccard_similarity(meso_acc_set, thermo_acc_set)
-            functional = score > jaccard_threshold
-        else:
-            # Handle unmatched rows
-            score = None
-            functional = False
-        
-        return {'functional': functional, 'score': score}
-            
-
+    query_link = conn.execute(query_string)
         
     # Generate output parquet file
-    try:
-        # Execute the query
-        query = conn.execute("SELECT * FROM joined_pairs")
-        data_remaining = True
-        chunk_counter = 0  # Initialize the chunk counter
-        while data_remaining:
-            # Fetch the query result in chunks
-            query_chunk = query.fetch_df_chunk(chunk_size)
+    # Execute the query
+    data_remaining = True
+    chunk_counter = 0  # Initialize the chunk counter
+    while data_remaining:
+        # Fetch the query result in chunks
+        query_chunk = query.fetch_df_chunk(chunk_size)
 
-            # Check if there is data remaining
-            if query_chunk.empty:
-                data_remaining = False
-                break
+        # Check if there is data remaining
+        if query_chunk.empty:
+            data_remaining = False
+            break
 
+        # Calculate Jaccard similarity and determine functional status using apply function
+        query_chunk[['functional', 'score']] = query_chunk.apply(
+            learn2therm.hmmer.evaluation_function,
+            axis=1,
+            args=(jaccard_threshold,),
+            result_type='expand'
+        )
 
-            # Calculate Jaccard similarity and determine functional status using apply function
-            query_chunk[['functional', 'score']] = query_chunk.apply(evaluation_function, axis=1, args=(jaccard_threshold,), result_type='expand')
+        # Write DataFrame to parquet
+        chunk_counter += 1  # Increment the chunk counter
+        query_chunk = query_chunk[['meso_pid', 'thermo_pid', 'functional', 'score']]
+        query_chunk.to_parquet(f'{OUTPUT_DIR}{chunk_counter}_output.parquet')
+        logger.info(f'Chunk {chunk_counter} written to parquet')
 
-
-            # Write DataFrame to parquet
-            chunk_counter += 1  # Increment the chunk counter
-            query_chunk = query_chunk[['meso_pid', 'thermo_pid', 'functional', 'score']]
-            query_chunk.to_parquet(f'{OUTPUT_DIR}{chunk_counter}_output.parquet')
-
-    except IOError as e:
-        logger.warning(f"Error writing to parquet file: {e}")
+    # Commit the changes to the database
+    conn.execute(f"CREATE TABLE labels AS SELECT * FROM read_parquet('{OUTPUT_DIR}/*.parquet')")
+    logger.info("Saved labels to temporary database")
 
     conn.close()
 
 
 
 if __name__ == '__main__':
-    # start logger/connect to log file
-    logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL, filemode='w')
+
+    with open("./params.yaml", "r") as stream:
+        params = yaml_load(stream)['run_hmmer']
+
+    tracker = OfflineEmissionsTracker(
+        project_name=f"s2.8",
+        output_dir='./data/',
+        country_iso_code='USA',
+        region='Washington'
+    ) 
+    tracker.start()
 
     logger.info(f"Running script:{__file__}")
 
@@ -181,29 +148,38 @@ if __name__ == '__main__':
 
     logger.info(f"Directory of output: {OUTPUT_DIR}, path to database {db_path}")
 
-
-
-    logger.info('Creating process pair table') 
-    threshold = 0.5  # Set your own threshold
-    chunksize = 5 # Vector size (2048 by default) * vector_multiple (we specify this).
+    logger.info('Creating pfam table') 
+    threshold = params['jaccard_threshold']  # Set your own threshold
+    chunksize = params['chunk_size'] # Vector size (2048 by default) * vector_multiple (we specify this).
     process_pairs_table(db_path, chunksize, threshold)
     logger.info('Pairs table processing completed')
 
 
-    conn = ddb.connect(db_path, read_only=False)
-    logger.info("Connected to DB")
+    conn = ddb.connect(db_path, read_only=True)
+    logger.info("Connected to DB to get statistics")
 
-    # Check if all pids in proteins table exist in pairs table
-    query2 = """
-        SELECT COUNT(*) 
-        FROM proteins_from_pairs
-        WHERE pid NOT IN (
-        SELECT DISTINCT(meso_pid) FROM pairs
-        UNION
-        SELECT DISTINCT(thermo_pid) FROM pairs
-        )
-        """
-    result = conn.execute(query2).fetchone()
-    missing_count = result[0]
+    # get some metrics
+    metrics = {}
+    count_pairs = conn.execute("SELECT COUNT(*) FROM pairs").fetchone()[0][0]
+    count_labels = conn.execute("SELECT COUNT(*) FROM labels").fetchone()[0][0]
+    assert count_pairs == count_labels, "Number of pairs and labels do not match"
+    count_found = conn.execute("SELECT COUNT(*) FROM labels WHERE functional IS NOT NA").fetchone()[0][0]
+    fraction_found = 1 - float(count_found/count_pairs)
 
-    logger.debug(f"Number of missing pids: {missing_count}")
+    emissions = float(tracker.stop())
+
+    min_jaccard = float(conn.execute("SELECT MIN(score) FROM labels").fetchone()[0][0])
+    mean_jaccard = float(conn.execute("SELECT AVG(score) FROM labels").fetchone()[0][0])
+    fraction_functional = float(conn.execute("SELECT COUNT(*) FROM labels WHERE functional").fetchone()[0][0]/count_found)
+    metrics = {
+        'fraction_found': fraction_found,
+        'min_jaccard': min_jaccard,
+        'mean_jaccard': mean_jaccard,
+        'fraction_functional': fraction_functional,
+        'co2': emissions
+    }
+
+    with open('./data/validation/hmmer/s2.8_metrics.yaml', 'w') as f:
+        yaml_dump(metrics, f)
+
+    
