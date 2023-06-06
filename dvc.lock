@@ -529,29 +529,32 @@ stages:
     cmd: python ./pipeline/s2.6_hmmer_hait.py
     deps:
     - path: ./data/validation/hait_pairs.csv
-      md5: a40fd24b027407ade78599adfeb94428
-      size: 939959
+      md5: da510eb88db40cbc95b514fd10fd90bd
+      size: 1030184
     - path: ./data/validation/hmmer/Pfam-A.hmm
       md5: eb895a2152c0e977cb6cf1fee27e3003
       size: 1572192814
+    - path: ./learn2therm/hmmer.py
+      md5: 833ecb222cf4afa159138e2bd44ec3a0
+      size: 10547
     - path: ./pipeline/s2.6_hmmer_hait.py
-      md5: 2ff1d360940f185288b3874776045646
-      size: 4559
+      md5: 19324d0cc3e733ed38c9ba07c97032fe
+      size: 5038
     params:
       params.yaml:
-        run_hmmer.e_value: 1e-07
+        run_hmmer.e_value: 1e-25
         run_hmmer.jaccard_threshold: 0.79
-        run_hmmer.njobs: 8
+        run_hmmer.njobs: 32
     outs:
     - path: ./data/validation/hmmer/hait_jaccard.png
-      md5: 2965697cabf31f1f9047a65b13d428ec
-      size: 44789
+      md5: 33d1a19ac395b350014275f37f828c2a
+      size: 47439
     - path: ./data/validation/hmmer/hait_scores.csv
-      md5: d2d83d8063150c72a3643448d98b7a2c
-      size: 127097
+      md5: b81cd3ba6a0fea46dd642ca92ace8ef3
+      size: 113617
     - path: ./data/validation/hmmer/s2.6_metrics.yaml
-      md5: 58575b315af5958b852a328bff98aa09
-      size: 140
+      md5: 9894e9e0d2be3a8747849ba1931ab2c6
+      size: 151
   run_hmmer:
     cmd: python ./pipeline/s2.7_run_hmmer.py
     deps:
@@ -561,6 +564,9 @@ stages:
     - path: ./data/validation/hmmer/Pfam-A.hmm
       md5: eb895a2152c0e977cb6cf1fee27e3003
       size: 1572192814
+    - path: ./learn2therm/hmmer.py
+      md5: 833ecb222cf4afa159138e2bd44ec3a0
+      size: 10547
     - path: ./pipeline/s2.7_run_hmmer.py
       md5: cdc8a993cab59c8422081aabf0a5426d
       size: 7573
@@ -568,16 +574,16 @@ stages:
       params.yaml:
         run_hmmer.chunk_size: 2000
         run_hmmer.dev_sample_data:
-        run_hmmer.e_value: 1e-07
+        run_hmmer.e_value: 1e-25
         run_hmmer.jaccard_threshold: 0.79
         run_hmmer.njobs: 32
         run_hmmer.prefetch: true
-        run_hmmer.scan: false
+        run_hmmer.scan: true
     outs:
     - path: ./data/validation/hmmer/hmmer_outputs/
-      md5: 9253a6e84e9af423db7fc976b89a0b0d.dir
-      size: 46762601
+      md5: d55b04c674756d331ccb7dd19a2124ac.dir
+      size: 46230215
       nfiles: 6
     - path: ./data/validation/hmmer/s2.7_metrics.yaml
-      md5: d8f1372462b53ff147e28d216bf7deac
-      size: 127
+      md5: 973d6995b0e23aa3a7d4550c907ae3e1
+      size: 126

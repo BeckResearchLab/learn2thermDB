@@ -101,7 +101,9 @@ def run_pyhmmer(
         output_file: str = None,
         cpu: int = 4,
         scan: bool=True,
-        eval_con: float = 1e-10):
+        eval_con: float = 1e-10,
+        **kwargs
+    ):
     """
     Run HMMER's hmmscan program on a set of input sequences using with HMMs from a database.
     Parameters
@@ -170,12 +172,22 @@ def run_pyhmmer(
         pass
 
     # HMMscan execution with or without saving output to file
-    if scan:
-        logger.info(f"Running hmmscan... {len(seqs)} sequences against {len(targets)} HMMs, using {cpu} CPUs")
-        all_hits = pyhmmer.hmmer.hmmscan(seqs, targets, cpus=cpu, E=eval_con)
+    if hasattr(seqs, '__len__'):
+        seqs_size = len(seqs)
     else:
-        logger.info(f"Running hmmsearch... {len(targets)} HMMs against {len(seqs)} seqs, using {cpu} CPUs")
-        all_hits = pyhmmer.hmmer.hmmsearch(targets, seqs, cpus=cpu, E=eval_con)
+        seqs_size = "In file, unknown length"
+
+    if hasattr(targets, '__len__'):
+        targets_size = len(targets)
+    else:
+        targets_size = "In file, unknown length"
+
+    if scan:
+        logger.info(f"Running hmmscan... {seqs_size} sequences against {targets_size} HMMs, using {cpu} CPUs")
+        all_hits = pyhmmer.hmmer.hmmscan(seqs, targets, cpus=cpu, incE=eval_con, **kwargs)
+    else:
+        logger.info(f"Running hmmsearch... {targets_size} HMMs against {seqs_size} seqs, using {cpu} CPUs")
+        all_hits = pyhmmer.hmmer.hmmsearch(targets, seqs, cpus=cpu, incE=eval_con, **kwargs)
     # check if we should save the output
     if output_file is not None:
         with open(output_file, "wb") as dst:
@@ -205,6 +217,10 @@ def parse_pyhmmer(all_hits, chunk_query_ids, scanned: bool = True):
     # iterate over each protein hit
     for top_hits in all_hits:
         for hit in top_hits:
+            # check e value
+            if hit.evalue > top_hits.incE:
+                continue
+
             # extract the query and accession IDs and decode the query ID
             if scanned:
                 query_id = hit.hits.query_name.decode('utf-8')

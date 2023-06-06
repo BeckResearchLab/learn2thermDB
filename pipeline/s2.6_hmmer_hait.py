@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
     # Run hmmscan
     all_hits = learn2therm.hmmer.run_pyhmmer(
-        seqs=seqblock, hmms_path=HMM_PATH, prefetch=False, cpu=params['njobs'], eval_con=params['e_value'])
+        seqs=seqblock, hmms_path=HMM_PATH, prefetch=False, cpu=params['njobs'], eval_con=params['e_value'], scan=params['scan'])
     logger.info("HMMER hmmscan completed")
 
     # Parse the output
@@ -73,13 +73,22 @@ if __name__ == '__main__':
     logger.info(f"{parsed_hits_df}")
     logger.info("Parsed the HMMER output")
 
+    # calculate the number of domains found per protein
+    parsed_hits_df['n_domains'] = parsed_hits_df['accession_id'].apply(lambda x: len(x.split(';')))
+    # save a hist of accessions counts found
+    fig, ax = plt.subplots()
+    sns.histplot(data=parsed_hits_df, x='n_domains', ax=ax)
+    ax.set_xlabel(f'Number of domains found meeting E < {params["e_value"]}')
+    fig.savefig('./data/validation/hmmer/hait_n_domains.png', dpi=300, bbox_inches='tight')
+
     # Merge the parsed output with the original DataFrame
     df = df.merge(parsed_hits_df.rename(columns={'query_id': 'meso_pid', 'accession_id': 'meso_accession'}), on='meso_pid', how='left')
     df = df.merge(parsed_hits_df.rename(columns={'query_id': 'thermo_pid', 'accession_id': 'thermo_accession'}), on='thermo_pid', how='left')
-    
+
     logger.info("Parsed hits merged with the original data")
     assert df['meso_accession'].isna().sum() == 0
     assert df['thermo_accession'].isna().sum() == 0
+
 
     # Apply evaluation function to each row
     jaccard_threshold = params['jaccard_threshold']
