@@ -19,6 +19,7 @@ import seaborn as sns
 
 import learn2therm.hmmer
 import learn2therm.utils
+import pyhmmer
 
 ## Paths
 HMM_PATH = './data/validation/hmmer/Pfam-A.hmm'  # ./Pfam-A.hmm
@@ -63,18 +64,25 @@ if __name__ == '__main__':
     seqblock = learn2therm.hmmer.save_to_digital_sequences(unique_seqs_df)
     logger.info("Protein sequences saved to a digital sequence block")
 
+    # get Z
+    profiles = list(pyhmmer.plan7.HMMFile(HMM_PATH))
+    n_hmms = len(profiles)
+    del profiles
+    logger.info(f"Number of HMMs: {n_hmms}")
+
     # Run hmmscan
     all_hits = learn2therm.hmmer.run_pyhmmer(
-        seqs=seqblock, hmms_path=HMM_PATH, prefetch=False, cpu=params['njobs'], eval_con=params['e_value'], scan=params['scan'])
+        seqs=seqblock, hmms_path=HMM_PATH, prefetch=False, cpu=params['njobs'], eval_con=params['e_value'], scan=params['scan'], Z=n_hmms)
     logger.info("HMMER hmmscan completed")
 
     # Parse the output
-    parsed_hits_df = learn2therm.hmmer.parse_pyhmmer(all_hits, unique_seqs_df['pid'].tolist())
+    parsed_hits_df = learn2therm.hmmer.parse_pyhmmer(all_hits, unique_seqs_df['pid'].tolist(), scanned=params['scan'])
     logger.info(f"{parsed_hits_df}")
     logger.info("Parsed the HMMER output")
 
     # calculate the number of domains found per protein
-    parsed_hits_df['n_domains'] = parsed_hits_df['accession_id'].apply(lambda x: len(x.split(';')))
+    parsed_hits_df['n_domains'] = parsed_hits_df['accession_id'].apply(lambda x: len(x.split(';')) if len(x)>0 else 0)
+    logger.info(f'Number of unique sequences, number in hmmer mapping: {len(unique_seqs_df)}, {len(parsed_hits_df)}')
     # save a hist of accessions counts found
     fig, ax = plt.subplots()
     sns.histplot(data=parsed_hits_df, x='n_domains', ax=ax)

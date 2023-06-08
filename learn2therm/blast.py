@@ -595,6 +595,15 @@ class TaxaAlignmentWorker:
                 results['thermo_taxid'] = self.thermo_index
                 results['meso_taxid'] = self.meso_index
                 results = results.rename(columns={'query_id': 'thermo_pid', 'subject_id': 'meso_pid'})
+
+                # check that none of the ids here were not in the original set
+                thermo_pids_out_set = set(results['thermo_pid'].values.tolist())
+                thermo_pids_set = set(thermo_sequences['pid'].values.tolist())
+                assert thermo_pids_out_set.issubset(thermo_pids_set), f"Thermo pids from blast: {thermo_pids_out_set} not in original set: {thermo_pids_set}"
+                meso_pids_out_set = set(results['meso_pid'].values.tolist())
+                meso_pids_set = set(meso_sequences['pid'].values.tolist())
+                assert meso_pids_out_set.issubset(meso_pids_set), f"Meso pids from blast: {meso_pids_out_set} not in original set: {meso_pids_set}"
+
                 results.to_parquet(self.output_dir+output_filename)
             # return metadata
             emissions = tracker.stop()
@@ -758,7 +767,7 @@ class TaxaAlignmentClusterState:
                     self.metadata.to_csv(self.output_dir+'completion_state.metadat', index=False)
                 else:
                     file = open(self.output_dir+'completion_state.metadat', 'a')
-                    output_values = [str(v) for v in result.values()]
+                    output_values = [str(v) if v is not None else '' for v in result.values()]
                     file.write(','.join(output_values)+'\n')
                     file.close()
                 yield result

@@ -374,23 +374,23 @@ stages:
     cmd: python ./pipeline/s1.3_protein_alignment.py
     deps:
     - path: ./data/proteins
-      md5: 57724bc351619b85c205a65f2f7bfd73.dir
-      size: 7997391585
+      md5: 294a0c72c9128af75de85f9947bfebdb.dir
+      size: 8031552496
       nfiles: 239
     - path: ./data/taxa_pairs/alignment
       md5: 40439dc256528d3c1e71b68d53f55ab1.dir
       size: 90778197
       nfiles: 26
     - path: ./data/taxa_pairs/pair_labels
-      md5: 9db2b5ea688ced9dd37f82c2a84037f4.dir
-      size: 16210411
+      md5: 3bf22eeeae76e04393b36f4afbbb0df2.dir
+      size: 16248669
       nfiles: 26
     - path: ./learn2therm/blast.py
-      md5: 291c944230b3579e5013a4477797edd8
-      size: 33342
+      md5: fe23d32469b21e03c972d73e498adfe3
+      size: 34066
     - path: ./pipeline/s1.3_protein_alignment.py
-      md5: 4f6c06a72ee0e9546aef7a50b62fa0c5
-      size: 10328
+      md5: cc83c2406f323cab304f9dc6e824ca33
+      size: 10342
     params:
       params.yaml:
         get_protein_blast_scores.dask_cluster_class: SLURMCluster
@@ -418,15 +418,15 @@ stages:
           evalue: 1e-05
           hsp_cov: 75
         get_protein_blast_scores.n_jobs: 80
-        get_protein_blast_scores.save_frequency: 25000
+        get_protein_blast_scores.save_frequency: 2500
     outs:
     - path: ./data/metrics/s1.3_metrics.yaml
-      md5: e75d542e5159fe907e82697f486ba236
-      size: 159
+      md5: e50c5c91b7bcb6c37fb058f436ca394d
+      size: 153
     - path: ./data/protein_pairs/
-      md5: edf6d331dc1de4968a7b50d836bcfbb8.dir
-      size: 3772595241
-      nfiles: 333
+      md5: 4e0966b67660c850febef8d2ea2508a9.dir
+      size: 40388643
+      nfiles: 6
   compare_to_Tm:
     cmd: python ./pipeline/s2.2_compare_to_Tm.py
     deps:

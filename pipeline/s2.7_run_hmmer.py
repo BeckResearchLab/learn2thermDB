@@ -33,11 +33,13 @@ from codecarbon import OfflineEmissionsTracker
 import duckdb as ddb
 from joblib import Parallel, delayed
 import pandas as pd
+import numpy as np
 
 # local dependencies
 import learn2therm.database
 import learn2therm.utils
 import learn2therm.hmmer
+import pyhmmer.plan7
 
 ## Paths
 HMM_PATH = './data/validation/hmmer/Pfam-A.hmm'  # ./Pfam-A.hmm
@@ -53,7 +55,7 @@ else:
 LOGNAME = __file__
 LOGFILE = f'./logs/{os.path.basename(__file__)}.log'
 
-def worker_function(chunk_index, chunked_inputs, e_value: float=1e-6, prefetch=True, cpu=1, wakeup=None, scan=True):
+def worker_function(chunk_index, chunked_inputs, e_value: float=1e-6, prefetch=True, cpu=1, wakeup=None, scan=True, **kwargs):
     """
     A wrapping function that runs and parses pyhmmer in chunks.
 
@@ -103,8 +105,9 @@ def worker_function(chunk_index, chunked_inputs, e_value: float=1e-6, prefetch=T
             prefetch=prefetch,
             cpu=cpu,
             eval_con=e_value,
-            scan=scan
-            )
+            scan=scan,
+            **kwargs
+        )
     else:
         hits = learn2therm.hmmer.run_pyhmmer(
             seqs=sequences,
@@ -112,8 +115,9 @@ def worker_function(chunk_index, chunked_inputs, e_value: float=1e-6, prefetch=T
             prefetch=False,
             cpu=cpu,
             eval_con=e_value,
-            scan=scan
-            )
+            scan=scan,
+            **kwargs
+        )
 
     # Parse pyhmmer output and save to CSV file
     accessions_parsed = learn2therm.hmmer.parse_pyhmmer(all_hits=hits, chunk_query_ids=chunked_inputs['pid'].tolist(), scanned=scan)
@@ -159,12 +163,18 @@ if __name__== "__main__":
     start_time = time.time()
 
     conn = ddb.connect(DB_PATH, read_only=True)
-    logger.info("Create PID dataframe from learn2therm database")
+    logger.info("Connected to learn2therm database")
     if params['dev_sample_data']:
         proteins_q = conn.execute(f"SELECT pid, protein_seq FROM proteins WHERE proteins.pid IN (SELECT DISTINCT(pairs.meso_pid) FROM pairs) OR proteins.pid IN (SELECT DISTINCT(pairs.thermo_pid) FROM pairs) LIMIT {params['dev_sample_data']}")
     else:
         proteins_q = conn.execute("SELECT pid, protein_seq FROM proteins WHERE proteins.pid IN (SELECT DISTINCT(pairs.meso_pid) FROM pairs) OR proteins.pid IN (SELECT DISTINCT(pairs.thermo_pid) FROM pairs)")
     
+    # get number of hmms for evalue calc
+    profiles = list(pyhmmer.plan7.HMMFile(HMM_PATH))
+    n_hmms = len(profiles)
+    del profiles
+    logger.info(f"Number of HMMs: {n_hmms}")
+
     # here we need to prefetch or not manually and only need to do it once
     if params['prefetch']:
         learn2therm.hmmer.hmmpress_hmms(HMM_PATH, PRESS_PATH)
@@ -172,38 +182,48 @@ if __name__== "__main__":
         targets = learn2therm.hmmer.prefetch_targets(PRESS_PATH)
         logger.info(f"prefetched targets, will use same block for all chunks")
         wrapper = lambda chunk_index, pid_chunk: worker_function(
-            chunk_index, pid_chunk, cpu=njobs, prefetch=targets, e_value=params['e_value'], scan=params['scan'])
+            chunk_index, pid_chunk, cpu=njobs, prefetch=targets, e_value=params['e_value'], scan=params['scan'], Z=n_hmms)
     else:
         wrapper = lambda chunk_index, pid_chunk: worker_function(
-            chunk_index, pid_chunk, cpu=njobs, prefetch=False, e_value=params['e_value'], scan=params['scan'])
+            chunk_index, pid_chunk, cpu=njobs, prefetch=False, e_value=params['e_value'], scan=params['scan'], Z=n_hmms)
     
     complete = False
     chunk_index = 0
+    total_processed = 0
     while not complete:
         pid_chunk = proteins_q.fetch_df_chunk(vectors_per_chunk=params['chunk_size'])
+        logger.info(f"Loaded chunk of size {len(pid_chunk)}")
         if len(pid_chunk) == 0:
             complete = True
             break
-        if chunk_index == 0:
-            logger.info(f"Proteins per chunk: {len(pid_chunk)}")
         wrapper(chunk_index, pid_chunk)
-        logger.info(f"Completed chunk {chunk_index}")
+        logger.info(f"Ran chunk, validating results")
+
+        # do a check on the output
+        df = pd.read_parquet(f'{OUTPUT_DIR}/{chunk_index}_output.parquet')
+        assert set(list(pid_chunk['pid'].values)) == set(list(df['query_id'].values)), "Not all query ids are in the output file"
+
+        logger.info(f"Completed chunk {chunk_index} with size {len(pid_chunk)}")
+        total_processed += len(pid_chunk)
         chunk_index += 1
         
-
     # compute some metrics
     co2 = float(tracker.stop())
     logger.info(f"Total CO2 emissions: {co2} kg")
 
     # get the total number of proteins we labeled with accessions
-    con = ddb.connect()
+    con = ddb.connect(DB_PATH, read_only=True)
     con.execute(f"CREATE TEMP TABLE results AS SELECT * FROM read_parquet('{OUTPUT_DIR}/*.parquet')")
-    total_proteins = con.execute("SELECT COUNT(DISTINCT(query_id)) FROM results").fetchone()[0]
+    total_proteins = con.execute("SELECT COUNT(*) FROM proteins WHERE proteins.pid IN (SELECT DISTINCT(pairs.meso_pid) FROM pairs) OR proteins.pid IN (SELECT DISTINCT(pairs.thermo_pid) FROM pairs)").fetchone()[0]
+    completed_proteins = con.execute("SELECT COUNT(DISTINCT(query_id)) FROM results").fetchone()[0]
     labeled_proteins = con.execute("SELECT COUNT(DISTINCT(query_id)) FROM results WHERE accession_id != ''").fetchone()[0]
+
+    logger.info(f"Processed {total_processed} proteins of the expected {total_proteins} proteins in pairs in the database, {completed_proteins} of which were are in the mapping.")
 
     metrics = {
         "n_proteins_in_pairs": int(total_proteins),
         "n_proteins_labeled": int(labeled_proteins),
+        "n_proteins_in_mapping": int(completed_proteins),
         "co2_emissions": co2,
         'execution_time': float((time.time() - start_time)/60)
     }

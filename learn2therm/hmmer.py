@@ -183,10 +183,10 @@ def run_pyhmmer(
         targets_size = "In file, unknown length"
 
     if scan:
-        logger.info(f"Running hmmscan... {seqs_size} sequences against {targets_size} HMMs, using {cpu} CPUs")
+        logger.info(f"Running hmmscan... {seqs_size} sequences against {targets_size} HMMs, using {cpu} CPUs, additional kwargs: {kwargs}")
         all_hits = pyhmmer.hmmer.hmmscan(seqs, targets, cpus=cpu, incE=eval_con, **kwargs)
     else:
-        logger.info(f"Running hmmsearch... {targets_size} HMMs against {seqs_size} seqs, using {cpu} CPUs")
+        logger.info(f"Running hmmsearch... {targets_size} HMMs against {seqs_size} seqs, using {cpu} CPUs, additional kwargs: {kwargs}")
         all_hits = pyhmmer.hmmer.hmmsearch(targets, seqs, cpus=cpu, incE=eval_con, **kwargs)
     # check if we should save the output
     if output_file is not None:
@@ -305,6 +305,6 @@ def evaluation_function(row, jaccard_threshold):
         functional = score > jaccard_threshold
     else:
         # Handle unmatched rows
-        score = None
+        score = 0.0
         functional = False
     return score, functional

@@ -19,7 +19,6 @@ from yaml import safe_load as yaml_load
 from yaml import dump as yaml_dump
 import pathlib
 import tempfile
-import torch
 import duckdb as ddb
 from codecarbon import OfflineEmissionsTracker
 

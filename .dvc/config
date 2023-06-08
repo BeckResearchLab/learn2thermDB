@@ -1,3 +1,5 @@
 [core]
     autostage = true
     remote = ssh
+[cache]
+    type = "hardlink,copy"

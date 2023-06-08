@@ -226,7 +226,7 @@ def main():
         logger.info(f"{results['hits'].isna().sum()} taxa pairs failed to complete")
         results = results[~results['hits'].isna()]
         num_taxa_pairs_completed = len(results)
-        emissions = float(results['emissions'].sum())
+        emissions = float(results['emissions'].astype(float).sum())
         hits = int(results['hits'].sum())
         pairwise_space = int(results['pw_space'].sum())
         logger.info(f'Initially calculated pairwise space: {total_space}, pairwise space completed: {pairwise_space}')
