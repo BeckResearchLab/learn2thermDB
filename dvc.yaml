@@ -48,7 +48,6 @@ stages:
     metrics:
     - ./data/metrics/s0.3_metrics.yaml:
         cache: false
-    frozen: true
   label_taxa:
     cmd: python pipeline/s1.0_label_taxa.py
     deps:
@@ -186,7 +185,7 @@ stages:
     plots:
     - ./data/validation/hait_alignment/:
         cache: false
-  
+
   get_HMM_profiles:
     cmd: python ./pipeline/s2.5_get_HMM_profiles.py
     outs:
@@ -225,7 +224,6 @@ stages:
     params:
     - run_hmmer.e_value
     - run_hmmer.njobs
-    - run_hmmer.jaccard_threshold
     - run_hmmer.chunk_size
     - run_hmmer.scan
     - run_hmmer.dev_sample_data
@@ -233,5 +231,20 @@ stages:
     metrics:
     - ./data/validation/hmmer/s2.7_metrics.yaml:
         cache: false
+  # parse_hmmer_result:
+  #   cmd: python ./pipeline/s2.8_parse_hmmer_result.py
+  #   deps:
+  #   - ./pipeline/s2.8_parse_hmmer_result.py
+  #   - ./data/validation/hmmer/hmmer_outputs/
+  #   - ./learn2therm/hmmer.py
+  #   - ./data/protein_pairs/
+  #   outs:
+  #   - ./data/validation/hmmer/hmmer_labels/
+  #   params:
+  #   - run_hmmer.jaccard_threshold
+  #   - run_hmmer.chunk_size
+  #   metrics:
+  #   - ./data/validation/hmmer/s2.8_metrics.yaml:
+  #       cache: false
 
   
