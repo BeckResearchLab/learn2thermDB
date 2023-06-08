@@ -175,23 +175,23 @@ stages:
     params:
       params.yaml:
         label_all_pairs.blast_metric_thresholds:
-          scaled_local_query_percent_id:
-            thresh: 0.82
+          local_gap_compressed_percent_id:
+            thresh: 0.81
             greater: true
           query_align_cov:
-            thresh: 0.9
+            thresh: 0.985
             greater: true
           subject_align_cov:
-            thresh: 0.9
+            thresh: 0.985
             greater: true
         label_all_pairs.dev_only_one_file: false
     outs:
     - path: ./data/metrics/s1.2_metrics.yaml
-      md5: eb40990137b181e1b61b5668e2b09333
-      size: 79
+      md5: 75a19a2c12df719c25fb0b69bbd27b33
+      size: 80
     - path: ./data/taxa_pairs/pair_labels
-      md5: 9db2b5ea688ced9dd37f82c2a84037f4.dir
-      size: 16210411
+      md5: 3bf22eeeae76e04393b36f4afbbb0df2.dir
+      size: 16248669
       nfiles: 26
   get_protein_blast_scores:
     cmd: python pipeline/s1.4_get_protein_blast_scores.py
