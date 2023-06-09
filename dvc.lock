@@ -418,15 +418,15 @@ stages:
           evalue: 1e-05
           hsp_cov: 75
         get_protein_blast_scores.n_jobs: 80
-        get_protein_blast_scores.save_frequency: 2500
+        get_protein_blast_scores.save_frequency: 10000
     outs:
     - path: ./data/metrics/s1.3_metrics.yaml
-      md5: e50c5c91b7bcb6c37fb058f436ca394d
-      size: 153
+      md5: aba6faf69b652ff77f5fab22c17087c6
+      size: 155
     - path: ./data/protein_pairs/
-      md5: 4e0966b67660c850febef8d2ea2508a9.dir
-      size: 40388643
-      nfiles: 6
+      md5: 91bc6bd9fd30069474678a7678149249.dir
+      size: 188522451
+      nfiles: 18
   compare_to_Tm:
     cmd: python ./pipeline/s2.2_compare_to_Tm.py
     deps:
