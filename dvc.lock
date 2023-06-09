@@ -421,12 +421,12 @@ stages:
         get_protein_blast_scores.save_frequency: 10000
     outs:
     - path: ./data/metrics/s1.3_metrics.yaml
-      md5: 894fd1a46f12ae358eaec48d22b89e0e
-      size: 154
+      md5: 910a0f7c7055dd9bda68981ec233516b
+      size: 156
     - path: ./data/protein_pairs/
-      md5: c2a5bb6b92aab14e204ae5373fc852ab.dir
-      size: 487413094
-      nfiles: 47
+      md5: 803d2e2cabef7215f922e48bc14b2d3a.dir
+      size: 636097477
+      nfiles: 62
   compare_to_Tm:
     cmd: python ./pipeline/s2.2_compare_to_Tm.py
     deps:
