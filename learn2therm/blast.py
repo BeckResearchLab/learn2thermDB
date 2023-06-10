@@ -812,6 +812,7 @@ class TaxaAlignmentClusterState:
     def _close(self):
         self.client.cancel(self._futures, force=True)
         time.sleep(15)
+        self.client.restart()
         self.client.close(timeout=15)
         logger.info(f"Canceled futures.")
         if self.aggregate_outputs:

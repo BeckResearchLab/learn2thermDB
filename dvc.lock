@@ -386,8 +386,8 @@ stages:
       size: 16248669
       nfiles: 26
     - path: ./learn2therm/blast.py
-      md5: fe23d32469b21e03c972d73e498adfe3
-      size: 34066
+      md5: 0ab214ca8067e9055c448e1fb6652c9e
+      size: 34097
     - path: ./pipeline/s1.3_protein_alignment.py
       md5: cc83c2406f323cab304f9dc6e824ca33
       size: 10342
@@ -418,15 +418,15 @@ stages:
           evalue: 1e-05
           hsp_cov: 75
         get_protein_blast_scores.n_jobs: 80
-        get_protein_blast_scores.save_frequency: 10000
+        get_protein_blast_scores.save_frequency: 500
     outs:
     - path: ./data/metrics/s1.3_metrics.yaml
-      md5: c7153a337057c60d446e10c1c661ba94
-      size: 156
+      md5: 153f27ebc2849c53278ad4e7036d77bc
+      size: 155
     - path: ./data/protein_pairs/
-      md5: 61dc2b1d53ac5ab17769575146c3af29.dir
-      size: 784340639
-      nfiles: 72
+      md5: e1126395a1a27b1e19db457e37f82666.dir
+      size: 784334868
+      nfiles: 69
   compare_to_Tm:
     cmd: python ./pipeline/s2.2_compare_to_Tm.py
     deps:
