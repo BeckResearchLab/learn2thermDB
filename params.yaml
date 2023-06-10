@@ -55,8 +55,8 @@ get_protein_blast_scores:
   dask_cluster_class: 'SLURMCluster'        # dask cluster class used to distribute workers. Update .config/dask as well
   max_protein_length: 250                   # only consider proteins with length less than number
   method: 'diamond'                         # which alighern (blast or diamond) to use
-  n_jobs: 80
-  save_frequency: 500                     # how many taxa pairs to finish aligning between dvc checkpoints
+  n_jobs: 20
+  save_frequency: 200                     # how many taxa pairs to finish aligning between dvc checkpoints
   dev_sample_pairs: null
   method_blast_params:                      # see https://biopython.org/docs/1.76/api/Bio.Blast.Applications.html
     num_threads: 6                          # number of threads to run on alignment worker         

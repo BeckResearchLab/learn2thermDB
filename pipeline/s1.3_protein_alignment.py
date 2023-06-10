@@ -181,9 +181,12 @@ def main():
         cluster = Cluster(silence_logs=None)
         cluster.adapt(minimum=minimum_jobs, maximum=params['n_jobs'], target_duration='5s')
         logger.info(f"{cluster.job_script()}")
-
+        time.sleep(10)
         t0 = time.time()
         with distributed.Client(cluster) as client:
+            # check on the cluster
+            logger.info(f"Scheduler info: {client.scheduler_info()}")
+            time.sleep(10)
             # run one without killer workers, faster option for 
             # fast tasks
             logger.info(f"Running primary fast sweep")
