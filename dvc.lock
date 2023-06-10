@@ -386,8 +386,8 @@ stages:
       size: 16248669
       nfiles: 26
     - path: ./learn2therm/blast.py
-      md5: d9985b613c7d7acccb57a8e84030796a
-      size: 34067
+      md5: 0c6ef88fe61ffdfd0f4bed610da4c89e
+      size: 34098
     - path: ./pipeline/s1.3_protein_alignment.py
       md5: f4332e3d499bde84dcfb681bedc42b94
       size: 10496
@@ -421,12 +421,12 @@ stages:
         get_protein_blast_scores.save_frequency: 200
     outs:
     - path: ./data/metrics/s1.3_metrics.yaml
-      md5: bbd9d8db04dc4195ec277c751893cce5
+      md5: e970ecf489e6ad23022d3cafd04beb79
       size: 156
     - path: ./data/protein_pairs/
-      md5: e89f4421b7bd0f63287b356fac2fae9f.dir
-      size: 784900016
-      nfiles: 74
+      md5: b61eb0f24ebd0e3213b363ac8c6e1a22.dir
+      size: 788659647
+      nfiles: 72
   compare_to_Tm:
     cmd: python ./pipeline/s2.2_compare_to_Tm.py
     deps:

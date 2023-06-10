@@ -799,7 +799,7 @@ class TaxaAlignmentClusterState:
             df = pd.read_parquet(self.output_dir+f)
             dfs.append(df)
             file_size += len(df)
-            if file_size >= 500000:
+            if file_size >= 500000 or f == unaggregated_files[-1]:
                 agg = pd.concat(dfs, axis=0, ignore_index=True)
                 agg.to_parquet(self.output_dir+f'agg_chunk_{i}.parquet')
                 logger.info(f"Saved chuck composed of {len(dfs)} taxa pairs.")
