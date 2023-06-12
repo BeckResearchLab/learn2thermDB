@@ -535,8 +535,8 @@ stages:
       md5: eb895a2152c0e977cb6cf1fee27e3003
       size: 1572192814
     - path: ./learn2therm/hmmer.py
-      md5: c8b45ad60ec80e83fd419cf6b6945c61
-      size: 10546
+      md5: 3b6d8590385da8cd9d80819dc73ade10
+      size: 10604
     - path: ./pipeline/s2.6_hmmer_hait.py
       md5: 076866cbf3bd0b9a1d2b67ce50fc3946
       size: 5379
@@ -549,12 +549,15 @@ stages:
     - path: ./data/validation/hmmer/hait_jaccard.png
       md5: 9771c7f36d8d61cfa7539f463e35dc11
       size: 47487
+    - path: ./data/validation/hmmer/hait_n_domains.png
+      md5: c7fe3c214a3349a6cb5e1a1a9fec70bd
+      size: 50581
     - path: ./data/validation/hmmer/hait_scores.csv
       md5: 8cc458f5914a81883c9f937a31c2465d
       size: 113905
     - path: ./data/validation/hmmer/s2.6_metrics.yaml
-      md5: 4527af49cda4ba48fafc01048fd8f036
-      size: 149
+      md5: 42a5292e0977bf9bd9b1a5c6000a8d78
+      size: 150
   run_hmmer:
     cmd: python ./pipeline/s2.7_run_hmmer.py
     deps:
