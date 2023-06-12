@@ -135,15 +135,16 @@ stages:
   make_database:
     cmd: python ./pipeline/s1.4_make_database.py
     deps:
+    - ./data/protein_pairs
     - ./data/proteins
     - ./data/taxa.parquet
-    - ./data/taxa_thermophile_labels.parquet
     - ./data/taxa_pairs/alignment
     - ./data/taxa_pairs/pair_labels
-    - ./data/protein_pairs
+    - ./data/taxa_thermophile_labels.parquet
     - ./learn2therm/database.py
     outs:
     - ./data/database.ddb
+    frozen: true
   get_hait_pairs:
     cmd: python ./pipeline/s2.1_get_hait_pairs.py
     deps:
@@ -208,6 +209,8 @@ stages:
     - run_hmmer.jaccard_threshold
     plots:
     - ./data/validation/hmmer/hait_jaccard.png:
+        cache: false
+    - ./data/validation/hmmer/hait_n_domains.png:
         cache: false
     metrics:
     - ./data/validation/hmmer/s2.6_metrics.yaml:
