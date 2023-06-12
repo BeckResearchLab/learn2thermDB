@@ -417,16 +417,16 @@ stages:
           matrix: BLOSUM62
           evalue: 1e-05
           hsp_cov: 75
-        get_protein_blast_scores.n_jobs: 20
-        get_protein_blast_scores.save_frequency: 200
+        get_protein_blast_scores.n_jobs: 80
+        get_protein_blast_scores.save_frequency: 20000
     outs:
     - path: ./data/metrics/s1.3_metrics.yaml
-      md5: ca536eb90c6d0909231240c658e96caf
-      size: 156
+      md5: f350d97df9d319423c55b84a7cf4c21d
+      size: 157
     - path: ./data/protein_pairs/
-      md5: 7a3b8233ffa953c12377102d564e09cf.dir
-      size: 792261964
-      nfiles: 73
+      md5: 854e4a6542cbd916ef6b41cfc554c188.dir
+      size: 1867609165
+      nfiles: 159
   compare_to_Tm:
     cmd: python ./pipeline/s2.2_compare_to_Tm.py
     deps:
