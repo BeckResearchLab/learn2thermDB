@@ -99,7 +99,7 @@ run_hmmer:
   njobs: 32
   scan: false
   jaccard_threshold: 0.79
-  dev_sample_data: null
+  dev_sample_data: false
 
 
 sample_data_for_structure:

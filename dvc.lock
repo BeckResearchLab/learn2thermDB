@@ -562,8 +562,8 @@ stages:
     cmd: python ./pipeline/s2.7_run_hmmer.py
     deps:
     - path: ./data/database.ddb
-      md5: c4dcb2c41d125677901a6a5d985cd136
-      size: 16853250048
+      md5: 7422f24471936cd68eae9b3b3e8eea6d
+      size: 13759426560
     - path: ./data/validation/hmmer/Pfam-A.hmm
       md5: eb895a2152c0e977cb6cf1fee27e3003
       size: 1572192814
@@ -571,21 +571,50 @@ stages:
       md5: 3b6d8590385da8cd9d80819dc73ade10
       size: 10604
     - path: ./pipeline/s2.7_run_hmmer.py
-      md5: ac9d1c6276c83078bc187d3125e9056d
-      size: 8676
+      md5: a0b438044b76d93d7c3fb29d036690be
+      size: 8896
     params:
       params.yaml:
-        run_hmmer.chunk_size: 1000
-        run_hmmer.dev_sample_data: 100000
+        run_hmmer.chunk_size: 2000
+        run_hmmer.dev_sample_data: false
         run_hmmer.e_value: 1e-25
         run_hmmer.njobs: 32
         run_hmmer.prefetch: true
         run_hmmer.scan: false
     outs:
     - path: ./data/validation/hmmer/hmmer_outputs/
-      md5: 37aa6ec6f804c5235e79f99212887082.dir
-      size: 913929
-      nfiles: 1
+      md5: 4f0e0cc5faebcbda21efea6c5aa503ae.dir
+      size: 32568520
+      nfiles: 6
     - path: ./data/validation/hmmer/s2.7_metrics.yaml
-      md5: 45c9e75b08a2b282110bde0b64f680ea
-      size: 156
+      md5: abf606bdb0f8d129f3fbb83816f61bfb
+      size: 158
+  parse_hmmer_result:
+    cmd: python ./pipeline/s2.8_parse_hmmer_result.py
+    deps:
+    - path: ./data/protein_pairs/
+      md5: 854e4a6542cbd916ef6b41cfc554c188.dir
+      size: 1867609165
+      nfiles: 159
+    - path: ./data/validation/hmmer/hmmer_outputs/
+      md5: 4f0e0cc5faebcbda21efea6c5aa503ae.dir
+      size: 32568520
+      nfiles: 6
+    - path: ./learn2therm/hmmer.py
+      md5: 3b6d8590385da8cd9d80819dc73ade10
+      size: 10604
+    - path: ./pipeline/s2.8_parse_hmmer_result.py
+      md5: 3cd588782256990939eb4f24d6f9ff17
+      size: 6290
+    params:
+      params.yaml:
+        run_hmmer.chunk_size: 2000
+        run_hmmer.jaccard_threshold: 0.79
+    outs:
+    - path: ./data/validation/hmmer/hmmer_labels/
+      md5: 477433958334a05faa33012a436e31e8.dir
+      size: 533204405
+      nfiles: 213
+    - path: ./data/validation/hmmer/s2.8_metrics.yaml
+      md5: 511b0bb47a062243ef66185e4cb7de0a
+      size: 127

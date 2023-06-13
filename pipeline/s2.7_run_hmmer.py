@@ -215,10 +215,11 @@ if __name__== "__main__":
     con = ddb.connect(DB_PATH, read_only=True)
     con.execute(f"CREATE TEMP TABLE results AS SELECT * FROM read_parquet('{OUTPUT_DIR}/*.parquet')")
     total_proteins = con.execute("SELECT COUNT(*) FROM proteins WHERE proteins.pid IN (SELECT DISTINCT(pairs.meso_pid) FROM pairs) OR proteins.pid IN (SELECT DISTINCT(pairs.thermo_pid) FROM pairs)").fetchone()[0]
+    total_proteins_check = con.execute("SELECT COUNT(*) FROM ((SELECT DISTINCT(meso_pid) AS pid FROM pairs) UNION (SELECT DISTINCT(thermo_pid) AS pid FROM pairs))").fetchone()[0]
     completed_proteins = con.execute("SELECT COUNT(DISTINCT(query_id)) FROM results").fetchone()[0]
     labeled_proteins = con.execute("SELECT COUNT(DISTINCT(query_id)) FROM results WHERE accession_id != ''").fetchone()[0]
 
-    logger.info(f"Processed {total_processed} proteins of the expected {total_proteins} proteins in pairs in the database, {completed_proteins} of which were are in the mapping.")
+    logger.info(f"Processed {total_processed} proteins of the expected {total_proteins} (check: {total_proteins_check}) proteins in pairs in the database, {completed_proteins} of which were are in the mapping.")
 
     metrics = {
         "n_proteins_in_pairs": int(total_proteins),

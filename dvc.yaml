@@ -234,19 +234,19 @@ stages:
     metrics:
     - ./data/validation/hmmer/s2.7_metrics.yaml:
         cache: false
-  # parse_hmmer_result:
-  #   cmd: python ./pipeline/s2.8_parse_hmmer_result.py
-  #   deps:
-  #   - ./pipeline/s2.8_parse_hmmer_result.py
-  #   - ./data/validation/hmmer/hmmer_outputs/
-  #   - ./learn2therm/hmmer.py
-  #   - ./data/protein_pairs/
-  #   outs:
-  #   - ./data/validation/hmmer/hmmer_labels/
-  #   params:
-  #   - run_hmmer.jaccard_threshold
-  #   - run_hmmer.chunk_size
-  #   metrics:
-  #   - ./data/validation/hmmer/s2.8_metrics.yaml:
-  #       cache: false
+  parse_hmmer_result:
+    cmd: python ./pipeline/s2.8_parse_hmmer_result.py
+    deps:
+    - ./pipeline/s2.8_parse_hmmer_result.py
+    - ./data/validation/hmmer/hmmer_outputs/
+    - ./learn2therm/hmmer.py
+    - ./data/protein_pairs/
+    outs:
+    - ./data/validation/hmmer/hmmer_labels/
+    params:
+    - run_hmmer.jaccard_threshold
+    - run_hmmer.chunk_size
+    metrics:
+    - ./data/validation/hmmer/s2.8_metrics.yaml:
+        cache: false
 
