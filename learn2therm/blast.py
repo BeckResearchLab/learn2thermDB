@@ -273,10 +273,10 @@ class AlignmentHandler:
     ----------
     seqs_A : DataFrame
         DataFrame containing protein sequences for the first set
-        Must have columns 'id' and 'seq'
+        Must have columns 'pid' and 'sequence'
     seqs_B : DataFrame
         DataFrame containing protein sequences for the second set
-        Must have columns 'id' and 'seq'
+        Must have columns 'pid' and 'sequence'
     alignment_params : dict
         parameters to pass to alignment method
     metrics: dict
@@ -595,6 +595,15 @@ class TaxaAlignmentWorker:
                 results['thermo_taxid'] = self.thermo_index
                 results['meso_taxid'] = self.meso_index
                 results = results.rename(columns={'query_id': 'thermo_pid', 'subject_id': 'meso_pid'})
+
+                # check that none of the ids here were not in the original set
+                thermo_pids_out_set = set(results['thermo_pid'].values.tolist())
+                thermo_pids_set = set(thermo_sequences['pid'].values.tolist())
+                assert thermo_pids_out_set.issubset(thermo_pids_set), f"Thermo pids from blast: {thermo_pids_out_set} not in original set: {thermo_pids_set}"
+                meso_pids_out_set = set(results['meso_pid'].values.tolist())
+                meso_pids_set = set(meso_sequences['pid'].values.tolist())
+                assert meso_pids_out_set.issubset(meso_pids_set), f"Meso pids from blast: {meso_pids_out_set} not in original set: {meso_pids_set}"
+
                 results.to_parquet(self.output_dir+output_filename)
             # return metadata
             emissions = tracker.stop()
@@ -672,10 +681,12 @@ class TaxaAlignmentClusterState:
         metrics: list = ['scaled_local_symmetric_percent_id'],
         restart: bool = True,
         killer_workers: bool = True,
+        aggregate_outputs: bool = True,
         worker_function: Callable = lambda aligner: aligner.run()
     ):
         self.killer_workers = killer_workers
         self.worker_function = worker_function
+        self.aggregate_outputs = aggregate_outputs
 
         if not output_dir.endswith('/'):
             output_dir = output_dir + '/'
@@ -756,7 +767,7 @@ class TaxaAlignmentClusterState:
                     self.metadata.to_csv(self.output_dir+'completion_state.metadat', index=False)
                 else:
                     file = open(self.output_dir+'completion_state.metadat', 'a')
-                    output_values = [str(v) for v in result.values()]
+                    output_values = [str(v) if v is not None else '' for v in result.values()]
                     file.write(','.join(output_values)+'\n')
                     file.close()
                 yield result
@@ -770,12 +781,41 @@ class TaxaAlignmentClusterState:
         else:
             self.futures_modified = None
 
+    def _aggregate_output_files(self):
+        """Aggregate files of distinct taxa pair files into larger chunks.
+        
+        We lose the file viewable information about which taxa re contained, but
+        too many distinct files is cumbersome for DVC and duckdb, so we aggregate
+        into files of size 500000 pairs.
+        """
+        unaggregated_files = os.listdir(self.output_dir)
+        unaggregated_files = [f for f in unaggregated_files if f.startswith('align_taxa')]
+        aggregate_files = os.listdir(self.output_dir)
+        aggregate_files = [f for f in aggregate_files if f.startswith('agg_chunk')]
+        dfs = []
+        file_size = 0
+        i = len(aggregate_files)
+        for f in unaggregated_files:
+            df = pd.read_parquet(self.output_dir+f)
+            dfs.append(df)
+            file_size += len(df)
+            if file_size >= 500000 or f == unaggregated_files[-1]:
+                agg = pd.concat(dfs, axis=0, ignore_index=True)
+                agg.to_parquet(self.output_dir+f'agg_chunk_{i}.parquet')
+                logger.info(f"Saved chuck composed of {len(dfs)} taxa pairs.")
+                i += 1
+                file_size = 0
+                dfs = []
+            os.remove(self.output_dir+f)
+        logger.info("Aggregated protein pair files into chunks.")
+
     def _close(self):
         self.client.cancel(self._futures, force=True)
         time.sleep(15)
         self.client.close(timeout=15)
         logger.info(f"Canceled futures.")
-
+        if self.aggregate_outputs:
+            self._aggregate_output_files()
 
     def __enter__(self):
         return self.futures_modified

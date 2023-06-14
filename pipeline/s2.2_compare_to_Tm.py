@@ -19,7 +19,6 @@ from yaml import safe_load as yaml_load
 from yaml import dump as yaml_dump
 import pathlib
 import tempfile
-import torch
 import duckdb as ddb
 from codecarbon import OfflineEmissionsTracker
 
@@ -52,8 +51,6 @@ logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL,
 
 FIREPROTDB_URL = "https://loschmidt.chemi.muni.cz/fireprotdb/v1/export?searchType=advanced&type=csv"
 MELTOME_URL = "https://meltomeatlas.proteomics.wzw.tum.de/master_meltomeatlasapp/cross-species.csv"
-
-RELOAD = True
 
 # functions for uniprot api
 def get_next_link(headers):
@@ -95,13 +92,18 @@ if __name__ == "__main__":
 
     # FIREPROT DB
     ########################################################################
-    logger.info("Downloading fireprot data")
-    payload = {"searchData":{"type":"expr","key":"all","value":" ","checkOptions":[]},"filter":{"filterKey":"ddG","order":"asc"}}
-    response = requests.post(FIREPROTDB_URL, json=payload)
-    content = response.content.decode('utf-8')
+    if not os.path.exists("./tmp/fireprot_raw.csv"):
+        logger.info("Downloading fireprot data")
+        payload = {"searchData":{"type":"expr","key":"all","value":" ","checkOptions":[]},"filter":{"filterKey":"ddG","order":"asc"}}
+        response = requests.post(FIREPROTDB_URL, json=payload)
+        content = response.content.decode('utf-8')
 
-    fireprot_df = pd.read_csv(io.StringIO(content))[['uniprot_id', 'tm', 'dTm', 'sequence']]
-    logger.info(f"{len(fireprot_df)} raw data points from FireProtDB")
+        fireprot_df = pd.read_csv(io.StringIO(content))[['uniprot_id', 'tm', 'dTm', 'sequence']]
+        logger.info(f"{len(fireprot_df)} raw data points from FireProtDB")
+        fireprot_df.to_csv("./tmp/fireprot_raw.csv")
+    else:
+        logger.info("Loading fireprot data from ./tmp/fireprot_raw.csv")
+        fireprot_df = pd.read_csv("./tmp/fireprot_raw.csv", index_col=0)
 
     # clean up the data  abit
     fireprot_df.dropna(inplace=True)
@@ -115,7 +117,7 @@ if __name__ == "__main__":
     # need to search out dataset of proteins for matches
     # since uniprot ids are not necessarily non redundant for >99% identity
     # we need to search by sequence
-    our_proteins = con.execute("SELECT pid, protein_seq AS sequence FROM proteins ORDER BY RANDOM()").df()
+    our_proteins = con.execute("SELECT pid, protein_seq AS sequence FROM proteins").df()
     logger.info(f"Got {len(our_proteins)} proteins from our dataset")
     
     handler = learn2therm.blast.DiamondAlignmentHandler(
@@ -123,7 +125,7 @@ if __name__ == "__main__":
         seqs_B = our_proteins,
         metrics = ['scaled_local_query_percent_id'],
         alignment_params = {
-            'num_threads': 6,
+            'num_threads': 32,
             'sensitivity': 'fast',
             'iterate': False,              
             'global_ranking': None,           
@@ -173,29 +175,42 @@ if __name__ == "__main__":
 
     # Meltome Atlas
     ########################################################################
-    if not RELOAD:
+    if not os.path.exists('./tmp/meltome_raw.csv'):
         meltome_df = pd.read_csv(MELTOME_URL)[['Protein_ID', 'meltPoint']]
         meltome_df.to_csv('./tmp/meltome_raw.csv')
     else:
-        meltome_df = pd.read_csv('./tmp/meltome_raw.csv')
+        meltome_df = pd.read_csv('./tmp/meltome_raw.csv', index_col=0)
     
+    logger.info(f"{len(meltome_df)} raw data points from Meltome Atlas")
+    meltome_df = meltome_df.dropna()
+    logger.info(f"{len(meltome_df)} meltome data points after dropping NaNs")
     # clean up the data  abit
-    meltome_df.dropna(inplace=True)
-    logger.info(f"{len(meltome_df)} raw meltome data points")
     # get uniprot id
     def split_uniprot_id(id_):
         return id_.split("_")[0]
     meltome_df['Protein_ID'] = meltome_df['Protein_ID'].apply(split_uniprot_id)
+    logger.info(f'Fixed uniprot ids: {meltome_df.head()}')
+    logger.info(f"Total meltome data count, unique pids: {len(meltome_df)}, {len(meltome_df['Protein_ID'].unique())}")
+    # drop duplicate uniprots
+    meltome_groups = meltome_df.groupby('Protein_ID')
+    logger.info(f"Variability in melting temperatures for uniprot ids in Meltome: {meltome_groups.std()['meltPoint'].describe()}")
+    meltome_df = meltome_groups.mean().reset_index()
+    logger.info(f"{len(meltome_df)} meltome data points after aggregating duplicate PIDs")
+    logger.info(f"{meltome_df.head()}")
     # subset data by only proteins we do not have an exact match for
     unknown_meltome_pids = con.execute(
         """SELECT DISTINCT(Protein_ID) 
         FROM meltome_df 
         WHERE Protein_ID NOT IN (SELECT pid FROM proteins)""").df()['Protein_ID'].values
-    logger.info(f"{len(unknown_meltome_pids)} unknown meltome proteins")
+    known_meltome_pids = con.execute(
+        """SELECT COUNT(DISTINCT(Protein_ID))
+        FROM meltome_df
+        WHERE Protein_ID IN (SELECT pid FROM proteins)""").df()
+    logger.info(f"{known_meltome_pids} pids from meltone in our dataset, {len(unknown_meltome_pids)} unknown meltome proteins")
     # get the amino acid sequence to balst vs our database
     logger.info("Getting amino acid sequences for unkown meltome data by querying uniprot")
 
-    if not RELOAD:
+    if not os.path.exists("./tmp/unknown_meltome_seqs.csv"):
         # retrieve sequences
         unknown_meltome_seqs = learn2therm.uniprot.get_uniprot_sequences(
             list(unknown_meltome_pids)).rename(columns={'id': 'pid', 'seq': 'sequence'})
@@ -204,7 +219,7 @@ if __name__ == "__main__":
         unknown_meltome_seqs = pd.read_csv("./tmp/unknown_meltome_seqs.csv")
 
     # run diamond to find near identical sequences
-    our_proteins = con.execute("SELECT pid, protein_seq AS sequence FROM proteins ORDER BY RANDOM()").df()
+    our_proteins = con.execute("SELECT pid, protein_seq AS sequence FROM proteins").df()
     logger.info(f"Got {len(our_proteins)} proteins from our dataset")
     
     handler = learn2therm.blast.DiamondAlignmentHandler(
@@ -212,7 +227,7 @@ if __name__ == "__main__":
         seqs_B = our_proteins,
         metrics = ['scaled_local_query_percent_id'],
         alignment_params = {
-            'num_threads': 6,
+            'num_threads': 32,
             'sensitivity': 'fast',
             'iterate': False,              
             'global_ranking': None,           
@@ -266,14 +281,20 @@ if __name__ == "__main__":
     # now get XXX et al data
 
     # make a plot of data
-    data = pd.concat([meltome_data, tm_data], ignore_index=True)
+    data = pd.concat([meltome_data, fpdb_data], ignore_index=True)
     fig, ax = plt.subplots(figsize=(5,5))
-    sns.regplot(data=data, x='OGT', y='Tm', hue='from', ax=ax)
+    min_ = min(data['OGT'].min(), data['Tm'].min())
+    max_ = max(data['OGT'].max(), data['Tm'].max())
+    ax.plot([min_, max_], [min_, max_], color='black', linestyle='--')
+    ax.set_xlim(min_, max_)
+    ax.set_ylim(min_, max_)
+    sns.scatterplot(data=data, x='OGT', y='Tm', hue='from', ax=ax)
     ax.set_xlabel("OGT [C]")
     ax.set_ylabel("Tm [C]")
+    data.to_csv('./data/validation/tm/ogt_vs_tm.csv')
 
     # save the plot
-    fig.savefig('./data/plots/ogt_vs_tm_check.png', dpi=300, bbox_inches='tight')
+    fig.savefig('./data/validation/tm/ogt_vs_tm_check.png', dpi=300, bbox_inches='tight')
 
     # save spearmans
     r, p = scipy.stats.spearmanr(data['OGT'], data['Tm'])
@@ -285,6 +306,6 @@ if __name__ == "__main__":
         'Tm_OGT_spearman_p': float(p),
         'Tm_OGT_co2': co2,
     }
-    with open('./data/metrics/s2.X_Tm_metrics.yaml', 'w') as f:
+    with open('./data/validation/tm/metrics.yaml', 'w') as f:
         yaml_dump(metrics, f)
     

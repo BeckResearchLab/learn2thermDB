@@ -23,7 +23,7 @@ jobqueue:
     
     job_extra_directives: ['--nodes=1', '--ntasks-per-node=1', '--hint=multithread']
     worker_extra_args: ["--lifetime", "85m", "--lifetime-stagger", "5m"]
-    job_script_prologue: ["source ~/.bashrc", "conda activate learn2thermDB"]    
+    job_script_prologue: ["source ~/.bashrc", "mamba activate l2tdb_tmp"]    
     
     # Scheduler options
     scheduler-options: {}

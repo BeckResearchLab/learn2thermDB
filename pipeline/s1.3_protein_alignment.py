@@ -181,9 +181,12 @@ def main():
         cluster = Cluster(silence_logs=None)
         cluster.adapt(minimum=minimum_jobs, maximum=params['n_jobs'], target_duration='5s')
         logger.info(f"{cluster.job_script()}")
-
+        time.sleep(10)
         t0 = time.time()
         with distributed.Client(cluster) as client:
+            # check on the cluster
+            logger.info(f"Scheduler info: {client.scheduler_info()}")
+            time.sleep(10)
             # run one without killer workers, faster option for 
             # fast tasks
             logger.info(f"Running primary fast sweep")
@@ -209,7 +212,11 @@ def main():
                         if i >= params['save_frequency']:
                             break
         # close the cluster while we compute metrics and DVC does its thing
-        cluster.close()
+        try:
+            cluster.close()
+            time.sleep(15)
+        except:
+            pass
         logger.info("Cluster closed, DVC checkpoint")
 
         # give a second for the client to close
@@ -222,7 +229,7 @@ def main():
         logger.info(f"{results['hits'].isna().sum()} taxa pairs failed to complete")
         results = results[~results['hits'].isna()]
         num_taxa_pairs_completed = len(results)
-        emissions = float(results['emissions'].sum())
+        emissions = float(results['emissions'].astype(float).sum())
         hits = int(results['hits'].sum())
         pairwise_space = int(results['pw_space'].sum())
         logger.info(f'Initially calculated pairwise space: {total_space}, pairwise space completed: {pairwise_space}')
