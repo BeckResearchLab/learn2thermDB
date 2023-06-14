@@ -52,8 +52,6 @@ logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL,
 FIREPROTDB_URL = "https://loschmidt.chemi.muni.cz/fireprotdb/v1/export?searchType=advanced&type=csv"
 MELTOME_URL = "https://meltomeatlas.proteomics.wzw.tum.de/master_meltomeatlasapp/cross-species.csv"
 
-RELOAD = False
-
 # functions for uniprot api
 def get_next_link(headers):
         if "Link" in headers:
@@ -94,13 +92,18 @@ if __name__ == "__main__":
 
     # FIREPROT DB
     ########################################################################
-    logger.info("Downloading fireprot data")
-    payload = {"searchData":{"type":"expr","key":"all","value":" ","checkOptions":[]},"filter":{"filterKey":"ddG","order":"asc"}}
-    response = requests.post(FIREPROTDB_URL, json=payload)
-    content = response.content.decode('utf-8')
+    if not os.path.exists("./tmp/fireprot_raw.csv"):
+        logger.info("Downloading fireprot data")
+        payload = {"searchData":{"type":"expr","key":"all","value":" ","checkOptions":[]},"filter":{"filterKey":"ddG","order":"asc"}}
+        response = requests.post(FIREPROTDB_URL, json=payload)
+        content = response.content.decode('utf-8')
 
-    fireprot_df = pd.read_csv(io.StringIO(content))[['uniprot_id', 'tm', 'dTm', 'sequence']]
-    logger.info(f"{len(fireprot_df)} raw data points from FireProtDB")
+        fireprot_df = pd.read_csv(io.StringIO(content))[['uniprot_id', 'tm', 'dTm', 'sequence']]
+        logger.info(f"{len(fireprot_df)} raw data points from FireProtDB")
+        fireprot_df.to_csv("./tmp/fireprot_raw.csv")
+    else:
+        logger.info("Loading fireprot data from ./tmp/fireprot_raw.csv")
+        fireprot_df = pd.read_csv("./tmp/fireprot_raw.csv", index_col=0)
 
     # clean up the data  abit
     fireprot_df.dropna(inplace=True)
@@ -122,7 +125,7 @@ if __name__ == "__main__":
         seqs_B = our_proteins,
         metrics = ['scaled_local_query_percent_id'],
         alignment_params = {
-            'num_threads': 6,
+            'num_threads': 32,
             'sensitivity': 'fast',
             'iterate': False,              
             'global_ranking': None,           
@@ -172,7 +175,7 @@ if __name__ == "__main__":
 
     # Meltome Atlas
     ########################################################################
-    if not RELOAD:
+    if not os.path.exists('./tmp/meltome_raw.csv'):
         meltome_df = pd.read_csv(MELTOME_URL)[['Protein_ID', 'meltPoint']]
         meltome_df.to_csv('./tmp/meltome_raw.csv')
     else:
@@ -207,7 +210,7 @@ if __name__ == "__main__":
     # get the amino acid sequence to balst vs our database
     logger.info("Getting amino acid sequences for unkown meltome data by querying uniprot")
 
-    if not RELOAD:
+    if not os.path.exists("./tmp/unknown_meltome_seqs.csv"):
         # retrieve sequences
         unknown_meltome_seqs = learn2therm.uniprot.get_uniprot_sequences(
             list(unknown_meltome_pids)).rename(columns={'id': 'pid', 'seq': 'sequence'})
@@ -224,7 +227,7 @@ if __name__ == "__main__":
         seqs_B = our_proteins,
         metrics = ['scaled_local_query_percent_id'],
         alignment_params = {
-            'num_threads': 6,
+            'num_threads': 32,
             'sensitivity': 'fast',
             'iterate': False,              
             'global_ranking': None,           

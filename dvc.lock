@@ -431,25 +431,25 @@ stages:
     cmd: python ./pipeline/s2.2_compare_to_Tm.py
     deps:
     - path: ./data/proteins
-      md5: 57724bc351619b85c205a65f2f7bfd73.dir
-      size: 7997391585
+      md5: 294a0c72c9128af75de85f9947bfebdb.dir
+      size: 8031552496
       nfiles: 239
     - path: ./data/taxa.parquet
       md5: e62b6a3fbb8232e4dfeca04c863ba761
       size: 6487331
     - path: ./pipeline/s2.2_compare_to_Tm.py
-      md5: 3ebee8865063b4dae40499076c34439b
-      size: 12891
+      md5: f15eb675aa1de529eb6576591310ba33
+      size: 13225
     outs:
     - path: ./data/validation/tm/metrics.yaml
-      md5: 126e0016299dfb134476be3f63c61a2c
+      md5: 0de58c4fda9ebe1d1187249f8e1fdc10
       size: 93
     - path: ./data/validation/tm/ogt_vs_tm.csv
-      md5: 91980e6f94a53a394c3bd968addcd640
-      size: 166177
+      md5: 9203c2fe409eaf86f39fc1f4dd60527e
+      size: 166564
     - path: ./data/validation/tm/ogt_vs_tm_check.png
-      md5: adf2de79b83baecbc9fa975b08eba5ab
-      size: 208886
+      md5: 2cba5b2e8671b05119263046e00ecdbf
+      size: 206107
   get_hait_pairs:
     cmd: python ./pipeline/s2.1_get_hait_pairs.py
     deps:
