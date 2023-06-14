@@ -65,7 +65,6 @@ stages:
     plots:
     - ./data/plots/ogt_hist.png:
         cache: false
-    frozen: true
   get_16s_blast_scores:
     cmd: python pipeline/s1.1_get_16s_blast_scores.py
     deps:
@@ -136,15 +135,16 @@ stages:
   make_database:
     cmd: python ./pipeline/s1.4_make_database.py
     deps:
+    - ./data/protein_pairs
     - ./data/proteins
     - ./data/taxa.parquet
-    - ./data/taxa_thermophile_labels.parquet
     - ./data/taxa_pairs/alignment
     - ./data/taxa_pairs/pair_labels
-    - ./data/protein_pairs
+    - ./data/taxa_thermophile_labels.parquet
     - ./learn2therm/database.py
     outs:
     - ./data/database.ddb
+    frozen: true
   get_hait_pairs:
     cmd: python ./pipeline/s2.1_get_hait_pairs.py
     deps:
@@ -186,3 +186,82 @@ stages:
     plots:
     - ./data/validation/hait_alignment/:
         cache: false
+
+  get_HMM_profiles:
+    cmd: python ./pipeline/s2.5_get_HMM_profiles.py
+    outs:
+    - ./data/validation/hmmer/Pfam-A.hmm
+    metrics:
+    - ./data/validation/hmmer/s2.5_metrics.yaml:
+        cache: false
+  hmmer_hait:
+    cmd: python ./pipeline/s2.6_hmmer_hait.py
+    deps:
+    - ./pipeline/s2.6_hmmer_hait.py
+    - ./data/validation/hmmer/Pfam-A.hmm
+    - ./data/validation/hait_pairs.csv
+    - ./learn2therm/hmmer.py
+    outs:
+    - ./data/validation/hmmer/hait_scores.csv
+    params:
+    - run_hmmer.e_value
+    - run_hmmer.njobs
+    - run_hmmer.jaccard_threshold
+    plots:
+    - ./data/validation/hmmer/hait_jaccard.png:
+        cache: false
+    - ./data/validation/hmmer/hait_n_domains.png:
+        cache: false
+    metrics:
+    - ./data/validation/hmmer/s2.6_metrics.yaml:
+        cache: false
+  run_hmmer:
+    cmd: python ./pipeline/s2.7_run_hmmer.py
+    deps:
+    - ./pipeline/s2.7_run_hmmer.py
+    - ./data/validation/hmmer/Pfam-A.hmm
+    - ./data/database.ddb
+    - ./learn2therm/hmmer.py
+    outs:
+    - ./data/validation/hmmer/hmmer_outputs/
+    params:
+    - run_hmmer.e_value
+    - run_hmmer.njobs
+    - run_hmmer.chunk_size
+    - run_hmmer.scan
+    - run_hmmer.dev_sample_data
+    - run_hmmer.prefetch
+    metrics:
+    - ./data/validation/hmmer/s2.7_metrics.yaml:
+        cache: false
+  parse_hmmer_result:
+    cmd: python ./pipeline/s2.8_parse_hmmer_result.py
+    deps:
+    - ./pipeline/s2.8_parse_hmmer_result.py
+    - ./data/validation/hmmer/hmmer_outputs/
+    - ./learn2therm/hmmer.py
+    - ./data/protein_pairs/
+    outs:
+    - ./data/validation/hmmer/hmmer_labels/
+    params:
+    - run_hmmer.jaccard_threshold
+    - run_hmmer.chunk_size
+    metrics:
+    - ./data/validation/hmmer/s2.8_metrics.yaml:
+        cache: false
+  compare_hait_hmmer:
+    cmd: python ./pipeline/s2.9_compare_hait_hmmer.py
+    deps:
+    - ./pipeline/s2.9_compare_hait_hmmer.py
+    - ./data/validation/hmmer/hmmer_labels/
+    - ./data/database.ddb
+    metrics:
+    - ./data/validation/hmmer/s2.9_metrics.yaml:
+        cache: false
+    plots:
+    - ./data/validation/hmmer/compare_jaccard_hist.png:
+        cache: false
+
+
+
+

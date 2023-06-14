@@ -175,23 +175,23 @@ stages:
     params:
       params.yaml:
         label_all_pairs.blast_metric_thresholds:
-          scaled_local_query_percent_id:
-            thresh: 0.82
+          local_gap_compressed_percent_id:
+            thresh: 0.81
             greater: true
           query_align_cov:
-            thresh: 0.9
+            thresh: 0.985
             greater: true
           subject_align_cov:
-            thresh: 0.9
+            thresh: 0.985
             greater: true
         label_all_pairs.dev_only_one_file: false
     outs:
     - path: ./data/metrics/s1.2_metrics.yaml
-      md5: eb40990137b181e1b61b5668e2b09333
-      size: 79
+      md5: 75a19a2c12df719c25fb0b69bbd27b33
+      size: 80
     - path: ./data/taxa_pairs/pair_labels
-      md5: 9db2b5ea688ced9dd37f82c2a84037f4.dir
-      size: 16210411
+      md5: 3bf22eeeae76e04393b36f4afbbb0df2.dir
+      size: 16248669
       nfiles: 26
   get_protein_blast_scores:
     cmd: python pipeline/s1.4_get_protein_blast_scores.py
@@ -266,12 +266,12 @@ stages:
     cmd: python ./pipeline/s1.4_make_database.py
     deps:
     - path: ./data/protein_pairs
-      md5: edf6d331dc1de4968a7b50d836bcfbb8.dir
-      size: 3772595241
-      nfiles: 333
+      md5: 854e4a6542cbd916ef6b41cfc554c188.dir
+      size: 1867609165
+      nfiles: 159
     - path: ./data/proteins
-      md5: 57724bc351619b85c205a65f2f7bfd73.dir
-      size: 7997391585
+      md5: 294a0c72c9128af75de85f9947bfebdb.dir
+      size: 8031552496
       nfiles: 239
     - path: ./data/taxa.parquet
       md5: e62b6a3fbb8232e4dfeca04c863ba761
@@ -281,8 +281,8 @@ stages:
       size: 90778197
       nfiles: 26
     - path: ./data/taxa_pairs/pair_labels
-      md5: 9db2b5ea688ced9dd37f82c2a84037f4.dir
-      size: 16210411
+      md5: 3bf22eeeae76e04393b36f4afbbb0df2.dir
+      size: 16248669
       nfiles: 26
     - path: ./data/taxa_thermophile_labels.parquet
       md5: 68b6dc086ee2d5f8e71373522e43f64a
@@ -292,8 +292,8 @@ stages:
       size: 10769
     outs:
     - path: ./data/database.ddb
-      md5: c4dcb2c41d125677901a6a5d985cd136
-      size: 16853250048
+      md5: 7422f24471936cd68eae9b3b3e8eea6d
+      size: 13759426560
   get_raw_data_taxa:
     cmd: python pipeline/s0.0_get_raw_data_taxa.py
     deps:
@@ -351,14 +351,14 @@ stages:
         parse_proteins.max_prot_per_file: 100000
     outs:
     - path: ./data/metrics/s0.3_metrics.yaml
-      md5: f9e4b23f68c45f8f0b7aad338c301335
+      md5: aae48eb1b6920ac4b1b985bd4b0e2d8d
       size: 90
     - path: ./data/metrics/s0.3_protein_per_data_distr.csv
-      md5: 00f3a4ce6743ad51fcad580e0b00e586
+      md5: 85d7481256d1db749f68b75c979aa73d
       size: 118659
     - path: ./data/proteins/
-      md5: 57724bc351619b85c205a65f2f7bfd73.dir
-      size: 7997391585
+      md5: 294a0c72c9128af75de85f9947bfebdb.dir
+      size: 8031552496
       nfiles: 239
   get_proteome_mdata:
     cmd: python pipeline/s0.2_get_proteome_mdata.py
@@ -374,23 +374,23 @@ stages:
     cmd: python ./pipeline/s1.3_protein_alignment.py
     deps:
     - path: ./data/proteins
-      md5: 57724bc351619b85c205a65f2f7bfd73.dir
-      size: 7997391585
+      md5: 294a0c72c9128af75de85f9947bfebdb.dir
+      size: 8031552496
       nfiles: 239
     - path: ./data/taxa_pairs/alignment
       md5: 40439dc256528d3c1e71b68d53f55ab1.dir
       size: 90778197
       nfiles: 26
     - path: ./data/taxa_pairs/pair_labels
-      md5: 9db2b5ea688ced9dd37f82c2a84037f4.dir
-      size: 16210411
+      md5: 3bf22eeeae76e04393b36f4afbbb0df2.dir
+      size: 16248669
       nfiles: 26
     - path: ./learn2therm/blast.py
-      md5: 291c944230b3579e5013a4477797edd8
-      size: 33342
+      md5: 0c6ef88fe61ffdfd0f4bed610da4c89e
+      size: 34098
     - path: ./pipeline/s1.3_protein_alignment.py
-      md5: 4f6c06a72ee0e9546aef7a50b62fa0c5
-      size: 10328
+      md5: f4332e3d499bde84dcfb681bedc42b94
+      size: 10496
     params:
       params.yaml:
         get_protein_blast_scores.dask_cluster_class: SLURMCluster
@@ -418,57 +418,57 @@ stages:
           evalue: 1e-05
           hsp_cov: 75
         get_protein_blast_scores.n_jobs: 80
-        get_protein_blast_scores.save_frequency: 25000
+        get_protein_blast_scores.save_frequency: 20000
     outs:
     - path: ./data/metrics/s1.3_metrics.yaml
-      md5: e75d542e5159fe907e82697f486ba236
-      size: 159
+      md5: f350d97df9d319423c55b84a7cf4c21d
+      size: 157
     - path: ./data/protein_pairs/
-      md5: edf6d331dc1de4968a7b50d836bcfbb8.dir
-      size: 3772595241
-      nfiles: 333
+      md5: 854e4a6542cbd916ef6b41cfc554c188.dir
+      size: 1867609165
+      nfiles: 159
   compare_to_Tm:
     cmd: python ./pipeline/s2.2_compare_to_Tm.py
     deps:
     - path: ./data/proteins
-      md5: 57724bc351619b85c205a65f2f7bfd73.dir
-      size: 7997391585
+      md5: 294a0c72c9128af75de85f9947bfebdb.dir
+      size: 8031552496
       nfiles: 239
     - path: ./data/taxa.parquet
       md5: e62b6a3fbb8232e4dfeca04c863ba761
       size: 6487331
     - path: ./pipeline/s2.2_compare_to_Tm.py
-      md5: 3ebee8865063b4dae40499076c34439b
-      size: 12891
+      md5: f15eb675aa1de529eb6576591310ba33
+      size: 13225
     outs:
     - path: ./data/validation/tm/metrics.yaml
-      md5: 126e0016299dfb134476be3f63c61a2c
+      md5: 0de58c4fda9ebe1d1187249f8e1fdc10
       size: 93
     - path: ./data/validation/tm/ogt_vs_tm.csv
-      md5: 91980e6f94a53a394c3bd968addcd640
-      size: 166177
+      md5: 9203c2fe409eaf86f39fc1f4dd60527e
+      size: 166564
     - path: ./data/validation/tm/ogt_vs_tm_check.png
-      md5: adf2de79b83baecbc9fa975b08eba5ab
-      size: 208886
+      md5: 2cba5b2e8671b05119263046e00ecdbf
+      size: 206107
   get_hait_pairs:
     cmd: python ./pipeline/s2.1_get_hait_pairs.py
     deps:
     - path: ./pipeline/s2.1_get_hait_pairs.py
-      md5: 8a04d81f8a3c6ab7099407c7db892a17
-      size: 4100
+      md5: 95c0502ea5adb068797b8a152b936978
+      size: 4646
     outs:
     - path: ./data/validation/hait_pairs.csv
-      md5: a40fd24b027407ade78599adfeb94428
-      size: 939959
+      md5: da510eb88db40cbc95b514fd10fd90bd
+      size: 1030184
   run_hait_alignment:
     cmd: python ./pipeline/s2.3_run_hait_alignment.py
     deps:
     - path: ./data/validation/hait_pairs.csv
-      md5: a40fd24b027407ade78599adfeb94428
-      size: 939959
+      md5: da510eb88db40cbc95b514fd10fd90bd
+      size: 1030184
     - path: ./learn2therm/blast.py
-      md5: 291c944230b3579e5013a4477797edd8
-      size: 33342
+      md5: 0c6ef88fe61ffdfd0f4bed610da4c89e
+      size: 34098
     - path: ./pipeline/s2.3_run_hait_alignment.py
       md5: adb29e20850fdc605e978a29d0926533
       size: 3252
@@ -497,22 +497,144 @@ stages:
           hsp_cov: 75
     outs:
     - path: ./data/validation/hait_aligned_scores.csv
-      md5: 560d53ffe1ac2bd32d89169d148ec584
-      size: 1154438
+      md5: 0008a3ee3cec87307c5085bad9c85819
+      size: 1261616
   compare_hait_alignment:
     cmd: python ./pipeline/s2.4_compare_hait_alignment.py
     deps:
     - path: ./data/database.ddb
-      md5: c4dcb2c41d125677901a6a5d985cd136
-      size: 16853250048
+      md5: 7422f24471936cd68eae9b3b3e8eea6d
+      size: 13759426560
     - path: ./data/validation/hait_aligned_scores.csv
-      md5: 560d53ffe1ac2bd32d89169d148ec584
-      size: 1154438
+      md5: 0008a3ee3cec87307c5085bad9c85819
+      size: 1261616
     - path: ./pipeline/s2.4_compare_hait_alignment.py
-      md5: e152f95ff177f72fc3b717d8d0dae241
-      size: 4582
+      md5: 88709a87998b4ca7d946a6b37d170c4d
+      size: 4617
     outs:
     - path: ./data/validation/hait_alignment/
-      md5: 94fd345812f657646e16e9a1c7e3388e.dir
-      size: 416548
+      md5: eb1c90d86f4f0079e2dbaa6d5ec312c1.dir
+      size: 404535
       nfiles: 4
+  get_HMM_profiles:
+    cmd: python ./pipeline/s2.5_get_HMM_profiles.py
+    outs:
+    - path: ./data/validation/hmmer/Pfam-A.hmm
+      md5: eb895a2152c0e977cb6cf1fee27e3003
+      size: 1572192814
+    - path: ./data/validation/hmmer/s2.5_metrics.yaml
+      md5: 118fa7426d2980e00004767d9f855821
+      size: 28
+  hmmer_hait:
+    cmd: python ./pipeline/s2.6_hmmer_hait.py
+    deps:
+    - path: ./data/validation/hait_pairs.csv
+      md5: da510eb88db40cbc95b514fd10fd90bd
+      size: 1030184
+    - path: ./data/validation/hmmer/Pfam-A.hmm
+      md5: eb895a2152c0e977cb6cf1fee27e3003
+      size: 1572192814
+    - path: ./learn2therm/hmmer.py
+      md5: 3b6d8590385da8cd9d80819dc73ade10
+      size: 10604
+    - path: ./pipeline/s2.6_hmmer_hait.py
+      md5: 076866cbf3bd0b9a1d2b67ce50fc3946
+      size: 5379
+    params:
+      params.yaml:
+        run_hmmer.e_value: 1e-10
+        run_hmmer.jaccard_threshold: 0.79
+        run_hmmer.njobs: 32
+    outs:
+    - path: ./data/validation/hmmer/hait_jaccard.png
+      md5: 5d4d7320f8285ba57d8d554211b4b9c3
+      size: 47708
+    - path: ./data/validation/hmmer/hait_n_domains.png
+      md5: 7d700365afe76c698317ec5021e406bf
+      size: 61284
+    - path: ./data/validation/hmmer/hait_scores.csv
+      md5: 4e9387cacdd61a0096603ea19299e824
+      size: 133964
+    - path: ./data/validation/hmmer/s2.6_metrics.yaml
+      md5: dac84b06de57b9012cd04443337eb6ea
+      size: 151
+  run_hmmer:
+    cmd: python ./pipeline/s2.7_run_hmmer.py
+    deps:
+    - path: ./data/database.ddb
+      md5: 7422f24471936cd68eae9b3b3e8eea6d
+      size: 13759426560
+    - path: ./data/validation/hmmer/Pfam-A.hmm
+      md5: eb895a2152c0e977cb6cf1fee27e3003
+      size: 1572192814
+    - path: ./learn2therm/hmmer.py
+      md5: 3b6d8590385da8cd9d80819dc73ade10
+      size: 10604
+    - path: ./pipeline/s2.7_run_hmmer.py
+      md5: bdbd3f941831c6a55d7c0daa2354f3a7
+      size: 9021
+    params:
+      params.yaml:
+        run_hmmer.chunk_size: 2000
+        run_hmmer.dev_sample_data: false
+        run_hmmer.e_value: 1e-10
+        run_hmmer.njobs: 32
+        run_hmmer.prefetch: true
+        run_hmmer.scan: false
+    outs:
+    - path: ./data/validation/hmmer/hmmer_outputs/
+      md5: b838008f7abebb1fb16201ebca82499a.dir
+      size: 33160362
+      nfiles: 6
+    - path: ./data/validation/hmmer/s2.7_metrics.yaml
+      md5: b5dfbe624c1c6dac5419990c42c68035
+      size: 158
+  parse_hmmer_result:
+    cmd: python ./pipeline/s2.8_parse_hmmer_result.py
+    deps:
+    - path: ./data/protein_pairs/
+      md5: 854e4a6542cbd916ef6b41cfc554c188.dir
+      size: 1867609165
+      nfiles: 159
+    - path: ./data/validation/hmmer/hmmer_outputs/
+      md5: b838008f7abebb1fb16201ebca82499a.dir
+      size: 33160362
+      nfiles: 6
+    - path: ./learn2therm/hmmer.py
+      md5: 3b6d8590385da8cd9d80819dc73ade10
+      size: 10604
+    - path: ./pipeline/s2.8_parse_hmmer_result.py
+      md5: 31e43626a676ffdac40e6b2d7c1a71da
+      size: 6310
+    params:
+      params.yaml:
+        run_hmmer.chunk_size: 2000
+        run_hmmer.jaccard_threshold: 0.79
+    outs:
+    - path: ./data/validation/hmmer/hmmer_labels/
+      md5: 33e6ec1b488c8eea835475a177b3cfb5.dir
+      size: 545230808
+      nfiles: 207
+    - path: ./data/validation/hmmer/s2.8_metrics.yaml
+      md5: 76e04bb9d3abebf5f0b372cdeb9f9f9a
+      size: 126
+  compare_hait_hmmer:
+    cmd: python ./pipeline/s2.9_compare_hait_hmmer.py
+    deps:
+    - path: ./data/database.ddb
+      md5: 7422f24471936cd68eae9b3b3e8eea6d
+      size: 13759426560
+    - path: ./data/validation/hmmer/hmmer_labels/
+      md5: 33e6ec1b488c8eea835475a177b3cfb5.dir
+      size: 545230808
+      nfiles: 207
+    - path: ./pipeline/s2.9_compare_hait_hmmer.py
+      md5: 23860fa292e1ec70228495dc26524fed
+      size: 3537
+    outs:
+    - path: ./data/validation/hmmer/compare_jaccard_hist.png
+      md5: 713032035dcdd821a109a3091f4ab151
+      size: 69907
+    - path: ./data/validation/hmmer/s2.9_metrics.yaml
+      md5: 697b22d9fca296e90769adb652965764
+      size: 222

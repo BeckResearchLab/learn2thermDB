@@ -36,17 +36,27 @@ logger = learn2therm.utils.start_logger_if_necessary(LOGNAME, LOGFILE, LOGLEVEL,
 
 if __name__ == '__main__':
     # get hait data
-    hait_ht_pairs = pd.read_excel(
+    hait_ht1_pairs = pd.read_excel(
         './external/prot25866-sup-0001-datas1.xlsx',
         sheet_name='PAIRS',
         usecols="A:B",
         skiprows=8).rename(columns={'HT':'T'}).dropna()
-    hait_t_pairs = pd.read_excel(
+    hait_t1_pairs = pd.read_excel(
         './external/prot25866-sup-0001-datas1.xlsx',
         sheet_name='PAIRS',
         usecols="D:E",
         skiprows=8).dropna().rename(columns={'T':'T', 'M.1':'M'})
-    hait_pairs = pd.concat([hait_ht_pairs, hait_t_pairs], join='outer', axis=0, ignore_index=True)
+    hait_ht2_pairs = pd.read_excel(
+        './external/prot25866-sup-0001-datas1.xlsx',
+        sheet_name='PAIRS',
+        usecols="H:I",
+        skiprows=8).rename(columns={'HT.1':'T', 'M.2':'M'}).dropna()
+    hait_t2_pairs = pd.read_excel(
+        './external/prot25866-sup-0001-datas1.xlsx',
+        sheet_name='PAIRS',
+        usecols="K:L",
+        skiprows=8).rename(columns={'T.1':'T', 'M.3':'M'}).dropna()
+    hait_pairs = pd.concat([hait_ht1_pairs, hait_t1_pairs, hait_ht2_pairs, hait_t2_pairs], join='outer', axis=0, ignore_index=True)
     logger.info(f"Got HAIT data with {len(hait_pairs)} pairs")
     # query for AA sequences from UniProt
     base_q = 'https://rest.uniprot.org/uniprotkb/search?query='
@@ -106,5 +116,6 @@ if __name__ == '__main__':
     hait_pairs['meso_pid'] = hait_pairs['meso_pdb'].map(pdb_to_pid)
     hait_pairs['thermo_pid'] = hait_pairs['thermo_pdb'].map(pdb_to_pid)
     hait_pairs.dropna(inplace=True)
+    hait_pairs.drop_duplicates(subset=['meso_pid', 'thermo_pid'], inplace=True)
     hait_pairs.to_csv('./data/validation/hait_pairs.csv')
-    logger.info(f"Got HAIT data with {len(hait_pairs)} pairs after dropping NA")
+    logger.info(f"Got HAIT data with {len(hait_pairs)} pairs after dropping NA and duplicates")

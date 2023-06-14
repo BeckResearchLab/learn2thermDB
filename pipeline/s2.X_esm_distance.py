@@ -19,6 +19,7 @@ import scipy.stats
 import matplotlib.pyplot as plt
 import seaborn as sns
 import torch
+import torch.nn
 from esm import Alphabet, FastaBatchedDataset, pretrained, MSATransformer
 import duckdb as ddb
 sns.set_style('whitegrid')
@@ -176,6 +177,8 @@ def run_esm_on_df(dataframe, model='esm2_t36_3B_UR50D'):
     logger.info(f"Ran ESM on {fp}")
     return result
 
+cos = torch.nn.CosineSimilarity(dim=1, eps=1e-6)
+
 if __name__ == '__main__':
 
     # load params
@@ -192,65 +195,23 @@ if __name__ == '__main__':
         logger.info('Loaded precomputed distances')
     else:
         # get hait data
-        hait_ht_pairs = pd.read_excel(
-            './tmp/prot25866-sup-0001-datas1.xlsx',
-            sheet_name='PAIRS',
-            usecols="A:B",
-            skiprows=8).rename(columns={'HT':'T'}).dropna()
-        hait_t_pairs = pd.read_excel(
-            './tmp/prot25866-sup-0001-datas1.xlsx',
-            sheet_name='PAIRS',
-            usecols="D:E",
-            skiprows=8).dropna().rename(columns={'T':'T', 'M.1':'M'})
-        hait_pairs = pd.concat([hait_ht_pairs, hait_t_pairs], join='outer', axis=0, ignore_index=True)
-        logger.info(f"Got HAIT data with {len(hait_pairs)} pairs")
-        # query for AA sequences from UniProt
-        base_q = 'https://rest.uniprot.org/uniprotkb/search?query='
-        pdbs = list(hait_pairs['M'].values.reshape(-1))
-        pdbs.extend(list(hait_pairs['T'].values.reshape(-1)))
-        pdbs = list(set(pdbs))
-        # programatic access in chunks
-        n = 20
-        pdb_chunks = [pdbs[i * n:(i + 1) * n] for i in range((len(pdbs) + n - 1) // n )]
-        pdb_to_seq = {}
-        for chunk in pdb_chunks:
-            q = [f'(xref:pdb-{p})OR' for p in chunk]
-            q = ''.join(q)[:-2]
-            q = base_q+q
-            r = requests.get(q)
-            r.raise_for_status()
-            logger.info(f"Got response from UniProt for a chunk of HAIT data")
-            results = r.json()
-            results = results['results']
-            # map pdb id to seq
-            for result in results:
-                seq = result['sequence']['value']
-                xrefs = result['uniProtKBCrossReferences']
-                for xref in xrefs:
-                    if xref['database'] == 'PDB':
-                        pdb_to_seq[xref['id']] = seq
-            time.sleep(3)
-        # create dataframe with seqs
-        hait_pairs['M_seq'] = hait_pairs['M'].map(pdb_to_seq)
-        hait_pairs['T_seq'] = hait_pairs['T'].map(pdb_to_seq)
-        hait_pairs.to_csv('./tmp/hait_pairs.csv')
-        hait_pairs.dropna(inplace=True)
-        logger.info(f"Got HAIT data with {len(hait_pairs)} pairs after dropping NA")
+        hait_pairs = pd.read_csv('./data/validation/hait_pairs.csv')
+
         # get ESM distances
-        df_ = hait_pairs[['M_seq', 'M']].rename(columns={'M_seq':'protein_seq', 'M':'pid'})
+        df_ = hait_pairs[['meso_seq', 'meso_pid']].rename(columns={'meso_seq':'protein_seq', 'meso_pid':'pid'})
         hait_meso_esm_result = run_esm_on_df(df_)
-        df_ = hait_pairs[['T_seq', 'T']].rename(columns={'T_seq':'protein_seq', 'T':'pid'})
+        df_ = hait_pairs[['thermo_seq', 'thermo_pid']].rename(columns={'thermo_seq':'protein_seq', 'thermo_pid':'pid'})
         hait_thermo_esm_result = run_esm_on_df(df_)
         # get distances
         meso_tensor = torch.vstack(tuple(hait_meso_esm_result['tensor'].values))
         thermo_tensor = torch.vstack(tuple(hait_thermo_esm_result['tensor'].values))
         assert len(meso_tensor) == len(thermo_tensor)
-        distances = (meso_tensor - thermo_tensor).pow(2).sum(axis=1).sqrt()
+        hait_distances = cos(meso_tensor, thermo_tensor)
         logger.info(f"Mean, std of ESM distance for Hait pairs: {distances.mean()}, {distances.std()}")
         torch.save(distances, './tmp/hait_distances.pt')
 
         # connect to database and get protein pairs, as well as random pairs
-        con = ddb.connect('./tmp/database', read_only=True)
+        con = ddb.connect('./data/database.ddb', read_only=True)
         random_thermo_proteins_dict = {}
         for T in temps:
             random_thermo_proteins_dict[T] = con.execute(f"""
@@ -304,7 +265,7 @@ if __name__ == '__main__':
             print(meso_tensor.shape)
 
             # compute distance between meso and thermo random proteins
-            distances = (meso_tensor - thermo_tensor).pow(2).sum(axis=1).sqrt()
+            distances = cos(meso_tensor, thermo_tensor)
             random_distances[T] = distances
             logger.info(f"Mean, std of ESM distance for random pairs with thermohpile T>{T}: {distances.mean()}, {distances.std()}")
         torch.save(random_distances, './tmp/random_distances.pt')
@@ -324,7 +285,7 @@ if __name__ == '__main__':
             assert len(meso_tensor) == len(thermo_tensor)
 
             # compute distance between meso and thermo random proteins
-            distances = (meso_tensor - thermo_tensor).pow(2).sum(axis=1).sqrt()
+            distances = cos(meso_tensor, thermo_tensor)
             logger.info(f"Mean, std of ESM distance for actual pairs with thermohpile T>{T}: {distances.mean()}, {distances.std()}")
             actual_distances[T] = distances
         torch.save(actual_distances, './tmp/actual_distances.pt')
