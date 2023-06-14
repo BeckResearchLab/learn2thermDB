@@ -165,7 +165,8 @@ if __name__== "__main__":
     conn = ddb.connect(DB_PATH, read_only=True)
     logger.info("Connected to learn2therm database")
     if params['dev_sample_data']:
-        proteins_q = conn.execute(f"SELECT pid, protein_seq FROM proteins WHERE proteins.pid IN (SELECT DISTINCT(pairs.meso_pid) FROM pairs) OR proteins.pid IN (SELECT DISTINCT(pairs.thermo_pid) FROM pairs) LIMIT {params['dev_sample_data']}")
+        conn.execute(f"CREATE TEMP TABLE pairs_sample AS SELECT * FROM pairs ORDER BY RANDOM() LIMIT {params['dev_sample_data']}")
+        proteins_q = conn.execute(f"SELECT pid, protein_seq FROM proteins WHERE proteins.pid IN (SELECT DISTINCT(pairs_sample.meso_pid) FROM pairs_sample) OR proteins.pid IN (SELECT DISTINCT(pairs_sample.thermo_pid) FROM pairs_sample)")
     else:
         proteins_q = conn.execute("SELECT pid, protein_seq FROM proteins WHERE proteins.pid IN (SELECT DISTINCT(pairs.meso_pid) FROM pairs) OR proteins.pid IN (SELECT DISTINCT(pairs.thermo_pid) FROM pairs)")
     

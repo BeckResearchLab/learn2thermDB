@@ -93,14 +93,13 @@ get_protein_blast_scores:
     - subject_align_cov
     - bit_score
 run_hmmer:
-  e_value: 1.e-25
+  e_value: 1.e-10
   chunk_size: 2000
   prefetch: true
   njobs: 32
   scan: false
   jaccard_threshold: 0.79
   dev_sample_data: false
-
 
 sample_data_for_structure:
   metrics: 

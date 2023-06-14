@@ -249,4 +249,19 @@ stages:
     metrics:
     - ./data/validation/hmmer/s2.8_metrics.yaml:
         cache: false
+  compare_hait_hmmer:
+    cmd: python ./pipeline/s2.9_compare_hait_hmmer.py
+    deps:
+    - ./pipeline/s2.9_compare_hait_hmmer.py
+    - ./data/validation/hmmer/hmmer_labels/
+    - ./data/database.ddb
+    metrics:
+    - ./data/validation/hmmer/s2.9_metrics.yaml:
+        cache: false
+    plots:
+    - ./data/validation/hmmer/compare_jaccard_hist.png:
+        cache: false
+
+
+
 

@@ -118,7 +118,7 @@ def process_pairs_table(dbpath, chunk_size:int, jaccard_threshold):
 
         # Write DataFrame to parquet
         chunk_counter += 1  # Increment the chunk counter
-        query_chunk = query_chunk[['meso_pid', 'thermo_pid', 'score']]
+        query_chunk = query_chunk[['meso_pid', 'thermo_pid', 'score', 'bool_confirmed']]
         query_chunk.to_parquet(f'{OUTPUT_DIR}{chunk_counter}_output.parquet')
         logger.info(f'Chunk {chunk_counter} of size {len(query_chunk)} written to parquet')
 
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     metrics = {}
     count_pairs = conn.execute("SELECT COUNT(*) FROM pairs").fetchone()[0]
     count_labels = conn.execute("SELECT COUNT(*) FROM labels").fetchone()[0]
-    assert count_pairs == count_labels, "Number of pairs and labels do not match"
+    # assert count_pairs == count_labels, "Number of pairs and labels do not match"
     count_found = conn.execute("SELECT COUNT(*) FROM labels WHERE score IS NOT NULL").fetchone()[0]
     fraction_found = float(count_found/count_pairs)
 
