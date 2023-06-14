@@ -629,12 +629,12 @@ stages:
       size: 545230808
       nfiles: 207
     - path: ./pipeline/s2.9_compare_hait_hmmer.py
-      md5: 80ad71d3eac25c181e3375d9745d84e3
-      size: 3531
+      md5: 23860fa292e1ec70228495dc26524fed
+      size: 3537
     outs:
     - path: ./data/validation/hmmer/compare_jaccard_hist.png
       md5: 713032035dcdd821a109a3091f4ab151
       size: 69907
     - path: ./data/validation/hmmer/s2.9_metrics.yaml
-      md5: 9b7e9356f41638da82fd394cf9f02556
-      size: 218
+      md5: 697b22d9fca296e90769adb652965764
+      size: 222

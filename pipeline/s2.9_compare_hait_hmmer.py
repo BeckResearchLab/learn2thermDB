@@ -55,11 +55,11 @@ if __name__ == "__main__":
     metrics['l2t_jaccard_mean'] = float(l2t_data['jaccard_score'].mean())
     metrics['hait_jaccard_mean'] = float(hait_data['jaccard_score'].mean())
     # compute a t statistic
-    t, p = scipy.stats.ttest_ind(l2t_data['jaccard_score'], hait_data['jaccard_score'], alternative='less',equal_var=False, nan_policy='omit')
+    t, p = scipy.stats.ttest_ind(l2t_data['jaccard_score'], hait_data['jaccard_score'], alternative='greater',equal_var=False, nan_policy='omit')
     logger.info(f"t, p: {t}, {p} full")
-    t, p = scipy.stats.ttest_ind(l2t_data[l2t_data['coverage']>0.95]['jaccard_score'], hait_data['jaccard_score'], alternative='less',equal_var=False, nan_policy='omit')
-    logger.info(f"t, p: {t}, {p} 95+")
     metrics['t_pvalue_base'] = float(p)
+    t, p = scipy.stats.ttest_ind(l2t_data[l2t_data['coverage']>0.95]['jaccard_score'], hait_data['jaccard_score'], alternative='greater',equal_var=False, nan_policy='omit')
+    logger.info(f"t, p: {t}, {p} 95+")
     metrics['t_pvalue_95'] = float(p)
     # make historgram of jacccard for those we did find vs the 2 datasets
     fig, ax = plt.subplots()
