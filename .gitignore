@@ -162,3 +162,7 @@ cython_debug/
 # logs
 logs
 tmp
+*.pt
+*.npy
+*.npz
+*.fasta

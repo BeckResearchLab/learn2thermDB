@@ -1,0 +1,11 @@
+MulticoreTSNE@git+https://github.com/DmitryUlyanov/Multicore-TSNE.git
+matplotlib
+seaborn
+numpy
+pandas
+tqdm
+joblib
+biopython
+fair-esm@git+https://github.com/facebookresearch/esm.git
+torch
+duckdb==0.7.1
