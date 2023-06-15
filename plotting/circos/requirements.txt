@@ -1,0 +1,6 @@
+python-circos==0.3.0
+pandas
+numpy
+matplotlib
+duckdb==0.7.1
+jupyter
