@@ -100,8 +100,7 @@ run_hmmer:
   scan: false
   jaccard_threshold: 0.79
   dev_sample_data: false
-
 sample_data_for_structure:
   metrics: 
     - "(query_align_cov+subject_align_cov)/2.0"
-  sample_size: 100
+  sample_size: 10000

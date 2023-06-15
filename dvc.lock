@@ -638,3 +638,47 @@ stages:
     - path: ./data/validation/hmmer/s2.9_metrics.yaml
       md5: 697b22d9fca296e90769adb652965764
       size: 222
+  structure_hait:
+    cmd: python ./pipeline/s2.11_structure_hait.py
+    deps:
+    - path: ./data/validation/hait_pairs.csv
+      md5: da510eb88db40cbc95b514fd10fd90bd
+      size: 1030184
+    - path: ./pipeline/s2.11_structure_hait.py
+      md5: 886b3bc4682382ddf6ba83f33c195cfb
+      size: 1769
+    outs:
+    - path: ./data/validation/structure/hait_fatcat.csv
+      md5: a9d92f34fe9c01a24a93ccbf02d5bfbf
+      size: 1039666
+  sample_data_for_structure:
+    cmd: python ./pipeline/s2.10_sample_data_for_structure.py
+    deps:
+    - path: ./data/database.ddb
+      md5: 7422f24471936cd68eae9b3b3e8eea6d
+      size: 13759426560
+    - path: ./pipeline/s2.10_sample_data_for_structure.py
+      md5: f5234261b6939c6c081b204c55ee231b
+      size: 3750
+    params:
+      params.yaml:
+        sample_data_for_structure.metrics:
+        - (query_align_cov+subject_align_cov)/2.0
+        sample_data_for_structure.sample_size: 10000
+    outs:
+    - path: ./data/validation/structure/sample_l2t_data.csv
+      md5: aa73eab313b44c4905c112ba0aba52b3
+      size: 374938
+  structure_l2t:
+    cmd: python ./pipeline/s2.12_structure_l2t.py
+    deps:
+    - path: ./data/validation/structure/sample_l2t_data.csv
+      md5: aa73eab313b44c4905c112ba0aba52b3
+      size: 374938
+    - path: ./pipeline/s2.12_structure_l2t.py
+      md5: d3139349859d0acfef0841c06f811fc4
+      size: 1908
+    outs:
+    - path: ./data/validation/structure/l2t_sample_fatcat.csv
+      md5: e2eb260c9c351d8fe0e620650cf8990d
+      size: 349807

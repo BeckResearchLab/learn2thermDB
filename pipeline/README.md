@@ -21,6 +21,7 @@ Ensure that the following are set in order access full functionality
 - `ENV_EMAIL` - The email will be used to access NCBI FTP in `s0.0` and Bacdive in `s0.1`
 - `NCBI_API_KEY` - API key from NCBI. Needed to get 16s sequences in `s0.0`. See [here](https://support.nlm.nih.gov/knowledgebase/article/KA-05317/en-us)
 - `LOGLEVEL` (optional) - Specified logging level to run the package. eg 'INFO' or 'DEBUG'
+- `FATCAT_EXEC` - Necessary for struvtura alignment steps of validation, `s2.11` and `s2.12`
 
 ## Notes
 ### s0.1

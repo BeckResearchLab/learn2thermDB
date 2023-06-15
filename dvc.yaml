@@ -261,6 +261,31 @@ stages:
     plots:
     - ./data/validation/hmmer/compare_jaccard_hist.png:
         cache: false
+  sample_data_for_structure:
+    cmd: python ./pipeline/s2.10_sample_data_for_structure.py
+    deps:
+    - ./pipeline/s2.10_sample_data_for_structure.py
+    - ./data/database.ddb
+    outs:
+    - ./data/validation/structure/sample_l2t_data.csv
+    params:
+    - sample_data_for_structure.sample_size
+    - sample_data_for_structure.metrics
+  structure_hait:
+    cmd: python ./pipeline/s2.11_structure_hait.py
+    deps:
+    - ./pipeline/s2.11_structure_hait.py
+    - ./data/validation/hait_pairs.csv
+    outs:
+    - ./data/validation/structure/hait_fatcat.csv
+  structure_l2t:
+    cmd: python ./pipeline/s2.12_structure_l2t.py
+    deps:
+    - ./pipeline/s2.12_structure_l2t.py
+    - ./data/validation/structure/sample_l2t_data.csv
+    outs:
+    - ./data/validation/structure/l2t_sample_fatcat.csv
+
 
 
 
