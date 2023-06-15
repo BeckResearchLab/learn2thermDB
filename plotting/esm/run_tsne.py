@@ -47,7 +47,7 @@ if __name__ == "__main__":
             results = []
             logger.info(f"Loading l2t ESM embeddings from {len(result_files)} files")
             for result_file in result_files:
-                results.extend(torch.load(result_file))
+                results.append(torch.load(result_file))
             result = parse_results(results)['tensor']
             l2t = np.vstack(result.values)
             np.save('./data/l2t_subset.npy', l2t)
