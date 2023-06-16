@@ -55,7 +55,7 @@ __Returns__:
 ## `utils`
 
 ### `WorkerLogger`
-Custom logger for logging ona worker, adds dask worker information to log message
+Custom logger for logging one worker, adds dask worker information to log message
 
 ### `start_logger_if_necessary`
 Start a logger if necessary on a dask worker
@@ -252,7 +252,93 @@ __Params__:
   - Whether or not to kill worker after each task
 
 
+***
+
+## `hmmer`
+A set of importable functions for running hmmer via the package pyhmmer, parsing output, and saving results
+
+### `hmmpress_hmms`
+Presses the HMMs in the given HMM database and stores the resulting files in a specified directory.
+Note to use this function, the user must run `s2.5_get_HMM_profiles.py` first to obtain the HMMs.
+
+__Params__:
+- `hmmdb_path` : str
+  - Path to the HMM database.
+- `pfam_data_folder` : str, optional
+  - Path to the directory where the HMMs should be stored.
+
+__Returns__:
+- `None`
+
+### `prefetch_targets`
+Prefetch HMM profiles from a given HMM database.
+This function is meant to be a mode of the `run_pyhmmer` function.
+
+__Params__:
+- pressed_path : str
+  - Path to the pressed HMM database.
+
+__Returns__:
+- targets : pyhmmer.plan7.OptimizedProfileBlock
+  - The HMM profiles loaded from the database.
 
 
+### `save_to_digital_sequences`
+Save protein sequences from a DataFrame to a digital sequence block.
 
+__Params__:
+- `dataframe` : pd.DataFrame
+  - DataFrame containing PIDs (Protein IDs) and sequences.
+    columns: 'pid', 'protein_seq'
 
+__Returns__:
+- DigitalSequenceBlock
+  - A digital sequence block containing the converted sequences.
+
+### `run_pyhmmer`
+Run HMMER's hmmscan or hmmsearch program on a set of input sequences using with HMMs from a database.
+
+__Params__:
+- `seqs` : pyhmmer.easel.DigitalSequenceBlock
+  - Path to the input sequence file.
+- `hmms_path` : str
+  - Path to the HMM database.
+- `prefetch` : bool, optional
+  - Specifies how the HMM are stored in meomry.
+    Also, can be a pyhmmer.plan7.OptimizedProfileBlock object.
+- `output_file` : str, optional
+  - Path to the output file if the users wants to write the file.
+- `cpu` : int, optional
+  - The number of CPUs to use. Default is 4.
+- `scan`: bool, optional
+  - Whether to run hmmscan or hmmsearch. Default is True (hmmscan).
+- `eval_con` : float, optional
+  - E-value threshold for domain reporting. Default is 1e-10.
+
+__Returns__:
+- `all_hits` : pyhmmer.plan7.TopHits or domtblout file
+  - If the output_file has a name, it will be written to a domtblout file.
+    Otherwise, the user will get a list of pyhmmeer TopHits objects.
+
+__Notes__:
+
+This function runs HMMER's hmmscan/hmmsearch program on a set of input sequences
+using HMMs from a given database.
+The function supports two modes: normal mode and prefetching mode.
+In normal mode, the HMMs are pressed and stored in a directory before execution.
+In prefetching mode, the HMMs are kept in memory for faster search.
+
+### `parse_pyhmmer`
+Parses the TopHit pyhmmer object getting the query and accession IDs and saves to a DataFrame
+
+__Params__:
+- `all_hits` : list
+  - A list of TopHit objects from pyhmmer.
+- `chunk_query_ids` : list
+  - A list of query IDs from the chunk.
+
+__Returns__:
+-  `pandas.DataFrame`
+  - A dataframe containing the query and accession IDs.
+
+### `TODO` parsing functions documentation

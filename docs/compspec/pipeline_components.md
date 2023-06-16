@@ -65,3 +65,8 @@ Each DVC stage is associated with a script
     - `data/taxa_pairs/protein_pairs_blast.csv` use to create table of protein pairs. Have to get tax ids from pair_labels.csv and then protein ids in the csv should match to proteins table
 
     _Outputs_: `data/learn2thermDB.sql`
+
+***
+The following is a detailed description of the scripts in the `pipeline` directory. A brief overview is given above. The scripts are numbered in the order they should be run. The purpose and specifics of each script are described below.
+
+### 1. `s0.0_get_raw_data_taxa.py`

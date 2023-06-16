@@ -105,7 +105,7 @@ def run_pyhmmer(
         **kwargs
     ):
     """
-    Run HMMER's hmmscan program on a set of input sequences using with HMMs from a database.
+    Run HMMER's hmmscan or hmmsearch program on a set of input sequences using with HMMs from a database.
     Parameters
     ----------
     seqs : pyhmmer.easel.DigitalSequenceBlock
@@ -139,7 +139,7 @@ def run_pyhmmer(
 
     Notes
     -----
-    This function runs HMMER's hmmscan program on a set of input sequences
+    This function runs HMMER's hmmscan/hmmsearch program on a set of input sequences
     using HMMs from a given database.
     The function supports two modes: normal mode and prefetching mode.
     In normal mode, the HMMs are pressed and stored in a directory before execution.
