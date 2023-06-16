@@ -130,7 +130,7 @@ stages:
       md5: 7a16de25a27f7ab5471edbf535265b9a
       size: 4854
     - path: ./data/metrics/s0.3_protein_per_data_distr.csv
-      md5: 00f3a4ce6743ad51fcad580e0b00e586
+      md5: 85d7481256d1db749f68b75c979aa73d
       size: 118659
     - path: ./data/taxa.parquet
       md5: e62b6a3fbb8232e4dfeca04c863ba761
@@ -149,14 +149,14 @@ stages:
     cmd: python ./analysis_pipeline/t1.0_chosen_protein_search_space.py
     deps:
     - path: ./analysis_pipeline/t1.0_chosen_protein_search_space.py
-      md5: 66e51003c9abec810cedace6a6e519d0
-      size: 7928
+      md5: 78b37aa3bc5d11de47313251939a8b1a
+      size: 7912
     - path: ./data/metrics/s0.3_protein_per_data_distr.csv
-      md5: 00f3a4ce6743ad51fcad580e0b00e586
+      md5: 85d7481256d1db749f68b75c979aa73d
       size: 118659
     - path: ./data/proteins
-      md5: 57724bc351619b85c205a65f2f7bfd73.dir
-      size: 7997391585
+      md5: 294a0c72c9128af75de85f9947bfebdb.dir
+      size: 8031552496
       nfiles: 239
     - path: ./data/taxa_thermophile_labels.parquet
       md5: 68b6dc086ee2d5f8e71373522e43f64a
@@ -206,8 +206,8 @@ stages:
       md5: 1074567ba2516610e77301d97d4bd942
       size: 99976
     - path: ./data/plots/search_space_resource_test.png
-      md5: 63a33eb3eeb80b771880ee282bfa8534
-      size: 217176
+      md5: 617be88954906a81dcce88061c0b987c
+      size: 225661
   filtered_protein_search_space:
     cmd: python ./analysis_pipeline/t1.2_filtered_protein_search_space.py
     deps:
@@ -215,16 +215,16 @@ stages:
       md5: 4855763a152e3d92177fe2bfad68f13a
       size: 9049
     - path: ./data/proteins
-      md5: 57724bc351619b85c205a65f2f7bfd73.dir
-      size: 7997391585
+      md5: 294a0c72c9128af75de85f9947bfebdb.dir
+      size: 8031552496
       nfiles: 239
     - path: ./data/taxa_pairs/alignment
       md5: 40439dc256528d3c1e71b68d53f55ab1.dir
       size: 90778197
       nfiles: 26
     - path: ./data/taxa_pairs/pair_labels
-      md5: 9db2b5ea688ced9dd37f82c2a84037f4.dir
-      size: 16210411
+      md5: 3bf22eeeae76e04393b36f4afbbb0df2.dir
+      size: 16248669
       nfiles: 26
     params:
       params.yaml:
@@ -254,5 +254,5 @@ stages:
         get_protein_blast_scores.n_jobs: 80
     outs:
     - path: ./data/metrics/t1.2_metrics.yaml
-      md5: 5981eb29b303e05d50063bf146b187ff
-      size: 190
+      md5: 6392c18c47e40648db4f94a2ab77a41d
+      size: 192

@@ -140,8 +140,8 @@ def main():
 
 
     # rename dfs to meet expected format
-    query_proteins = query_proteins.rename(columns={'pid': 'id', 'protein_seq': 'seq'})
-    subject_proteins = subject_proteins.rename(columns={'pid': 'id', 'protein_seq': 'seq'})
+    query_proteins = query_proteins.rename(columns={'protein_seq': 'sequence'})
+    subject_proteins = subject_proteins.rename(columns={'protein_seq': 'sequence'})
 
     # run blast
     # start carbon and ram tracking
