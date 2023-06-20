@@ -208,6 +208,7 @@ def main():
     ax[1].set_ylabel('expected hits')
     ax[2].set_ylabel('expected min ram per processor (GB)')
     ax[3].set_ylabel('expected carbon (kg)')
+    plt.tight_layout()
 
     plt.savefig('./data/plots/search_space_resource_test.png', dpi=300)
 

@@ -149,8 +149,8 @@ stages:
     cmd: python ./analysis_pipeline/t1.0_chosen_protein_search_space.py
     deps:
     - path: ./analysis_pipeline/t1.0_chosen_protein_search_space.py
-      md5: 78b37aa3bc5d11de47313251939a8b1a
-      size: 7912
+      md5: 3a3c1ac62e78b89c8526bf8270880e9f
+      size: 7935
     - path: ./data/metrics/s0.3_protein_per_data_distr.csv
       md5: 85d7481256d1db749f68b75c979aa73d
       size: 118659
@@ -206,8 +206,8 @@ stages:
       md5: 1074567ba2516610e77301d97d4bd942
       size: 99976
     - path: ./data/plots/search_space_resource_test.png
-      md5: 617be88954906a81dcce88061c0b987c
-      size: 225661
+      md5: 9065f0775c9df14bf65cd0cad7db75af
+      size: 221490
   filtered_protein_search_space:
     cmd: python ./analysis_pipeline/t1.2_filtered_protein_search_space.py
     deps:
