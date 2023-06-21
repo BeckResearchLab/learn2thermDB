@@ -336,9 +336,53 @@ __Params__:
   - A list of TopHit objects from pyhmmer.
 - `chunk_query_ids` : list
   - A list of query IDs from the chunk.
+- `scanned` : bool, optional
+  - Whether the sequences were scanned or searched. Default is True (scanned).
 
 __Returns__:
 -  `pandas.DataFrame`
   - A dataframe containing the query and accession IDs.
 
-### `TODO` parsing functions documentation
+### `preprocess_accessions`
+Preprocesses the accession IDs from the HMMER output.
+
+__Params__:
+- `meso_accessions` : list
+  - A list of accession IDs from the mesophilic sequences.
+- `thermo_accessions` : list
+  - A list of accession IDs from the thermophilic sequences.
+
+__Returns__:
+- `meso_accessions_set` : set
+  - A set of accession IDs from the mesophilic sequences.
+- `thermo_accessions_set` : set
+  - A set of accession IDs from the thermophilic sequences.
+
+
+### `calculate_jaccard_similarity`
+Calculates Jaccard similarity between meso_pid and thermo_pid pairs via their accessions.
+
+__Params__:
+- `meso_accessions_set` : set
+  - A set of accession IDs from the mesophilic sequences.
+- `thermo_accessions_set` : set
+  - A set of accession IDs from the thermophilic sequences.
+
+__Returns__:
+- `jaccard_similarity` : float
+  - The Jaccard similarity between the meso and thermo accessions.
+
+### `evaluation_function`
+A worker function that examines the parsing of the HMMER output and calculates the Jaccard similarity.
+
+__Params__:
+- `row` : pandas.Series
+  - A row from the DataFrame containing the query and accession IDs.
+- `jacaard_threshold` : float
+  - The Jaccard similarity threshold.
+
+__Returns__:
+- `score ` : float
+  - The Jaccard similarity between the meso and thermo accessions.
+- `functional` : bool
+  - Whether the Jaccard similarity is above the threshold.

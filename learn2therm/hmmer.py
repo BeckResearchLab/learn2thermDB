@@ -205,6 +205,8 @@ def parse_pyhmmer(all_hits, chunk_query_ids, scanned: bool = True):
         A list of TopHit objects from pyhmmer.
     chunk_query_ids : list
         A list of query IDs from the chunk.
+    scanned : bool, optional
+        Whether the sequences were scanned or searched. Default is True (scanned).
 
     Returns
     -------
@@ -282,7 +284,8 @@ def calculate_jaccard_similarity(meso_accession_set, thermo_accession_set):
 
 # Define the evaluation function for the apply function
 def evaluation_function(row, jaccard_threshold):
-    """TODO
+    """
+    A worker function that examines the parsing of the HMMER output and calculates the Jaccard similarity.
     """
     # Get the accessions
     meso_acc = row['meso_accession']

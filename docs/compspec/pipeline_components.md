@@ -111,3 +111,6 @@ Each DVC stage is associated with a script
     Run FATCAT structural alignment for L2T pairs by getting PDB or AlphaFold structures.
     - _Inputs_: `data/validation/structure/sample_l2t_data.csv`
     - _Outputs_: `data/validation/structure/l2t_sample_fatcat.csv`
+
+***
+The following is a detailed description of the scripts in the `pipeline` directory. A brief overview is given above. The scripts are numbered in the order they should be run. The purpose and specifics of each script are described below.
