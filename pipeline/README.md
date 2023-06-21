@@ -8,11 +8,25 @@ Script labeling is of the format `s<Sub Pipeline Number>.<Script Number>_<Script
 | ------ | -------- |
 | s0.0_get_raw_data_taxa.py | Pull most recent NCBI 16s r RNA sequences, and OGT records from Enqvist |
 | s0.1_get_raw_data_proteins.py | Download bacterial and archaeal UniProtKB proteins. |
-| s0.2_get_proteome_mdata.py | Download Proteome metadata from Uniprot. A "best" proteome is selected for each species |
-| s0.3_parse_proteins.py | Loop raw UniProt data and record protein seq and select DB identifiers if the protein belongs to a taxa with OGT. |
-| s1.0_label_taxa.py | Assign thermophile labels to organisms |
-| s1.1_get_16s_blast_scores.py | Run pairwise blastn on 16s sequences |
-| s1.2_label_all_pairs.py | Use thresholds on 16s metrics to label organism pairs |
+| s0.2_get_proteome_mdata.py | Get metadata for UniProt proteomes and select one "best" proteome per organism. |
+| s0.3_parse_proteins.py | Extract minimal protein data, store in an efficient file format, and skip proteins that don't have OGT or are from redundant proteomes. |
+| s1.0_label_taxa.py | Assign booleans for taxa as thermophiles based on a specified threshold. |
+| s1.1_get_16s_blast_scores.py | Compute pairwise BLAST pairings of mesophilic vs thermophilic 16s rRNA sequences. |
+| s1.2_label_all_pairs.py | Create a list of taxa pairs that meet a minimum 16s rRNA BLAST score. |
+| s1.3_protein_alignment.py | Run a parallel cluster to align protein pairs among taxa pairs using DIAMOND. |
+| s1.4_make_database.py | Collect processed data files into a relational duckdb database. |
+| s2.1_get_hait_pairs.py | Parse the protein pairs from Hait et al.'s excel files and query the PDB IDs to get sequences. |
+| s2.2_compare_to_Tm.py | Compare melting temperatures from FireProtDB and Meltome Atlas to OGTs in the dataset. |
+| s2.3_run_hait_alignment.py | Compute alignment metrics for Hait pairs using identical parameters as the full dataset. |
+| s2.4_compare_hait_alignment.py | Compare metrics for BLAST alignments of Hait pairs to the dataset, and make plots. |
+| s2.5_get_HMM_profiles.py | Download Pfam HMMs. |
+| s2.6_hmmer_hait.py | Run Pfam against proteins in Hait pairs and compute Jaccard scores of annotations. |
+| s2.7_run_hmmer.py | Scan Pfam against all proteins in the database that are in protein pairs. |
+| s2.8_parse_hmmer_result.py | Parse HMMER results into a table of protein pairs and their Jaccard scores of annotations. |
+| s2.9_compare_hait_hmmer.py | Compare Pfam annotations of Hait pairs to the dataset, and make plots. |
+| s2.10_sample_data_for_structure.py | Sample some protein pairs to conduct structural alignment on, uniformly over BLAST coverage. |
+| s2.11_structure_hait.py | Run FATCAT structural alignment for Hait pairs by getting PDB structures. |
+| s2.12_structure_l2t.py | Run FATCAT structural alignment for L2T pairs by getting PDB or AlphaFold structures. |
 
 See the script [compspec]('./docs/compspec/pipeline_components.md') for more details.
 

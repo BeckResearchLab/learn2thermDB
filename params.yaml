@@ -19,13 +19,13 @@ label_taxa:
 get_16s_blast_scores:
   num_threads: 20                    # number of cpus to run in parallel
   word_size: 28                      # size of words for initial exact matching of nucleotides
-  gapopen_penalty: 2                 # cost to open a gap
-  gapextend_penalty: 1               # cost to extend gap
+  gapopen_penalty: 2                 # cost of bit score to open a gap
+  gapextend_penalty: 1               # cost of bit score to extend gap
   reward: 1                          # reward for nucleotide match
   penalty: -2                        # cost of nucleotide mismatch
   ungapped: false                    # whether to do ungapped alignment
   dev_n_sample: null                     
-  blast_metrics:
+  blast_metrics:                     # list of methods of learn2therm.blast.BlastMetics to record for aligned hits of 16s rRNA sequence
     - local_gap_compressed_percent_id
     - scaled_local_query_percent_id
     - scaled_local_symmetric_percent_id
@@ -53,32 +53,32 @@ label_all_pairs:
   dev_only_one_file: false
 get_protein_blast_scores:
   dask_cluster_class: 'SLURMCluster'        # dask cluster class used to distribute workers. Update .config/dask as well
-  max_protein_length: 250                   # only consider proteins with length less than number
-  method: 'diamond'                         # which alighern (blast or diamond) to use
-  n_jobs: 80
+  max_protein_length: 250                   # only consider proteins with length lte number
+  method: 'diamond'                         # which aligher (blast or diamond) to use
+  n_jobs: 80                                # number of parallel dask workers
   save_frequency: 20000                     # how many taxa pairs to finish aligning between dvc checkpoints
   dev_sample_pairs: null
   method_blast_params:                      # see https://biopython.org/docs/1.76/api/Bio.Blast.Applications.html
     num_threads: 6                          # number of threads to run on alignment worker         
     word_size: 3                            # size of words for initial exact matching of nucleotides
-    gapopen: 11                             # cost to open a gap
-    gapextend: 1                            # cost to extend gap
-    matrix: 'BLOSUM62'
+    gapopen: 11                             # cost ofg bit score to open a gap
+    gapextend: 1                            # cost of bit score to extend gap
+    matrix: 'BLOSUM62'                      # scoring matrix for amino acid comparisons in alignment
     threshold: 11                           # minumum score for word to be added to blast lookup table
     ungapped: false                         # whether to do ungapped alignment
-    evalue: .00001                          # minimum evalue
+    evalue: .00001                          # maximum evalue to keep alignment
     qcov_hsp_perc: 75                       # minimum percent query coverage
   method_diamond_params:                    # see https://github.com/bbuchfink/diamond
-    num_threads: 6
-    sensitivity: 'ultra-sensitive'
+    num_threads: 6                          # number of threads to run on alignment worker 
+    sensitivity: 'ultra-sensitive'          # the initial mathcing filters that diamond uses are more stringent with less sensitivity
     iterate: false                          # start with low sensitivity and only go lower towards target sensitivity for failure
     global_ranking: null                    # hard limit on the number of Smith Waterman extensions that will be computed for each query.
-    gapopen: 11
-    gapextend: 1
-    matrix: 'BLOSUM62'
-    evalue: .00001
+    gapopen: 11                             # cost of bit score to open a gap
+    gapextend: 1                            # cost of bit score to extend a gap
+    matrix: 'BLOSUM62'                      # scoring matrix for amino acid comparisons in alignment
+    evalue: .00001                          # maximum evalue to keep alignment
     hsp_cov: 75                             # minumum coverage of both strands  
-  blast_metrics:
+  blast_metrics:                            # list of methods of learn2therm.blast.BlastMetics to record for aligned hits in protein alignment
     - local_gap_compressed_percent_id
     - scaled_local_query_percent_id
     - scaled_local_symmetric_percent_id
@@ -92,15 +92,15 @@ get_protein_blast_scores:
     - subject_align_len
     - subject_align_cov
     - bit_score
-run_hmmer:
-  e_value: 1.e-10
-  chunk_size: 2000
-  prefetch: true
-  njobs: 32
-  scan: false
-  jaccard_threshold: 0.79
+run_hmmer:                                          # validation step
+  e_value: 1.e-10                                   # maximum evalue to mark protein with HMM match
+  chunk_size: 2000                                  # vector size from duckdb to get proteins in chunks and run hmmer on them
+  prefetch: true                                    # whether to load hmms into memory or leave as disk iterator
+  njobs: 32                                         # number of cpus for pyhmmer
+  scan: false                                       # hmmscan or hmmsearch
+  jaccard_threshold: 0.79                           # labels protein pairs with booleans, if greater than this score, not discussed in paper
   dev_sample_data: false
 sample_data_for_structure:
-  metrics: 
+  metrics:                                          # list of queries to make of protein pairs table, these metrics are smapled uniformly for structural alignment
     - "(query_align_cov+subject_align_cov)/2.0"
-  sample_size: 10000
+  sample_size: 10000                                # number of protein pairs to run alignment on

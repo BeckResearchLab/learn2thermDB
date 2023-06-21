@@ -2,6 +2,7 @@
 Scripts are executed to track the project from raw data to trained model. This docuemnt details the DVC tracked execution
 Each DVC stage is associated with a script
 
+## Data ingestion
 1. `s0.0_get_raw_data_taxa.py`  
     Pull most recent NCBI 16s r RNA sequences, and OGT records from Enqvist 
     - _Params_: `min_16s_len`, `max_16s_len` number of nucleotides required to keep and organism
@@ -22,6 +23,8 @@ Each DVC stage is associated with a script
     - _Inputs_: `data/taxa/uniprot/uniprot_pulled_timestamp`, `data/taxa.parquet` 
     - _Outputs_: `data/proteins`, contains proteins in chunked files of the form `*.parquet`. Columns include protein sequence, database identifiers, and associated taxa IDs, `./data/metrics/s0.3_protein_per_data_distr.csv` table of number of proteins per taxa
     - _Metrics_: `n_proteins` total protein count, `percent_prot_w_struc` fraction of proteins with PDB or alphafold id
+
+## Data pairing
 5. `s1.0_label_taxa.py`
     Assign booleans for taxa as thermophile
     - _Params_: `ogt_threshold` binary thermophile threshold
@@ -46,27 +49,65 @@ Each DVC stage is associated with a script
     - _Inputs_: `data/taxa_pairs/alignment/*.parquet`, `data/taxa_pairs/pair_labels/*.parquet`, `./data/proteins`
     - _Outputs_: `data/protein_pairs/*.parquet`, each file is alignment for a taxa pair with protein ids and metrics
     - _Metrics_: `protein_align_X`, where X is "emissions", "hits", "time", "return". The resources and used and return on investment of protein alignment.
+9. `s1.4_make_database.py`
+    Collect processed data files into a relational duckdb database.
+    - _Inputs_: `data/taxa.parquet`, `data/taxa_thermophile_labels.parquet`, `data/protein_pairs/*.parquet`, `data/proteins/*.parquet`, `data/uniprot/proteome_metadata.csv`
+    - _Outputs_: `data/database.ddb`
 
-# BELOW NEEDS UPDATING
-
-8. `s1.4_get_protein_blast_scores.py`  
-    For each meso-thermo taxa pair, compute pairwise BLAST scores of all protein sequences.  
-    _Params_: `data_processing.protein_blast_parameters`  
-    _Inputs_: `data/taxa_pairs/pair_labels.csv`, `data/taxa/proteins/`  
-    _Outputs_: `data/taxa_pairs/protein_pairs_blast.csv` contains field pair_index which maps 1:1 to the index in pair_labels.csv, then protein indexes for meso and thermo protein, and their blast scores  
-    _Metrics_: `blastp_kg_CO2_per_pair`, `percent_full_pairwise_blastp`: fraction of total possible protein pairs within labeled taxa pairs that we found hits, `blastp_time_per_pair`: minutes per pair to blast on average. Multiply these two per pair metrics by num_pairs_conservative to get total emissions and cpu time
-9. `s1.5_spin_up_rdb.py`  
-    Uses all files created so far to create an RDB of taxa, proteins, taxa pairs, and protein pairs.  
-    The only constrictive choices at this point were meso-thermo OGT threshold and minumum 16s score to consider a pair.  
-    _Inputs_:  
-    - `data/taxa/taxa_info_and_ogt.csv`, `data/taxa/labels.csv` merge to create table of taxa
-    - `data/taxa/proteins/` use index to create proteins table relational to taxa id
-    - `data/taxa_pairs/pair_labels.csv` use to create table of taxa pairs, index of taxa are in columns
-    - `data/taxa_pairs/protein_pairs_blast.csv` use to create table of protein pairs. Have to get tax ids from pair_labels.csv and then protein ids in the csv should match to proteins table
-
-    _Outputs_: `data/learn2thermDB.sql`
-
-***
-The following is a detailed description of the scripts in the `pipeline` directory. A brief overview is given above. The scripts are numbered in the order they should be run. The purpose and specifics of each script are described below.
-
-### 1. `s0.0_get_raw_data_taxa.py`
+## Data validation
+10. `s2.1_get_hait_pairs.py`
+    Parse the protein pairs from Hait et al's excel files, query the PDB ids to get sequences.
+    - _Outputs_: `data/validation/hait_pairs.csv`
+11. `s2.2_compare_to_Tm.py`
+    Compare melting temperatures from FireProtDB and Meltome Atlas to OGTs in the dataset.
+    - _Inputs_: `data/database.ddb`
+    - _Metrics_: `Tm_OGT_spearman_p`, `Tm_OGT_spearman_r` Spearman R and null probability of relationship between OGT from our data and melting temperature from 3rd party dataset
+12. `s2.3_run_hait_alignment.py`
+    Compute the alignment metrics for hait pairs using identical parameters as
+    the alignment metrics for the full dataset.
+    - _Params_: `method` local aligner type, `method_X_params` where X is eg. "blast" params given to aligner, `blast_metrics` alignment metrics to record.
+    - _Inputs_: `data/validation/hait_pairs.csv`
+    - _Outputs_: `data/validation/hait_aligned_scores.csv`
+13. `s2.4_compare_hait_alignment.py`
+    Compare metrics for BLAST alignments of Hait pairs to our dataset, and make some plots.
+    - _Inputs_: `data/validation/hait_aligned_scores.csv`, `data/database.ddb`
+    - _Outputs_: `data/validation/hait_alignment/*.png` Distribution comparison of alignment metrics, and size of your dataset if we were to use Hait scores as a filter.
+14. `s2.5_get_HMM_profiles.py`
+    Download Pfam HMMs.
+    - _Outputs_: `./data/validation/hmmer/Pfam-A.hmm`
+    - _Metrics_: `HMM_pulled_date` date of Pfam aquisition
+15. `s2.6_hmmer_hait.py`
+    Run Pfam against proteins in Hait pairs, compute Jaccard of annotations.
+    - _Params_: `e_value` Maximum e-value for hmmer to report an annotation, `njobs` cores for parallel
+    - _Inputs_: `data/validation/hait_pairs.csv`, `./data/validation/hmmer/Pfam-A.hmm`
+    - _Outputs_: `data/validation/hait_scores.csv`
+    - _Metrics_: `mean_jaccard` Mean jaccard score of annotations over Hait pairs, `fraction_found` Fraction of proteins with at least one Pfam annotation
+16. `s2.7_run_hmmer.py`
+    Scan Pfam against all proteins on our database that are in protein pairs.
+    - _Params_: `e_value` Maximum e-value for hmmer to report an annotation, `njobs` cores for parallel, `scan` boolean to hmmscan or hmmsearch, `prefetch` whether to prefetch HMMs into memory or leave as file iterator, `chunk_size` size of protein chunks to run and save to file at one time.
+    - _Inputs_: `data/database.ddb`, `./data/validation/hmmer/Pfam-A.hmm`
+    - _Outputs_: `data/validation/hmmer_putputs/*.parquet` Pfam annotations for each protein
+    - _Metrics_: `n_proteins_in_pairs` number of proteins in pairs, `n_proteins_labeled` number of proteins with at least one Pfam annotation.
+17. `s2.8_parse_hmmer_result.py`
+    Parse hmmer results into a table of protein pairs and their Jaccard scores of annotations
+    - _Inputs_: `data/validation/hmmer_outputs/*.parquet`
+    - _Outputs_: `data/validation/hmmer_labels/*.parquet`
+    - _Metrics_: `mean_jaccard` Mean jaccard score of annotations over protein pairs, `fraction_found` Fraction of proteins with at least one Pfam annotation
+18. `s2.9_compare_hait_hmmer.py`
+    Compare Pfam annotations of Hait pairs to our dataset, and make some plots.
+    - _Inputs_: `data/validation/hmmer_labels/*.parquet`, `data/database.ddb`
+    - _Outputs_: `data/validation/hmmer/compare_jaccard_hist.png` Distribution comparison of alignment Jaccard scores for Hait pairs and our pairs. 
+    - _Metrics_: `t_pvalue_base` p-value of t-test of Jaccard scores between Hait and our pairs, `t_pvalue_95` p-value of t-test of Jaccard scores between Hait and our pairs with > 95% blast coverage
+19. `s2.10_sample_data_for_structure.py`
+    Sample some protein pairs to conduct structural alignment on, uniform over BLAST coverage.
+    - _Params_: `sample_size` number of protein pairs to sample, `metrics` list of queries to make from pairs table to sample pairs uniformly over
+    - _Inputs_: `data/database.ddb`
+    - _Outputs_: `data/validation/structure/sample_l2t_data.csv`
+20. `s2.11_structure_hait.py`
+    Run FATCAT structural alignment for Hait pairs by getting PDB structures.
+    - _Inputs_: `data/validation/hait_pairs.csv`
+    - _Outputs_: `data/validation/structure/hait_fatcat.csv`
+21. `s2.12_structure_l2t.py`
+    Run FATCAT structural alignment for L2T pairs by getting PDB or AlphaFold structures.
+    - _Inputs_: `data/validation/structure/sample_l2t_data.csv`
+    - _Outputs_: `data/validation/structure/l2t_sample_fatcat.csv`

@@ -154,8 +154,7 @@ stages:
   compare_to_Tm:
     cmd: python ./pipeline/s2.2_compare_to_Tm.py
     deps:
-    - ./data/proteins
-    - ./data/taxa.parquet
+    - ./data/database.ddb
     - ./pipeline/s2.2_compare_to_Tm.py
     outs:
     - ./data/validation/tm/ogt_vs_tm.csv

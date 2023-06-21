@@ -140,8 +140,8 @@ def main():
 
 
     # rename dfs to meet expected format
-    query_proteins = query_proteins.rename(columns={'pid': 'id', 'protein_seq': 'seq'})
-    subject_proteins = subject_proteins.rename(columns={'pid': 'id', 'protein_seq': 'seq'})
+    query_proteins = query_proteins.rename(columns={'protein_seq': 'sequence'})
+    subject_proteins = subject_proteins.rename(columns={'protein_seq': 'sequence'})
 
     # run blast
     # start carbon and ram tracking
@@ -208,6 +208,7 @@ def main():
     ax[1].set_ylabel('expected hits')
     ax[2].set_ylabel('expected min ram per processor (GB)')
     ax[3].set_ylabel('expected carbon (kg)')
+    plt.tight_layout()
 
     plt.savefig('./data/plots/search_space_resource_test.png', dpi=300)
 
