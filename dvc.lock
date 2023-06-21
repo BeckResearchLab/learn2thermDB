@@ -107,7 +107,7 @@ stages:
     cmd: python pipeline/s1.1_get_16s_blast_scores.py
     deps:
     - path: ./data/metrics/s0.3_protein_per_data_distr.csv
-      md5: 00f3a4ce6743ad51fcad580e0b00e586
+      md5: 85d7481256d1db749f68b75c979aa73d
       size: 118659
     - path: ./data/taxa.parquet
       md5: e62b6a3fbb8232e4dfeca04c863ba761
@@ -116,8 +116,8 @@ stages:
       md5: 68b6dc086ee2d5f8e71373522e43f64a
       size: 120740
     - path: ./learn2therm/blast.py
-      md5: 291c944230b3579e5013a4477797edd8
-      size: 33342
+      md5: 0c6ef88fe61ffdfd0f4bed610da4c89e
+      size: 34098
     - path: ./learn2therm/io.py
       md5: 4f49985e8dcfb88d2c4504744e05d96a
       size: 4031
@@ -430,13 +430,9 @@ stages:
   compare_to_Tm:
     cmd: python ./pipeline/s2.2_compare_to_Tm.py
     deps:
-    - path: ./data/proteins
-      md5: 294a0c72c9128af75de85f9947bfebdb.dir
-      size: 8031552496
-      nfiles: 239
-    - path: ./data/taxa.parquet
-      md5: e62b6a3fbb8232e4dfeca04c863ba761
-      size: 6487331
+    - path: ./data/database.ddb
+      md5: 7422f24471936cd68eae9b3b3e8eea6d
+      size: 13759426560
     - path: ./pipeline/s2.2_compare_to_Tm.py
       md5: f15eb675aa1de529eb6576591310ba33
       size: 13225
