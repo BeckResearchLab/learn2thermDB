@@ -21,7 +21,7 @@ jobqueue:
     job-mem: null
     log-directory: './logs/dask/'
     
-    job_extra_directives: ['--nodes=1', '--ntasks-per-node=1', '--hint=multithread']
+    job_extra_directives: ['--nodes=1', '--ntasks-per-node=1', '--hint=multithread', '--export=all']
     worker_extra_args: ["--lifetime", "85m", "--lifetime-stagger", "5m"]
     job_script_prologue: ["source ~/.bashrc", "mamba activate l2tdb_tmp"]    
     
