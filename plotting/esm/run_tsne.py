@@ -3,6 +3,7 @@ from MulticoreTSNE import MulticoreTSNE as TSNE
 import numpy as np
 import time
 import matplotlib.pyplot as plt
+import seaborn as sns
 import torch
 import numpy as np
 import pandas as pd
@@ -110,20 +111,21 @@ if __name__ == "__main__":
     hait = p[labels == 'hait']
 
     # plot the map
-    plt.style.use('dark_background')
-    fig, ax = plt.subplots(figsize=(10,10))
-    ax.scatter(atlas[:,0], atlas[:,1], c='#0079FF', s=12, alpha=1, linewidths=1, edgecolors="#0062CF", label='ESM Atlas')
-    ax.scatter(l2t[:,0], l2t[:,1], c='#ffff99', s=8, alpha=0.5, linewidths=1, edgecolors="#FFE03D", label='learn2therm')
-    ax.scatter(hait[:,0], hait[:,1], c='#FF5416', s=15, alpha=1.0, linewidths=0.0, label='Hait et al.')
+    # plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(6,6))
+    sns.set_context('paper')
+    ax.scatter(atlas[:,0], atlas[:,1], c='#0079FF', s=8, alpha=1, linewidths=1, edgecolors="#0062CF", label='ESM Atlas')
+    ax.scatter(l2t[:,0], l2t[:,1], c='#ffff99', s=4, alpha=0.3, linewidths=1, edgecolors="#FFE03D", label='learn2therm')
+    ax.scatter(hait[:,0], hait[:,1], c='#FF5416', s=10, alpha=1.0, linewidths=0.0, label='Hait et al.')
     # remove the spline and labels, only want internal plot
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
     ax.spines['left'].set_visible(False)
     ax.spines['bottom'].set_visible(False)
-    leg = plt.legend()
+    leg = plt.legend(bbox_to_anchor=(0.80, 1), loc='upper left', borderaxespad=0)
     for lh in leg.legendHandles: 
         lh.set_alpha(1)
     ax.set_xticks([])
     ax.set_yticks([])
-    plt.savefig('./tsne.png', dpi=300)
+    plt.savefig('./tsne.png', dpi=300, bbox_inches='tight')
 
