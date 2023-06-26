@@ -11,7 +11,6 @@ stages:
     metrics:
     - ./data/metrics/s0.0_metrics.yaml:
         cache: false
-    frozen: true
   get_raw_data_proteins:
     cmd: python pipeline/s0.1_get_raw_data_proteins.py
     deps:
@@ -23,14 +22,12 @@ stages:
     metrics:
     - ./data/metrics/s0.1_metrics.yaml:
         cache: false
-    frozen: true
   get_proteome_mdata:
     cmd: python pipeline/s0.2_get_proteome_mdata.py
     deps:
     - pipeline/s0.2_get_proteome_mdata.py
     outs:
     - ./data/uniprot/proteome_metadata.csv
-    frozen: true
   parse_proteins:
     cmd: python pipeline/s0.3_parse_proteins.py
     deps:
@@ -48,7 +45,6 @@ stages:
     metrics:
     - ./data/metrics/s0.3_metrics.yaml:
         cache: false
-    frozen: true
   label_taxa:
     cmd: python pipeline/s1.0_label_taxa.py
     deps:
@@ -90,8 +86,6 @@ stages:
     metrics:
     - ./data/metrics/s1.1_metrics.yaml:
         cache: false
-
-    frozen: true
   label_all_pairs:
     cmd: python pipeline/s1.2_label_all_pairs.py
     deps:
@@ -106,7 +100,6 @@ stages:
     metrics:
     - ./data/metrics/s1.2_metrics.yaml:
         cache: false
-    frozen: true
   protein_alignment:
     cmd: python ./pipeline/s1.3_protein_alignment.py
     deps:
@@ -131,7 +124,6 @@ stages:
     - ./data/metrics/s1.3_metrics.yaml:
         cache: false
         persist: true
-    frozen: true
   make_database:
     cmd: python ./pipeline/s1.4_make_database.py
     deps:
@@ -144,7 +136,6 @@ stages:
     - ./learn2therm/database.py
     outs:
     - ./data/database.ddb
-    frozen: true
   get_hait_pairs:
     cmd: python ./pipeline/s2.1_get_hait_pairs.py
     deps:
