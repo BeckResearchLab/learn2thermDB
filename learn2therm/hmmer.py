@@ -105,7 +105,7 @@ def run_pyhmmer(
         **kwargs
     ):
     """
-    Run HMMER's hmmscan program on a set of input sequences using with HMMs from a database.
+    Run HMMER's hmmscan or hmmsearch program on a set of input sequences using with HMMs from a database.
     Parameters
     ----------
     seqs : pyhmmer.easel.DigitalSequenceBlock
@@ -139,7 +139,7 @@ def run_pyhmmer(
 
     Notes
     -----
-    This function runs HMMER's hmmscan program on a set of input sequences
+    This function runs HMMER's hmmscan/hmmsearch program on a set of input sequences
     using HMMs from a given database.
     The function supports two modes: normal mode and prefetching mode.
     In normal mode, the HMMs are pressed and stored in a directory before execution.
@@ -205,6 +205,8 @@ def parse_pyhmmer(all_hits, chunk_query_ids, scanned: bool = True):
         A list of TopHit objects from pyhmmer.
     chunk_query_ids : list
         A list of query IDs from the chunk.
+    scanned : bool, optional
+        Whether the sequences were scanned or searched. Default is True (scanned).
 
     Returns
     -------
@@ -282,7 +284,8 @@ def calculate_jaccard_similarity(meso_accession_set, thermo_accession_set):
 
 # Define the evaluation function for the apply function
 def evaluation_function(row, jaccard_threshold):
-    """TODO
+    """
+    A worker function that examines the parsing of the HMMER output and calculates the Jaccard similarity.
     """
     # Get the accessions
     meso_acc = row['meso_accession']
