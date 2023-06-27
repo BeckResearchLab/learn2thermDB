@@ -31,8 +31,8 @@ See [here](https://dvc.org/doc/command-reference/config)
 #### Dask
 Dask configuration is required for `s1.3`. This script stands up a Dask cluster of workers to conduct protein alignment. Each worker runs alignment between a one taxa pair at a time. In order to conduct this step, `.config/dask/jobqueue.yaml` must be updated. The pipeline was initially ran using slurm, and the config file is provided, however names and accounts will necessarly need to be changed for your cluster. If using a distributed scheduler other than SLURM, it must be supported by dask and the appropriate configurations made. See [here](https://jobqueue.dask.org/en/latest/api.html).
 
-If the pipeline is erroring out at this stage, it is likely an issue with teh cluster configuration. Common issues experienced are workers not being abel to find executables.
-Ensure that the workers have appropriate environment setups. If using SLURM, the existing confiog file is a working example: note the sourceing of `bashrc`, environment activation, and environment variable exports in the job preludes/directives.
+If the pipeline is erroring out at this stage, it is likely an issue with the cluster configuration. Common issues experienced are workers not being able to find executables.
+Ensure that the workers have appropriate environment setups. If using SLURM, the existing config file is a working example: note the sourceing of `bashrc`, environment activation, and environment variable exports in the job preludes/directives.
 
 
 ### Execution
