@@ -288,12 +288,12 @@ stages:
       md5: 68b6dc086ee2d5f8e71373522e43f64a
       size: 120740
     - path: ./learn2therm/database.py
-      md5: 5ad33a5edd188e88941ed05780f64a3b
-      size: 10769
+      md5: 2ded61aa9b14fc60795dea91af3d2d20
+      size: 10802
     outs:
     - path: ./data/database.ddb
-      md5: 7422f24471936cd68eae9b3b3e8eea6d
-      size: 13759426560
+      md5: b51482d0b753298b2bd522729dc69767
+      size: 14074523648
   get_raw_data_taxa:
     cmd: python pipeline/s0.0_get_raw_data_taxa.py
     deps:
@@ -431,15 +431,15 @@ stages:
     cmd: python ./pipeline/s2.2_compare_to_Tm.py
     deps:
     - path: ./data/database.ddb
-      md5: 7422f24471936cd68eae9b3b3e8eea6d
-      size: 13759426560
+      md5: b51482d0b753298b2bd522729dc69767
+      size: 14074523648
     - path: ./pipeline/s2.2_compare_to_Tm.py
       md5: f15eb675aa1de529eb6576591310ba33
       size: 13225
     outs:
     - path: ./data/validation/tm/metrics.yaml
-      md5: 0de58c4fda9ebe1d1187249f8e1fdc10
-      size: 93
+      md5: 5dfaa4f96a982a16d6abeaffcc58bf06
+      size: 94
     - path: ./data/validation/tm/ogt_vs_tm.csv
       md5: 9203c2fe409eaf86f39fc1f4dd60527e
       size: 166564
@@ -499,8 +499,8 @@ stages:
     cmd: python ./pipeline/s2.4_compare_hait_alignment.py
     deps:
     - path: ./data/database.ddb
-      md5: 7422f24471936cd68eae9b3b3e8eea6d
-      size: 13759426560
+      md5: b51482d0b753298b2bd522729dc69767
+      size: 14074523648
     - path: ./data/validation/hait_aligned_scores.csv
       md5: 0008a3ee3cec87307c5085bad9c85819
       size: 1261616
@@ -509,8 +509,8 @@ stages:
       size: 4617
     outs:
     - path: ./data/validation/hait_alignment/
-      md5: eb1c90d86f4f0079e2dbaa6d5ec312c1.dir
-      size: 404535
+      md5: 8e8bb1b8a1a67e56931b674f4760058d.dir
+      size: 404197
       nfiles: 4
   get_HMM_profiles:
     cmd: python ./pipeline/s2.5_get_HMM_profiles.py
@@ -531,8 +531,8 @@ stages:
       md5: eb895a2152c0e977cb6cf1fee27e3003
       size: 1572192814
     - path: ./learn2therm/hmmer.py
-      md5: 3b6d8590385da8cd9d80819dc73ade10
-      size: 10604
+      md5: eccd13a29bd99b10477081d31c36b0ae
+      size: 10842
     - path: ./pipeline/s2.6_hmmer_hait.py
       md5: 076866cbf3bd0b9a1d2b67ce50fc3946
       size: 5379
@@ -552,20 +552,20 @@ stages:
       md5: 4e9387cacdd61a0096603ea19299e824
       size: 133964
     - path: ./data/validation/hmmer/s2.6_metrics.yaml
-      md5: dac84b06de57b9012cd04443337eb6ea
-      size: 151
+      md5: ba1bf189b8bc0e4d21c868af76a4e034
+      size: 152
   run_hmmer:
     cmd: python ./pipeline/s2.7_run_hmmer.py
     deps:
     - path: ./data/database.ddb
-      md5: 7422f24471936cd68eae9b3b3e8eea6d
-      size: 13759426560
+      md5: b51482d0b753298b2bd522729dc69767
+      size: 14074523648
     - path: ./data/validation/hmmer/Pfam-A.hmm
       md5: eb895a2152c0e977cb6cf1fee27e3003
       size: 1572192814
     - path: ./learn2therm/hmmer.py
-      md5: 3b6d8590385da8cd9d80819dc73ade10
-      size: 10604
+      md5: eccd13a29bd99b10477081d31c36b0ae
+      size: 10842
     - path: ./pipeline/s2.7_run_hmmer.py
       md5: bdbd3f941831c6a55d7c0daa2354f3a7
       size: 9021
@@ -579,11 +579,11 @@ stages:
         run_hmmer.scan: false
     outs:
     - path: ./data/validation/hmmer/hmmer_outputs/
-      md5: b838008f7abebb1fb16201ebca82499a.dir
-      size: 33160362
+      md5: 027a672a998a3c8639c5bf75a791a655.dir
+      size: 33161094
       nfiles: 6
     - path: ./data/validation/hmmer/s2.7_metrics.yaml
-      md5: b5dfbe624c1c6dac5419990c42c68035
+      md5: 30d47a21e0831e79e5a4713252156868
       size: 158
   parse_hmmer_result:
     cmd: python ./pipeline/s2.8_parse_hmmer_result.py
@@ -593,12 +593,12 @@ stages:
       size: 1867609165
       nfiles: 159
     - path: ./data/validation/hmmer/hmmer_outputs/
-      md5: b838008f7abebb1fb16201ebca82499a.dir
-      size: 33160362
+      md5: 027a672a998a3c8639c5bf75a791a655.dir
+      size: 33161094
       nfiles: 6
     - path: ./learn2therm/hmmer.py
-      md5: 3b6d8590385da8cd9d80819dc73ade10
-      size: 10604
+      md5: eccd13a29bd99b10477081d31c36b0ae
+      size: 10842
     - path: ./pipeline/s2.8_parse_hmmer_result.py
       md5: 31e43626a676ffdac40e6b2d7c1a71da
       size: 6310
@@ -608,32 +608,32 @@ stages:
         run_hmmer.jaccard_threshold: 0.79
     outs:
     - path: ./data/validation/hmmer/hmmer_labels/
-      md5: 33e6ec1b488c8eea835475a177b3cfb5.dir
-      size: 545230808
-      nfiles: 207
+      md5: 679766830076109da6620d2ae3996948.dir
+      size: 802868141
+      nfiles: 224
     - path: ./data/validation/hmmer/s2.8_metrics.yaml
-      md5: 76e04bb9d3abebf5f0b372cdeb9f9f9a
+      md5: 9a9561652b0329103cba6bf40708f718
       size: 126
   compare_hait_hmmer:
     cmd: python ./pipeline/s2.9_compare_hait_hmmer.py
     deps:
     - path: ./data/database.ddb
-      md5: 7422f24471936cd68eae9b3b3e8eea6d
-      size: 13759426560
+      md5: b51482d0b753298b2bd522729dc69767
+      size: 14074523648
     - path: ./data/validation/hmmer/hmmer_labels/
-      md5: 33e6ec1b488c8eea835475a177b3cfb5.dir
-      size: 545230808
-      nfiles: 207
+      md5: 679766830076109da6620d2ae3996948.dir
+      size: 802868141
+      nfiles: 224
     - path: ./pipeline/s2.9_compare_hait_hmmer.py
       md5: 23860fa292e1ec70228495dc26524fed
       size: 3537
     outs:
     - path: ./data/validation/hmmer/compare_jaccard_hist.png
-      md5: 713032035dcdd821a109a3091f4ab151
-      size: 69907
+      md5: 11a8720bb96b2dac9615eab5235090ab
+      size: 70821
     - path: ./data/validation/hmmer/s2.9_metrics.yaml
-      md5: 697b22d9fca296e90769adb652965764
-      size: 222
+      md5: 813af92d04223435be4817074feada8b
+      size: 220
   structure_hait:
     cmd: python ./pipeline/s2.11_structure_hait.py
     deps:
@@ -651,8 +651,8 @@ stages:
     cmd: python ./pipeline/s2.10_sample_data_for_structure.py
     deps:
     - path: ./data/database.ddb
-      md5: 7422f24471936cd68eae9b3b3e8eea6d
-      size: 13759426560
+      md5: b51482d0b753298b2bd522729dc69767
+      size: 14074523648
     - path: ./pipeline/s2.10_sample_data_for_structure.py
       md5: f5234261b6939c6c081b204c55ee231b
       size: 3750
@@ -663,18 +663,18 @@ stages:
         sample_data_for_structure.sample_size: 10000
     outs:
     - path: ./data/validation/structure/sample_l2t_data.csv
-      md5: aa73eab313b44c4905c112ba0aba52b3
-      size: 374938
+      md5: f21195b2afa9cfe9158f75e945944566
+      size: 374901
   structure_l2t:
     cmd: python ./pipeline/s2.12_structure_l2t.py
     deps:
     - path: ./data/validation/structure/sample_l2t_data.csv
-      md5: aa73eab313b44c4905c112ba0aba52b3
-      size: 374938
+      md5: f21195b2afa9cfe9158f75e945944566
+      size: 374901
     - path: ./pipeline/s2.12_structure_l2t.py
       md5: d3139349859d0acfef0841c06f811fc4
       size: 1908
     outs:
     - path: ./data/validation/structure/l2t_sample_fatcat.csv
-      md5: e2eb260c9c351d8fe0e620650cf8990d
-      size: 349807
+      md5: fee8a4546b55cb708cfa141c911598f2
+      size: 352285

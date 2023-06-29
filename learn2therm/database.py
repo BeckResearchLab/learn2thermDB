@@ -156,7 +156,7 @@ class L2TDatabase:
     
     @staticmethod
     def _create_protein_pairs_table(conn, files_path):
-        conn.execute(f"""CREATE OR REPLACE TABLE pairs AS SELECT 
+        conn.execute(f"""CREATE OR REPLACE TABLE pairs AS SELECT DISTINCT ON(meso_pid, thermo_pid)
                 meso_pid::VARCHAR AS meso_pid,
                 thermo_pid::VARCHAR AS thermo_pid,
                 meso_taxid::INT AS meso_taxid,
