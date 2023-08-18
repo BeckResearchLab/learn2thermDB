@@ -275,6 +275,18 @@ stages:
     - ./data/validation/structure/sample_l2t_data.csv
     outs:
     - ./data/validation/structure/l2t_sample_fatcat.csv
+  engqvist:
+    cmd: python ./pipeline/s2.13_map_to_engqvist.py
+    deps:
+    - ./pipeline/s2.13_map_to_engqvist.py
+    - ./data/database.ddb
+    metrics:
+    - ./data/validation/engqvist/metrics.yaml:
+        cache: false
+    plots:
+    - ./data/validation/engqvist/ogt_comparison.png:
+        cache: false
+    
 
 
 

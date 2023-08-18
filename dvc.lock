@@ -678,3 +678,19 @@ stages:
     - path: ./data/validation/structure/l2t_sample_fatcat.csv
       md5: fee8a4546b55cb708cfa141c911598f2
       size: 352285
+  engqvist:
+    cmd: python ./pipeline/s2.13_map_to_engqvist.py
+    deps:
+    - path: ./data/database.ddb
+      md5: b51482d0b753298b2bd522729dc69767
+      size: 14074523648
+    - path: ./pipeline/s2.13_map_to_engqvist.py
+      md5: 0a067d733177b3e6e7c1446174254575
+      size: 3353
+    outs:
+    - path: ./data/validation/engqvist/metrics.yaml
+      md5: 8c65be42fe0b500b7224dc540e03eee4
+      size: 129
+    - path: ./data/validation/engqvist/ogt_comparison.png
+      md5: adde4542ef3bb2d4ec91e76dbe627512
+      size: 219861
