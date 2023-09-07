@@ -685,12 +685,12 @@ stages:
       md5: b51482d0b753298b2bd522729dc69767
       size: 14074523648
     - path: ./pipeline/s2.13_map_to_engqvist.py
-      md5: 0a067d733177b3e6e7c1446174254575
-      size: 3353
+      md5: 5fd131ef40acaf3263fa7d632790581c
+      size: 3487
     outs:
     - path: ./data/validation/engqvist/metrics.yaml
-      md5: 8c65be42fe0b500b7224dc540e03eee4
-      size: 129
+      md5: 17dd0da3dd0ac87c06241f6783bee026
+      size: 131
     - path: ./data/validation/engqvist/ogt_comparison.png
-      md5: adde4542ef3bb2d4ec91e76dbe627512
-      size: 219861
+      md5: c736bf2093de2e6e4f3e0e30dc7689e7
+      size: 219914

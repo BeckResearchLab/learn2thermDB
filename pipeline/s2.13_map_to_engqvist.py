@@ -63,7 +63,7 @@ if __name__ == "__main__":
     # Add the data as a temporary table
     logger.info("Adding Engqvist's data as a temporary table")
     con.execute("CREATE TEMP TABLE engqvist AS SELECT * FROM read_csv_auto('./tmp/enzyme_ogt_topt.tsv', sep='\t')")
-    logger.info(f'{con.execute("SELECT COUNT(*) FROM engqvist").fetchone()} examples')
+    logger.info(f'{con.execute("SELECT COUNT(*) FROM engqvist").fetchone()} examples from enqvist, some predicted')
 
     # inner join our OGTs with engqvist's OGTs
     logger.info("Joining our OGTs with Engqvist's OGTs")
@@ -71,8 +71,9 @@ if __name__ == "__main__":
         """SELECT engqvist.ogt AS ogt_e, taxa.temperature AS ogt_u FROM taxa
             INNER JOIN proteins ON (taxa.taxid=proteins.taxid)
             INNER JOIN engqvist ON (engqvist.uniprot_id=proteins.pid)
-    """).df()
-
+            WHERE engqvist.ogt_source='experimental'
+    """).df().dropna()
+    logger.info(f"Data overlap: {len(df)}")
     # Compute R2 and make a plot
 
     slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(df['ogt_e'], df['ogt_u'])
